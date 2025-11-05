@@ -1,6 +1,6 @@
 #include "mesh.h"
 
-inline void Mesh::setupSphere(float radius, unsigned int sectors, unsigned int stacks) {
+void Mesh::setupSphere(float radius, unsigned int sectors, unsigned int stacks) {
     if (sectors < 3) sectors = 3;
     if (stacks < 2) stacks = 2;
     vertices.clear();
