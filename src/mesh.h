@@ -37,6 +37,7 @@ class Mesh {
         std::vector< Vec3 > normals; //array of vertices normals useful for the display
         std::vector< Triangle > triangles; //array of mesh triangles
         std::vector< Vec3 > triangle_normals; //triangle normals to display face normals
+        bool isSphere = false;
 
 
         //Compute face normals for the display
@@ -49,8 +50,5 @@ class Mesh {
         void setupSphere(float radius = 1.0f, unsigned int sectors = 32, unsigned int stacks = 16);
 };
 
-//Transformation made of a rotation and translation
-struct Transformation {
-    Mat3 rotation;
-    Vec3 translation;
-};
+
+

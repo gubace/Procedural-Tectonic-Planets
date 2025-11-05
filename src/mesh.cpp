@@ -82,7 +82,7 @@ void Mesh::setupSphere(float radius, unsigned int sectors, unsigned int stacks) 
         triangle_normals[t] = n;
     }
 
-    // Note: normals vector already filled as unit normals at vertices (from sphere param)
+    isSphere = true;
 }
 
 void Mesh::computeTrianglesNormals(){

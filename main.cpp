@@ -28,10 +28,17 @@
 #include <float.h>
 #include "src/Vec3.h"
 #include "src/Camera.h"
-#include "src/mesh.h"
+
+#include "src/planet.h"
 
 enum DisplayMode{ WIRE=0, SOLID=1, LIGHTED_WIRE=2, LIGHTED=3 };
 
+
+//Transformation made of a rotation and translation
+struct Transformation {
+    Mat3 rotation;
+    Vec3 translation;
+};
 
 
 bool contain(std::vector<unsigned int> const & i_vector, unsigned int element) {
@@ -69,6 +76,8 @@ void collect_one_ring (std::vector<Vec3> const & i_vertices,
 
 //Input mesh loaded at the launch of the application
 Mesh mesh;
+
+Planet planet(1.0f);
 std::vector< float > current_field; //normalized filed of each vertex
 
 bool display_normals;
@@ -244,6 +253,8 @@ void init () {
     glClearColor (0.2f, 0.2f, 0.3f, 1.0f);
     glEnable(GL_COLOR_MATERIAL);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+
+    mesh = planet;
 
     display_normals = false;
     display_mesh = true;
