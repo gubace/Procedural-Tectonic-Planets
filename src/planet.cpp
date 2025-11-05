@@ -12,8 +12,8 @@ void Planet::generatePlates(unsigned int n_plates) {
         unsigned int seed = rand() % vertices.size();
         seed_indices.push_back(seed);
 
-        float color = (i + 1) / (float) n_plates;
-        colors[i] = Vec3(color, 1.0 - color, color / 2);
+        float color = (i) / (float) n_plates;
+        colors[i] = Vec3(0.5, color, 0.5);
         plates[i].vertices_indices.push_back(seed);
     }
 
@@ -35,7 +35,7 @@ void Planet::generatePlates(unsigned int n_plates) {
                 }
             }
             plates[closest_plate].vertices_indices.push_back(v);
-            colors[v] = colors[closest_plate];
+            colors[v] = colors[seed_indices[closest_plate]];
         }
     }
 }
