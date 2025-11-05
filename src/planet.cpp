@@ -23,7 +23,7 @@ void Planet::generatePlates(unsigned int n_plates) {
         seed_indices.push_back(seed);
 
         float color = (i + 1) / (float) n_plates;
-        plate_colors[i] = Vec3(color, 1.0f - color, color * 0.5f);
+        plate_colors[i] = Vec3(color * 0.2f, 1.0f - color, color * 0.8f);
 
         // assign seed vertex the plate color
         colors[seed] = plate_colors[i];
