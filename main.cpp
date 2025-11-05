@@ -588,7 +588,7 @@ int main (int argc, char ** argv) {
     key ('?', 0, 0);
 
     //Mesh loaded with precomputed normals
-    //mesh.setupSphere(1.0f, 64, 32);
+    mesh.setupSphere(1.0f, 64, 32);
 
 
 
