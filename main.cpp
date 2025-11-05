@@ -254,7 +254,7 @@ void init () {
     glEnable(GL_COLOR_MATERIAL);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
-    planet.generatePlates(10);
+    planet.generatePlates(4);
     mesh = planet;
 
     display_normals = false;
@@ -345,13 +345,13 @@ void drawSmoothTriangleMesh( Mesh const & i_mesh , bool draw_field = false ) {
         for(unsigned int i = 0 ; i < 3 ; i++) {
             const Vec3 & p = i_mesh.vertices[i_mesh.triangles[tIt][i]]; //Vertex position
             const Vec3 & n = i_mesh.normals[i_mesh.triangles[tIt][i]]; //Vertex normal
+            const Vec3 & c = i_mesh.colors[i_mesh.triangles[tIt][i]];
 
             if( draw_field && current_field.size() > 0 ){
                 RGB color = scalarToRGB( current_field[i_mesh.triangles[tIt][i]] );
                 glColor3f( color.r, color.g, color.b );
             }
-            Vec3 color = i_mesh.colors[i_mesh.triangles[tIt][i]];
-            glColor3f(color[0], color[1], color[2]);
+            glColor3f(c[0], c[1], c[2]);
             glNormal3f( n[0] , n[1] , n[2] );
             glVertex3f( p[0] , p[1] , p[2] );
         }
