@@ -33,6 +33,7 @@ struct Triangle {
 
 class Mesh {
     public:
+        std::vector< Vec3 > colors;
         std::vector< Vec3 > vertices; //array of mesh vertices positions
         std::vector< Vec3 > normals; //array of vertices normals useful for the display
         std::vector< Triangle > triangles; //array of mesh triangles

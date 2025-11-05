@@ -350,6 +350,8 @@ void drawSmoothTriangleMesh( Mesh const & i_mesh , bool draw_field = false ) {
                 RGB color = scalarToRGB( current_field[i_mesh.triangles[tIt][i]] );
                 glColor3f( color.r, color.g, color.b );
             }
+            Vec3 color = i_mesh.colors[i_mesh.triangles[tIt][i]];
+            glColor3f(color[0], color[1], color[2]);
             glNormal3f( n[0] , n[1] , n[2] );
             glVertex3f( p[0] , p[1] , p[2] );
         }
@@ -369,6 +371,8 @@ void drawTriangleMesh( Mesh const & i_mesh , bool draw_field = false  ) {
                 RGB color = scalarToRGB( current_field[i_mesh.triangles[tIt][i]] );
                 glColor3f( color.r, color.g, color.b );
             }
+            Vec3 color = i_mesh.colors[i_mesh.triangles[tIt][i]];
+            glColor3f(color[0], color[1], color[2]);
             glNormal3f( n[0] , n[1] , n[2] );
             glVertex3f( p[0] , p[1] , p[2] );
         }

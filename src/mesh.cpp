@@ -83,6 +83,7 @@ void Mesh::setupSphere(float radius, unsigned int sectors, unsigned int stacks) 
     }
 
     isSphere = true;
+    colors.resize(vertices.size());
 }
 
 void Mesh::computeTrianglesNormals(){
