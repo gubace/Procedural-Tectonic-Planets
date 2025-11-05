@@ -254,7 +254,7 @@ void init () {
     glEnable(GL_COLOR_MATERIAL);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
-    planet.generatePlates(4);
+    planet.generatePlates(40);
     mesh = planet;
 
     display_normals = false;
