@@ -140,10 +140,10 @@ Projet3D: CMakeFiles/Projet3D.dir/src/Camera.cpp.o
 Projet3D: CMakeFiles/Projet3D.dir/src/Trackball.cpp.o
 Projet3D: CMakeFiles/Projet3D.dir/src/mesh.cpp.o
 Projet3D: CMakeFiles/Projet3D.dir/build.make
-Projet3D: /usr/lib/x86_64-linux-gnu/libGL.so
 Projet3D: /usr/lib/x86_64-linux-gnu/libglut.so
-Projet3D: /usr/lib/x86_64-linux-gnu/libgsl.so
-Projet3D: /usr/lib/x86_64-linux-gnu/libgslcblas.so
+Projet3D: /usr/lib/x86_64-linux-gnu/libGLU.so
+Projet3D: /usr/lib/x86_64-linux-gnu/libGLX.so
+Projet3D: /usr/lib/x86_64-linux-gnu/libOpenGL.so
 Projet3D: /usr/lib/x86_64-linux-gnu/libXmu.so
 Projet3D: /usr/lib/x86_64-linux-gnu/libXi.so
 Projet3D: CMakeFiles/Projet3D.dir/link.txt

@@ -1,10 +1,14 @@
 cmake_minimum_required(VERSION 3.5)
 project(Projet3D VERSION 1.0 LANGUAGES CXX)
 
+# Prefer GLVND with modern CMake
+if(POLICY CMP0072)
+  cmake_policy(SET CMP0072 NEW)
+endif()
+
 # Options
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Source collection
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
@@ -16,40 +20,56 @@ file(GLOB_RECURSE PROJECT_SOURCES
 # Include directories
 include_directories(${SRC_DIR})
 
-# Find OpenGL / GLUT
+# Find OpenGL
 find_package(OpenGL REQUIRED)
-find_package(GLUT REQUIRED)
 
-# Optional: try to find GSL libs (if used)
-find_library(GSL_LIB gsl)
-find_library(GSLCBLAS_LIB gslcblas)
+# Try to find GLUT (FindGLUT may not be available on all systems)
+find_package(GLUT)
+if(NOT GLUT_FOUND)
+    find_library(GLUT_LIB glut)
+    if(NOT GLUT_LIB)
+        message(FATAL_ERROR "GLUT not found. Install freeglut3-dev / freeglut-devel or adjust CMake.")
+    else()
+        message(STATUS "Found GLUT (fallback): ${GLUT_LIB}")
+    endif()
+else()
+    message(STATUS "Found GLUT via find_package")
+endif()
 
-# Create executable
+# Find GLU (pour gluPerspective)
+find_library(GLU_LIB GLU)
+if (GLU_LIB)
+    message(STATUS "Found GLU: ${GLU_LIB}")
+else()
+    message(FATAL_ERROR "GLU library not found. Install libglu (e.g. libglu1-mesa-dev) or adjust CMake.")
+endif()
+
+# Create executable target BEFORE linking libraries
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
 
-# Link libraries (portable depending on find_package results)
+# Link OpenGL
 if(TARGET OpenGL::GL)
     target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL)
+elseif(DEFINED OPENGL_gl_LIBRARY)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_gl_LIBRARY})
 elseif(DEFINED OPENGL_LIBRARIES)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_LIBRARIES})
 endif()
 
+# Link GLUT (use either GLUT::GLUT / GLUT_LIBRARY or fallback GLUT_LIB)
 if(TARGET GLUT::GLUT)
     target_link_libraries(${PROJECT_NAME} PRIVATE GLUT::GLUT)
 elseif(DEFINED GLUT_LIBRARY)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${GLUT_LIBRARY})
+elseif(DEFINED GLUT_LIB)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${GLUT_LIB})
 endif()
+
+# link GLU
+target_link_libraries(${PROJECT_NAME} PRIVATE ${GLU_LIB})
 
 # math / threading
 target_link_libraries(${PROJECT_NAME} PRIVATE m pthread)
-
-# link GSL if found
-if(GSL_LIB)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${GSL_LIB})
-endif()
-if(GSLCBLAS_LIB)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${GSLCBLAS_LIB})
-endif()
 
 # Build type default
 if(NOT CMAKE_BUILD_TYPE)

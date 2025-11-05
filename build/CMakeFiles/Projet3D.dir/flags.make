@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/home/e20210000275/M2/Projet3D/src
 
-CXX_FLAGS = -g -fPIE -std=gnu++11
+CXX_FLAGS = -g -std=gnu++11
 
