@@ -15,7 +15,7 @@ class Planet : public Mesh {
         std::vector<Plate> plates;
         float radius = 1.0f;
         Planet(float r) : radius(r) {
-            setupSphere(radius, 64, 32);
+            setupSphere(radius, 512, 256);
         }
 
         void generatePlates(unsigned int n_plates);
