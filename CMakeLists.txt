@@ -13,8 +13,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Source collection
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 file(GLOB_RECURSE PROJECT_SOURCES
-    ${CMAKE_SOURCE_DIR}/main.cpp
-    ${SRC_DIR}/*.cpp
+-    ${CMAKE_SOURCE_DIR}/main.cpp
++    ${CMAKE_SOURCE_DIR}/main.cpp
++    ${SRC_DIR}/*.cpp
 )
 
 # Include directories

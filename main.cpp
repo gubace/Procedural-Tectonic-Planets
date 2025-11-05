@@ -254,6 +254,7 @@ void init () {
     glEnable(GL_COLOR_MATERIAL);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
+    planet.generatePlates(10);
     mesh = planet;
 
     display_normals = false;
@@ -599,7 +600,6 @@ int main (int argc, char ** argv) {
     key ('?', 0, 0);
 
     //Mesh loaded with precomputed normals
-    mesh.setupSphere(1.0f, 64, 32);
 
 
 

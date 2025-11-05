@@ -1,8 +1,8 @@
 #include "planet.h"
-
+#include <random>
 
 void Planet::generatePlates(unsigned int n_plates) {
-    // Placeholder implementation: evenly distribute vertices among plates
+
     plates.clear();
     plates.resize(n_plates);
 
