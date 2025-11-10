@@ -232,17 +232,20 @@ std::vector<Vec3> Planet::vertexColorsForCrustTypes() const {
 }
 
 
-std::vector<Vec3> Planet::vertexColorsForCrustAndPlateBoundaries(float borderBlend, const Vec3& borderColor) const {
+std::vector<Vec3> Planet::vertexColorsForCrustAndPlateBoundaries() const {
     std::vector<Vec3> out = vertexColorsForCrustTypes();
     if (plates.empty()) return out;
 
+    // Associer chaque sommet à une plaque
     std::vector<int> plate_of(vertices.size(), -1);
     for (size_t k = 0; k < plates.size(); ++k) {
         for (unsigned int idx : plates[k].vertices_indices) {
-            if (idx < plate_of.size()) plate_of[idx] = (int)k;
+            if (idx < plate_of.size())
+                plate_of[idx] = static_cast<int>(k);
         }
     }
 
+    // Construire la liste des voisins (adjacence)
     std::vector<std::vector<unsigned int>> neighbors(vertices.size());
     for (const Triangle &t : triangles) {
         unsigned int a = t[0], b = t[1], c = t[2];
@@ -250,32 +253,23 @@ std::vector<Vec3> Planet::vertexColorsForCrustAndPlateBoundaries(float borderBle
         if (b < vertices.size() && c < vertices.size()) { neighbors[b].push_back(c); neighbors[c].push_back(b); }
         if (c < vertices.size() && a < vertices.size()) { neighbors[c].push_back(a); neighbors[a].push_back(c); }
     }
-    
+
+    // Nettoyer les doublons
     for (auto &nb : neighbors) {
-        if (nb.size() > 1) {
-            std::sort(nb.begin(), nb.end());
-            nb.erase(std::unique(nb.begin(), nb.end()), nb.end());
-        }
+        std::sort(nb.begin(), nb.end());
+        nb.erase(std::unique(nb.begin(), nb.end()), nb.end());
     }
 
-    // détecter sommet de bord et mélanger la couleur
+    // Colorer directement les sommets appartenant à une frontière
     for (size_t i = 0; i < vertices.size(); ++i) {
-        int p0 = (i < plate_of.size() ? plate_of[i] : -1);
-        if (p0 < 0) continue;
-        bool isBoundary = false;
+        int plate = (i < plate_of.size() ? plate_of[i] : -1);
+        if (plate < 0) continue;
+
         for (unsigned int j : neighbors[i]) {
-            if (j < plate_of.size() && plate_of[j] != p0) { isBoundary = true; break; }
-        }
-        if (isBoundary && borderBlend > 0.0f) {
-            // mélange simple out = lerp(out, borderColor, borderBlend)
-            float inv = 1.0f - borderBlend;
-            Vec3 base = out[i];
-            Vec3 mixed = Vec3(
-                base[0] * inv + borderColor[0] * borderBlend,
-                base[1] * inv + borderColor[1] * borderBlend,
-                base[2] * inv + borderColor[2] * borderBlend
-            );
-            out[i] = mixed;
+            if (j < plate_of.size() && plate_of[j] != plate) {
+                out[i] = Vec3(1.0,0.0,0.0);  // couleur unique pour les bords
+                break;
+            }
         }
     }
 
