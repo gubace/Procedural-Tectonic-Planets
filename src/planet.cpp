@@ -178,7 +178,7 @@ void Planet::assignCrustParameters() {
     noise.SetFractalOctaves(5);
     noise.SetFractalLacunarity(2.0f);
     noise.SetFractalGain(0.5f);
-    noise.SetSeed(42);
+    noise.SetSeed((int)std::random_device{}());
 
     const float continent_threshold = 0.15f;
 
