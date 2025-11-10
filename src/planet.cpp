@@ -4,6 +4,7 @@
 #include <iostream>
 #include <limits>
 #include <unordered_set>
+#include <memory>
 
 //convert HSV->RGB 
 static Vec3 hsv2rgb(float h, float s, float v) {
@@ -156,5 +157,44 @@ void Planet::generatePlates(unsigned int n_plates) {
         if (k < 0) k = 0;
         plates[k].vertices_indices.push_back((unsigned int)v);
         colors[v] = plate_colors[k];
+    }
+}
+
+
+void Planet::printCrustAt(unsigned int vertex_index) {
+    if (vertex_index >= crust_data.size() || !crust_data[vertex_index]) return;
+    crust_data[vertex_index]->printInfo();
+}
+
+
+void Planet::assignCrustParameters() {
+    crust_data.resize(vertices.size());
+
+    // --- Configuration du bruit global ---
+    FastNoiseLite noise;
+    noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
+    noise.SetFrequency(0.8f / radius);
+    noise.SetFractalType(FastNoiseLite::FractalType_FBm);
+    noise.SetFractalOctaves(5);
+    noise.SetFractalLacunarity(2.0f);
+    noise.SetFractalGain(0.5f);
+    noise.SetSeed(42);
+
+    const float continent_threshold = 0.0f;
+
+    for (size_t i = 0; i < vertices.size(); ++i) {
+        const Vec3& p = vertices[i];
+        float n = noise.GetNoise(p[0], p[1], p[2]);
+
+        if (n < continent_threshold) { //océanie
+            float elevation = n * 4000.0f; 
+            float thickness = 7.0f + 2.0f * (n + 1.0f) * 0.5f; 
+            crust_data[i].reset(new OceanicCrust(thickness, elevation, 0.0f, Vec3(0,0,1)));
+        } 
+        else { // continental
+            float elevation = (n - continent_threshold) * 3000.0f; 
+            float thickness = 30.0f + 10.0f * n;
+            crust_data[i].reset(new ContinentalCrust(thickness, elevation, 0.0f, "none", Vec3(0,1,0)));
+        }
     }
 }
