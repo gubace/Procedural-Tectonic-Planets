@@ -83,6 +83,7 @@ std::vector< float > current_field; //normalized filed of each vertex
 bool display_normals;
 bool display_smooth_normals;
 bool display_mesh;
+int display_plates_mode;
 
 DisplayMode displayMode;
 int weight_type;
@@ -225,6 +226,17 @@ void openOFF( std::string const & filename,
 
 }
 
+void updateDisplayedColors() {
+    if (display_plates_mode == 1) {
+        mesh.colors = planet.vertexColorsForPlates();
+    } else if (display_plates_mode == 2) {
+        mesh.colors = planet.vertexColorsForCrustTypes();
+    } else {
+        mesh.colors = planet.colors; // couleurs par défaut (générées par Planet)
+    }
+    glutPostRedisplay();
+}
+
 // ------------------------------------
 // Application initialization
 // ------------------------------------
@@ -255,12 +267,15 @@ void init () {
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
     planet.generatePlates(10);
+    planet.assignCrustParameters();
+    
     mesh = planet;
-
+    display_plates_mode = 0;
     display_normals = false;
     display_mesh = true;
     display_smooth_normals = true;
     displayMode = LIGHTED;
+    updateDisplayedColors();
 
 }
 
@@ -388,6 +403,9 @@ void drawMesh( Mesh const & i_mesh , bool draw_field = false ){
         drawTriangleMesh(i_mesh, draw_field) ; //Display with face normals
 }
 
+
+
+
 void drawVectorField( std::vector<Vec3> const & i_positions, std::vector<Vec3> const & i_directions ) {
     glLineWidth(1.);
     for(unsigned int pIt = 0 ; pIt < i_directions.size() ; ++pIt) {
@@ -507,6 +525,11 @@ void key (unsigned char keyPressed, int x, int y) {
 
     case 'w':
         changeDisplayMode();
+        break;
+
+    case 'p': //Press p key to display plates
+        display_plates_mode = (display_plates_mode + 1) % 3;
+        updateDisplayedColors();
         break;
 
 

@@ -88,5 +88,8 @@ public:
     void generatePlates(unsigned int n_plates);
     void assignCrustParameters();
     void printCrustAt(unsigned int vertex_index);
+
+    std::vector<Vec3> vertexColorsForPlates() const;
+    std::vector<Vec3> vertexColorsForCrustTypes() const;
 };
 

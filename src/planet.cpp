@@ -198,3 +198,35 @@ void Planet::assignCrustParameters() {
         }
     }
 }
+
+
+
+
+std::vector<Vec3> Planet::vertexColorsForPlates() const {
+    std::vector<Vec3> out(vertices.size(), Vec3(0.5f, 0.5f, 0.5f));
+    if (plates.empty()) return out;
+    unsigned int n = (unsigned int)plates.size();
+    for (unsigned int k = 0; k < n; ++k) {
+        Vec3 col = hsv2rgb((k / (float)n), 0.7f, 0.85f);
+        for (unsigned int idx : plates[k].vertices_indices) {
+            if (idx < out.size()) out[idx] = col;
+        }
+    }
+    return out;
+}
+
+std::vector<Vec3> Planet::vertexColorsForCrustTypes() const {
+    std::vector<Vec3> out(vertices.size(), Vec3(0.5f, 0.5f, 0.5f));
+    for (size_t i = 0; i < vertices.size(); ++i) {
+        if (i < crust_data.size() && crust_data[i]) {
+            if (crust_data[i]->type == CrustType::Oceanic) {
+                out[i] = Vec3(0.1f, 0.3f, 0.85f); // bleu océanique
+            } else {
+                out[i] = Vec3(0.15f, 0.8f, 0.2f); // vert continental
+            }
+        } else {
+            out[i] = Vec3(0.6f, 0.6f, 0.6f); // pas de données
+        }
+    }
+    return out;
+}
