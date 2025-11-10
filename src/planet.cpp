@@ -1,4 +1,5 @@
 #include "planet.h"
+#include "FastNoiseLite.h"
 #include <random>
 #include <iostream>
 #include <limits>
