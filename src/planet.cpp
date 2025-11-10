@@ -34,6 +34,14 @@ void Planet::generatePlates(unsigned int n_plates) {
     if (vertices.empty()) return;
     if (n_plates > vertices.size()) n_plates = vertices.size();
 
+    // === Initialisation du bruit ===
+    FastNoiseLite noise;
+    noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
+    noise.SetFrequency(1.5f);
+    noise.SetFractalType(FastNoiseLite::FractalType_FBm);
+    noise.SetFractalOctaves(3);
+    noise.SetSeed((int)std::random_device{}());
+
     plates.clear();
     plates.resize(n_plates);
     colors.resize(vertices.size());
@@ -42,6 +50,7 @@ void Planet::generatePlates(unsigned int n_plates) {
     std::mt19937 rng((unsigned)std::random_device{}());
     std::uniform_int_distribution<unsigned int> uid(0, (unsigned int)vertices.size() - 1);
 
+    // === Choix des graines (centroïdes initiaux) ===
     std::vector<unsigned int> seeds;
     seeds.reserve(n_plates);
     std::unordered_set<unsigned int> chosen;
@@ -50,22 +59,57 @@ void Planet::generatePlates(unsigned int n_plates) {
         if (chosen.insert(s).second) seeds.push_back(s);
     }
 
-    //centroids
+    // === Centroids initiaux ===
     std::vector<Vec3> centroids;
     centroids.reserve(n_plates);
-    for (unsigned int s : seeds) centroids.push_back(vertices[s]);
+    for (unsigned int s : seeds)
+        centroids.push_back(vertices[s]);
 
+    // === Perturbation des centroïdes ===
+    for (unsigned int k = 0; k < n_plates; ++k) {
+        Vec3 normalized_c = centroids[k];
+        normalized_c.normalize();
+        Vec3 c = normalized_c;
+        float n = noise.GetNoise(c[0] * 2.0f, c[1] * 2.0f, c[2] * 2.0f);
 
-    
+        // Crée une légère rotation / translation bruitée sur la sphère
+        Vec3 offset = Vec3(
+            c[0] + 0.15f * n * c[1],
+            c[1] + 0.15f * n * c[2],
+            c[2] + 0.15f * n * c[0]
+        );
+        offset.normalize();
+        centroids[k] = offset * radius;
+    }
+
     std::vector<int> assign(vertices.size(), -1);
     
-    // assignment step: each vertex to nearest centroid
+    // === Étape d’assignation (Voronoï sphérique) ===
+    const float jitterStrength = 0.06f; // Force de la perturbation
+    
     for (size_t v = 0; v < vertices.size(); ++v) {
         float bestDist = std::numeric_limits<float>::infinity();
         int bestK = -1;
+        Vec3 vNorm = vertices[v];
+        vNorm.normalize();
+
         for (unsigned int k = 0; k < n_plates; ++k) {
-            Vec3 d = vertices[v] - centroids[k];
-            float dist = d.squareLength();
+            Vec3 cNorm = centroids[k];
+            cNorm.normalize();
+            
+            // Distance angulaire de base
+            float angle = std::acos(std::max(-1.0f, std::min(1.0f, Vec3::dot(vNorm,cNorm))));
+            
+            // Ajouter du bruit à la distance
+            float n = noise.GetNoise(
+                vNorm[0] * 2.0f + k * 1000.0f,  // Offset par plaque
+                vNorm[1] * 2.0f + k * 1000.0f, 
+                vNorm[2] * 2.0f + k * 1000.0f
+            );
+            
+            // Distance perturbée
+            float dist = angle + jitterStrength * n;
+            
             if (dist < bestDist) {
                 bestDist = dist;
                 bestK = (int)k;
@@ -74,7 +118,7 @@ void Planet::generatePlates(unsigned int n_plates) {
         assign[v] = bestK;
     }
 
-    // update centroids as mean of assigned vertices, then project back to sphere
+    // === Mise à jour des centroïdes ===
     std::vector<Vec3> newCentroid(n_plates, Vec3(0.0f, 0.0f, 0.0f));
     std::vector<unsigned int> counts(n_plates, 0u);
     for (size_t v = 0; v < vertices.size(); ++v) {
@@ -84,25 +128,22 @@ void Planet::generatePlates(unsigned int n_plates) {
             counts[k] += 1;
         }
     }
+
     for (unsigned int k = 0; k < n_plates; ++k) {
         if (counts[k] > 0) {
-
             newCentroid[k] /= (float)counts[k];
             newCentroid[k].normalize();
             newCentroid[k] *= radius;
             centroids[k] = newCentroid[k];
-
         } else {
-            
             unsigned int s = uid(rng);
             centroids[k] = vertices[s];
-            
         }
     }
-    
 
-    // build plates from final assignment and create color palette
-    for (unsigned int k = 0; k < n_plates; ++k) plates[k].vertices_indices.clear();
+    // === Construction des plaques et couleurs ===
+    for (unsigned int k = 0; k < n_plates; ++k)
+        plates[k].vertices_indices.clear();
 
     std::vector<Vec3> plate_colors(n_plates);
     for (unsigned int k = 0; k < n_plates; ++k) {
