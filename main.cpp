@@ -227,12 +227,15 @@ void openOFF( std::string const & filename,
 }
 
 void updateDisplayedColors() {
-    if (display_plates_mode == 1) {
+    if (display_plates_mode == 0) {
         mesh.colors = planet.vertexColorsForPlates();
-    } else if (display_plates_mode == 2) {
+        printf("Updated colors for plates display.\n");
+    } else if (display_plates_mode == 1) {
         mesh.colors = planet.vertexColorsForCrustTypes();
-    } else {
-        mesh.colors = planet.colors; // couleurs par défaut (générées par Planet)
+        printf("Updated colors for crust types display.\n");
+    } else if (display_plates_mode == 2) {
+        mesh.colors = planet.vertexColorsForCrustAndPlateBoundaries();
+        printf("Updated colors for crust and plate boundaries display.\n");
     }
     glutPostRedisplay();
 }

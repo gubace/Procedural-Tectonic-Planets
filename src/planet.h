@@ -91,5 +91,6 @@ public:
 
     std::vector<Vec3> vertexColorsForPlates() const;
     std::vector<Vec3> vertexColorsForCrustTypes() const;
+    std::vector<Vec3> vertexColorsForCrustAndPlateBoundaries(float borderBlend = 1.0f, const Vec3& borderColor = Vec3(0.0f, 0.0f, 0.0f)) const;
 };
 
