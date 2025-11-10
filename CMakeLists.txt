@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 project(Projet3D VERSION 1.0 LANGUAGES CXX)
 
 # Prefer GLVND with modern CMake
@@ -38,11 +38,15 @@ else()
 endif()
 
 # Find GLU (pour gluPerspective)
-find_library(GLU_LIB GLU)
-if (GLU_LIB)
-    message(STATUS "Found GLU: ${GLU_LIB}")
+if(WIN32)
+    set(GLU_LIB glu32)
+    message(STATUS "Windows: Using glu32 library")
 else()
-    message(FATAL_ERROR "GLU library not found. Install libglu (e.g. libglu1-mesa-dev) or adjust CMake.")
+    find_library(GLU_LIB GLU)
+    if (NOT GLU_LIB)
+        message(FATAL_ERROR "GLU library not found. Install libglu (e.g. libglu1-mesa-dev) or adjust CMake.")
+    endif()
+    message(STATUS "Found GLU: ${GLU_LIB}")
 endif()
 
 # Create executable target BEFORE linking libraries
@@ -70,7 +74,11 @@ endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE ${GLU_LIB})
 
 # math / threading
-target_link_libraries(${PROJECT_NAME} PRIVATE m pthread)
+if(WIN32)
+    # Windows doesn't need libm, and threading is part of the C++ standard library
+else()
+    target_link_libraries(${PROJECT_NAME} PRIVATE m pthread)
+endif()
 
 # Build type default
 if(NOT CMAKE_BUILD_TYPE)
