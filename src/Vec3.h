@@ -124,6 +124,11 @@ public:
         mVals[1] -= other[1];
         mVals[2] -= other[2];
     }
+    void operator *= (Vec3 const & other) {
+        mVals[0] *= other[0];
+        mVals[1] *= other[1];
+        mVals[2] *= other[2];
+    }
     void operator *= (float s) {
         mVals[0] *= s;
         mVals[1] *= s;
@@ -148,6 +153,18 @@ public:
         }
         return Vec3( mVals[1] , -mVals[0] , 0 );
     }
+
+    static Vec3 make_tangent(const Vec3 &p, const Vec3 &s){
+        Vec3 t = Vec3::cross(p, s);
+        if (t.length() < 1e-6f) {
+            // fallback: choose arbitrary orthogonal vector
+            Vec3 alt = (std::fabs(p[0]) < 0.9f) ? Vec3(1,0,0) : Vec3(0,1,0);
+            t = Vec3::cross(p, alt);
+        }
+        t.normalize();
+        return t;
+    }
+
 };
 
 static inline Vec3 operator + (Vec3 const & a , Vec3 const & b) {
@@ -553,6 +570,8 @@ inline static std::ostream & operator << (std::ostream & s , Mat3 const & m)
     s << m(0,0) << " \t" << m(0,1) << " \t" << m(0,2) << std::endl << m(1,0) << " \t" << m(1,1) << " \t" << m(1,2) << std::endl << m(2,0) << " \t" << m(2,1) << " \t" << m(2,2) << std::endl;
     return s;
 }
+
+
 
 
 #endif
