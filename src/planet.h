@@ -70,7 +70,7 @@ public:
 class Plate {
     public:
         std::vector<unsigned int> vertices_indices;
-        Vec3 plate_velocity; //TODO Vec2
+        Vec3 plate_velocity;
 };
 
 
@@ -82,7 +82,7 @@ public:
     float radius = 1.0f;
 
     Planet(float r) : radius(r) {
-        setupSphere(radius, 256, 128);
+        setupSphere(radius, 512, 256);
     }
 
     void generatePlates(unsigned int n_plates);
