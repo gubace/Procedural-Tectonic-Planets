@@ -30,6 +30,7 @@
 #include "src/Camera.h"
 
 #include "src/planet.h"
+#include "src/movement.h"
 
 enum DisplayMode{ WIRE=0, SOLID=1, LIGHTED_WIRE=2, LIGHTED=3 };
 
@@ -78,6 +79,9 @@ void collect_one_ring (std::vector<Vec3> const & i_vertices,
 Mesh mesh;
 
 Planet planet(1.0f);
+Movement movement_controller(planet);
+float timeStep = 1.0f;
+
 std::vector< float > current_field; //normalized filed of each vertex
 
 bool display_normals;
@@ -271,6 +275,10 @@ void init () {
 
     planet.generatePlates(10);
     planet.assignCrustParameters();
+
+    // TODO: Add random velocities and rotation axes to plates
+    planet.plates[0].plate_velocity = 1.0;
+    planet.plates[0].rotation_axis = Vec3(0.0, 1.0, 0.0);
     
     mesh = planet;
     display_plates_mode = 0;
@@ -535,6 +543,11 @@ void key (unsigned char keyPressed, int x, int y) {
         updateDisplayedColors();
         break;
 
+    case 'm': //Press m key to move the plates
+        movement_controller.movePlates(timeStep); // TODO: change time management
+        mesh = planet;
+        timeStep++;
+        break;
 
     case 'n': //Press n key to display normals
         display_normals = !display_normals;

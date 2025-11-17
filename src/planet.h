@@ -1,3 +1,4 @@
+#pragma once
 
 #include "Vec3.h"
 #include "mesh.h"
@@ -15,7 +16,8 @@
 class Plate {
     public:
         std::vector<unsigned int> vertices_indices;
-        Vec2 plate_velocity;
+        float plate_velocity;
+        Vec3 rotation_axis;
 };
 
 
