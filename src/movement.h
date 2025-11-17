@@ -23,8 +23,7 @@ class Movement {
             if (plate.plate_velocity == 0.0) {
                 return;
             }
-
-            std::cout << "Initial position: " << planet.vertices[plate.vertices_indices[0]] << std::endl;
+            
             for (int v = 0; v < plate.vertices_indices.size(); v++) {
                 unsigned int vertexIndex = plate.vertices_indices[v];
                 Vec3& vertexPos = planet.vertices[vertexIndex];
@@ -45,7 +44,5 @@ class Movement {
                 // Mise à jour de la position du sommet
                 vertexPos = rotatedPos;
             }
-
-            std::cout << "Final position: " << planet.vertices[plate.vertices_indices[0]] << std::endl;
         }
 };
