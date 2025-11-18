@@ -276,9 +276,6 @@ void init () {
     planet.generatePlates(10);
     planet.assignCrustParameters();
 
-    // TODO: Add random velocities and rotation axes to plates
-    planet.plates[0].plate_velocity = 1.0;
-    planet.plates[0].rotation_axis = Vec3(0.0, 1.0, 0.0);
     
     mesh = planet;
     display_plates_mode = 0;

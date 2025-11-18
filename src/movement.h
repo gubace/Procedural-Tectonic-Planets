@@ -14,6 +14,7 @@ class Movement {
 
         void movePlates(float deltaTime) {
             for (Plate& plate : planet.plates) {
+                printf("plate_velocity : %f \n",plate.plate_velocity);
                 movePlate(plate, deltaTime);
             }
         }
