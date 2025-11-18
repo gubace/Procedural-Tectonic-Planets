@@ -17,7 +17,7 @@ class Movement {
 
         void movePlates(float deltaTime);
 
-        std::vector<SubductionCandidate> detectPotentialSubductions(float convergenceThreshold = 1e-4f);
+        std::vector<SubductionCandidate> detectPotentialSubductions(float convergenceThreshold = 0.01f);
     
     private:
         void movePlate(Plate& plate, float deltaTime);

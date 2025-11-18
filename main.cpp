@@ -150,7 +150,7 @@ void initLight () {
     glEnable (GL_LIGHTING);
 }
 
-void init () {
+void init() {
     camera.resize (SCREENWIDTH, SCREENHEIGHT);
     initLight ();
     glCullFace (GL_BACK);
@@ -161,7 +161,7 @@ void init () {
     glEnable(GL_COLOR_MATERIAL);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
-    planet.generatePlates(3);
+    planet.generatePlates(2);
     planet.assignCrustParameters();
 
     
@@ -441,8 +441,8 @@ void key (unsigned char keyPressed, int x, int y) {
         movement_controller.movePlates(timeStep); // TODO: change time management
         mesh = planet;
         // update plates display and detect subduction candidates immediately
-        g_subductionCandidates = movement_controller.detectPotentialSubductions(1e-4f);
-        printf("Detected %zu subduction candidates\n", g_subductionCandidates.size());
+        //g_subductionCandidates = movement_controller.detectPotentialSubductions(1e-4f);
+        //printf("Detected %zu subduction candidates\n", g_subductionCandidates.size());
         timeStep++;
         break;
 
@@ -450,6 +450,7 @@ void key (unsigned char keyPressed, int x, int y) {
         display_subductions = !display_subductions;
         if (display_subductions) {
             g_subductionCandidates = movement_controller.detectPotentialSubductions(1e-4f);
+            printf("Detected %zu subduction candidates\n", g_subductionCandidates.size());
             printf("Subduction markers ON (%zu candidates)\n", g_subductionCandidates.size());
         } else {
             printf("Subduction markers OFF\n");

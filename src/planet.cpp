@@ -160,17 +160,19 @@ void Planet::generatePlates(unsigned int n_plates) {
         colors[v] = plate_colors[k];
     }
 
-    std::uniform_real_distribution<float> dist01(0.0f, 1.0f); //TODO CHANGE THAT
+    std::uniform_real_distribution<float> dist01(0.1f, 0.9f);
         const float TWO_PI = 6.28318530717958647692f;
-        
-
-        plates[0].plate_velocity = dist01(rng);
-
-        float z = 2.0f * dist01(rng) - 1.0f;
-        float theta = TWO_PI * dist01(rng);
-        float rxy = std::sqrt(std::max(0.0f, 1.0f - z * z));
-        plates[0].rotation_axis = Vec3(rxy * std::cos(theta), rxy * std::sin(theta), z);
-        
+        for (int i = 0; i < n_plates; ++i) {
+            Plate & plate = plates[i];
+            
+            
+                plate.plate_velocity = dist01(rng);
+                float z = 2.0f * dist01(rng) - 1.0f;
+                float theta = TWO_PI * dist01(rng);
+                float rxy = std::sqrt(std::max(0.0f, 1.0f - z * z));
+                plate.rotation_axis = Vec3(rxy * std::cos(theta), rxy * std::sin(theta), z);
+            
+        }
 
 }
 

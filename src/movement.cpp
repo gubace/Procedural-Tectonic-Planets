@@ -36,7 +36,21 @@ std::vector<std::vector<unsigned int>> buildVertexNeighbors(const Planet& planet
     return neighbors;
 }
 
-
+void populate_plate_centroids(std::vector<Vec3> &plate_centroid, std::vector<unsigned int> &plate_count, size_t P, Planet& planet) {
+        for (size_t p = 0; p < P; ++p) {
+            for (unsigned int vid : planet.plates[p].vertices_indices) {
+                if (vid < planet.vertices.size()) {
+                    plate_centroid[p] += planet.vertices[vid];
+                    plate_count[p] += 1;
+                }
+            }
+            if (plate_count[p] > 0) {
+                plate_centroid[p] /= (float)plate_count[p];
+                plate_centroid[p].normalize();
+                plate_centroid[p] *= planet.radius;
+            }
+        }
+    }
 
 
 
@@ -64,20 +78,8 @@ std::vector<SubductionCandidate> Movement::detectPotentialSubductions(float conv
     size_t P = planet.plates.size();
     std::vector<Vec3> plate_centroid(P, Vec3(0.0f,0.0f,0.0f));
     std::vector<unsigned int> plate_count(P, 0u);
-    for (size_t p = 0; p < P; ++p) {
-        for (unsigned int vid : planet.plates[p].vertices_indices) {
-            if (vid < planet.vertices.size()) {
-                plate_centroid[p] += planet.vertices[vid];
-                plate_count[p] += 1;
-            }
-        }
-        if (plate_count[p] > 0) {
-            plate_centroid[p] /= (float)plate_count[p];
-            plate_centroid[p].normalize();
-            plate_centroid[p] *= planet.radius;
-        }
-    }
-    // --
+    populate_plate_centroids(plate_centroid, plate_count, P, planet);
+  
 
     // --- helper: average oceanic age for a plate (sample up to N vertices) ---
     auto plate_average_oceanic_age = [&](unsigned int pidx)->float {
@@ -101,7 +103,9 @@ std::vector<SubductionCandidate> Movement::detectPotentialSubductions(float conv
 
     for (unsigned int v = 0; v < planet.vertices.size(); ++v) {
         int pa = plate_of[v];
+
         if (pa < 0) continue;
+
         for (unsigned int nb : neighbors[v]) {
             int pb = plate_of[nb];
             if (pb < 0 || pb == pa) continue;
@@ -134,9 +138,7 @@ std::vector<SubductionCandidate> Movement::detectPotentialSubductions(float conv
 
             Vec3 rel = vA - vB;
             float conv = Vec3::dot(rel, dir); // positive => A towards B
-            float convAbs = std::abs(conv);
-
-            if (convAbs < convergenceThreshold) continue; // not converging enough
+            if (conv <= convergenceThreshold) continue;
 
             // determine crust types at the boundary: sample v for pa, nb for pb
             bool isOceanicA = false, isOceanicB = false;
@@ -176,14 +178,17 @@ std::vector<SubductionCandidate> Movement::detectPotentialSubductions(float conv
                 reason = "continental-continental: forced subduction/collision";
             }
 
-            // sanity: ensure the computed under plate is the one actually moving toward the other
-            bool A_toward_B = (conv > 0.0f);
-            if (A_toward_B) {
-                // A->B, so under should be A if rules say so; else keep
+            // ensure the chosen under-plate is actually the one moving toward the other:
+            float proj_under = 0.0f, proj_over = 0.0f;
+            if (plate_under == (unsigned int)pa) {
+                proj_under = Vec3::dot(vA, dir);
+                proj_over  = Vec3::dot(vB, dir);
             } else {
-                // B->A, swap roles for reporting if needed
-                std::swap(plate_under, plate_over);
+                proj_under = Vec3::dot(vB, dir);
+                proj_over  = Vec3::dot(vA, dir);
             }
+            // if the selected under plate is not the one moving more toward the other, skip (not a real plunge)
+            if (proj_under <= proj_over + 1e-6f) continue;
 
             SubductionCandidate sc;
             sc.vertex_index = v;
