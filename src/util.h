@@ -5,7 +5,11 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
+#include <vector>
+#include <string>
+#include <iostream>
 
+#include "subduction.h"
 #include "Vec3.h"
 #include "planet.h"
 
@@ -87,4 +91,31 @@ static void drawPlateArrows(const Planet & planet, float visualScale = 0.4f) {
 
         drawArrow(centroid, linVel, 2.0f, col);
     }
+}
+
+
+
+static void drawSubductionMarkers(const Planet & planet, const std::vector<SubductionCandidate> & cands, float markerSize = 0.02f) {
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+    glDisable(GL_LIGHTING); // optional: or enable lighting for shaded spheres
+    for (const SubductionCandidate & sc : cands) {
+        if (sc.vertex_index >= planet.vertices.size()) continue;
+        Vec3 pos = planet.vertices[sc.vertex_index];
+
+        // choose color by type
+        Vec3 col(1.0f, 0.0f, 0.0f); // default red
+        switch (sc.type) {
+            case SubductionCandidate::Type::Oceanic_Oceanic:      col = Vec3(1.0f, 0.8f, 0.0f); break; // yellow
+            case SubductionCandidate::Type::Oceanic_Continental: col = Vec3(1.0f, 0.2f, 0.2f); break; // red
+            case SubductionCandidate::Type::Continental_Continental: col = Vec3(1.0f, 0.0f, 1.0f); break; // magenta
+        }
+
+        glColor3f(col[0], col[1], col[2]);
+        glPushMatrix();
+            glTranslatef(pos[0], pos[1], pos[2]);
+            // using glutSolidSphere for simplicity
+            glutSolidSphere(markerSize, 8, 8);
+        glPopMatrix();
+    }
+    glPopAttrib();
 }

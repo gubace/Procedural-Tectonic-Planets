@@ -31,9 +31,10 @@
 
 #include "src/Vec3.h"
 #include "src/Camera.h"
-
 #include "src/planet.h"
 #include "src/movement.h"
+#include "src/subduction.h"
+
 
 enum DisplayMode{ WIRE=0, SOLID=1, LIGHTED_WIRE=2, LIGHTED=3 };
 
@@ -96,6 +97,10 @@ bool display_directions;
 DisplayMode displayMode;
 int weight_type;
 
+static std::vector<SubductionCandidate> g_subductionCandidates;
+static bool display_subductions = false;
+
+
 // -------------------------------------------
 // OpenGL/GLUT application code.
 // -------------------------------------------
@@ -156,7 +161,7 @@ void init () {
     glEnable(GL_COLOR_MATERIAL);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
-    planet.generatePlates(2);
+    planet.generatePlates(3);
     planet.assignCrustParameters();
 
     
@@ -373,7 +378,9 @@ void draw () {
         drawPlateArrows(planet, 0.5f);
     }
 
-    
+    if (display_subductions) {
+        drawSubductionMarkers(planet, g_subductionCandidates);
+    }    
 
     glEnable(GL_LIGHTING);
 
@@ -433,7 +440,20 @@ void key (unsigned char keyPressed, int x, int y) {
     case 'm': //Press m key to move the plates
         movement_controller.movePlates(timeStep); // TODO: change time management
         mesh = planet;
+        // update plates display and detect subduction candidates immediately
+        g_subductionCandidates = movement_controller.detectPotentialSubductions(1e-4f);
+        printf("Detected %zu subduction candidates\n", g_subductionCandidates.size());
         timeStep++;
+        break;
+
+    case 'b': // toggle subduction markers and compute once
+        display_subductions = !display_subductions;
+        if (display_subductions) {
+            g_subductionCandidates = movement_controller.detectPotentialSubductions(1e-4f);
+            printf("Subduction markers ON (%zu candidates)\n", g_subductionCandidates.size());
+        } else {
+            printf("Subduction markers OFF\n");
+        }
         break;
 
     case 'n': //Press n key to display normals
