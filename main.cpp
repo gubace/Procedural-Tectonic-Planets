@@ -26,6 +26,9 @@
 #include <algorithm>
 #include <GL/glut.h>
 #include <float.h>
+
+#include "src/util.h"
+
 #include "src/Vec3.h"
 #include "src/Camera.h"
 
@@ -88,6 +91,7 @@ bool display_normals;
 bool display_smooth_normals;
 bool display_mesh;
 int display_plates_mode;
+bool display_directions;
 
 DisplayMode displayMode;
 int weight_type;
@@ -106,129 +110,8 @@ static bool mouseZoomPressed = false;
 static int lastX=0, lastY=0, lastZoom=0;
 static bool fullScreen = false;
 
-// ------------------------------------
-// File I/O
-// ------------------------------------
-bool saveOFF( const std::string & filename ,
-              std::vector< Vec3 > const & i_vertices ,
-              std::vector< Vec3 > const & i_normals ,
-              std::vector< Triangle > const & i_triangles,
-              std::vector< Vec3 > const & i_triangle_normals ,
-              bool save_normals = false ) {
-    std::ofstream myfile;
-    myfile.open(filename.c_str());
-    if (!myfile.is_open()) {
-        std::cout << filename << " cannot be opened" << std::endl;
-        return false;
-    }
 
-    myfile << "OFF" << std::endl ;
 
-    unsigned int n_vertices = i_vertices.size() , n_triangles = i_triangles.size();
-    myfile << n_vertices << " " << n_triangles << " 0" << std::endl;
-
-    for( unsigned int v = 0 ; v < n_vertices ; ++v ) {
-        myfile << i_vertices[v][0] << " " << i_vertices[v][1] << " " << i_vertices[v][2] << " ";
-        if (save_normals) myfile << i_normals[v][0] << " " << i_normals[v][1] << " " << i_normals[v][2] << std::endl;
-        else myfile << std::endl;
-    }
-    for( unsigned int f = 0 ; f < n_triangles ; ++f ) {
-        myfile << 3 << " " << i_triangles[f][0] << " " << i_triangles[f][1] << " " << i_triangles[f][2]<< " ";
-        if (save_normals) myfile << i_triangle_normals[f][0] << " " << i_triangle_normals[f][1] << " " << i_triangle_normals[f][2];
-        myfile << std::endl;
-    }
-    myfile.close();
-    return true;
-}
-
-void openOFF( std::string const & filename,
-              std::vector<Vec3> & o_vertices,
-              std::vector<Vec3> & o_normals,
-              std::vector< Triangle > & o_triangles,
-              std::vector< Vec3 > & o_triangle_normals,
-              bool load_normals = true )
-{
-    std::ifstream myfile;
-    myfile.open(filename.c_str());
-    if (!myfile.is_open())
-    {
-        std::cout << filename << " cannot be opened" << std::endl;
-        return;
-    }
-
-    std::string magic_s;
-
-    myfile >> magic_s;
-
-    if( magic_s != "OFF" )
-    {
-        std::cout << magic_s << " != OFF :   We handle ONLY *.off files." << std::endl;
-        myfile.close();
-        exit(1);
-    }
-
-    int n_vertices , n_faces , dummy_int;
-    myfile >> n_vertices >> n_faces >> dummy_int;
-
-    o_vertices.clear();
-    o_normals.clear();
-
-    for( int v = 0 ; v < n_vertices ; ++v )
-    {
-        float x , y , z ;
-
-        myfile >> x >> y >> z ;
-        o_vertices.push_back( Vec3( x , y , z ) );
-
-        if( load_normals ) {
-            myfile >> x >> y >> z;
-            o_normals.push_back( Vec3( x , y , z ) );
-        }
-    }
-
-    o_triangles.clear();
-    o_triangle_normals.clear();
-    for( int f = 0 ; f < n_faces ; ++f )
-    {
-        int n_vertices_on_face;
-        myfile >> n_vertices_on_face;
-
-        if( n_vertices_on_face == 3 )
-        {
-            unsigned int _v1 , _v2 , _v3;
-            myfile >> _v1 >> _v2 >> _v3;
-
-            o_triangles.push_back(Triangle( _v1, _v2, _v3 ));
-
-            if( load_normals ) {
-                float x , y , z ;
-                myfile >> x >> y >> z;
-                o_triangle_normals.push_back( Vec3( x , y , z ) );
-            }
-        }
-        else if( n_vertices_on_face == 4 )
-        {
-            unsigned int _v1 , _v2 , _v3 , _v4;
-            myfile >> _v1 >> _v2 >> _v3 >> _v4;
-
-            o_triangles.push_back(Triangle(_v1, _v2, _v3 ));
-            o_triangles.push_back(Triangle(_v1, _v3, _v4));
-            if( load_normals ) {
-                float x , y , z ;
-                myfile >> x >> y >> z;
-                o_triangle_normals.push_back( Vec3( x , y , z ) );
-            }
-
-        }
-        else
-        {
-            std::cout << "We handle ONLY *.off files with 3 or 4 vertices per face" << std::endl;
-            myfile.close();
-            exit(1);
-        }
-    }
-
-}
 
 void updateDisplayedColors() {
     if (display_plates_mode == 0) {
@@ -273,7 +156,7 @@ void init () {
     glEnable(GL_COLOR_MATERIAL);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
-    planet.generatePlates(10);
+    planet.generatePlates(2);
     planet.assignCrustParameters();
 
     
@@ -282,7 +165,8 @@ void init () {
     display_normals = false;
     display_mesh = true;
     display_smooth_normals = true;
-    displayMode = LIGHTED;
+    displayMode = SOLID;
+    display_directions = true;
     updateDisplayedColors();
 
 }
@@ -485,6 +369,12 @@ void draw () {
         drawNormals(mesh);
     }
 
+    if(display_directions){
+        drawPlateArrows(planet, 0.5f);
+    }
+
+    
+
     glEnable(GL_LIGHTING);
 
 
@@ -557,6 +447,10 @@ void key (unsigned char keyPressed, int x, int y) {
 
     case 's': //Switches between face normals and vertices normals
         display_smooth_normals = !display_smooth_normals;
+        break;
+
+    case 'd':
+        display_directions = !display_directions;
         break;
 
 
