@@ -179,7 +179,7 @@ void Planet::generatePlates(unsigned int n_plates) {
 
 
 void Planet::splitPlates() {
-    for (int i = 0; i < triangles.size(); i++) {
+    for (int i = (int)triangles.size() - 1; i >= 0; i--) {
         Triangle t = triangles[i];
         unsigned int vIdx0 = t.v[0];
         unsigned int plateV0 = verticesToPlates[vIdx0];
