@@ -12,7 +12,7 @@
 class Movement {
     public:
         Planet& planet;
-        float movementAttenuation = 0.0001;
+        float movementAttenuation = 0.00001;
 
         Movement(Planet& p) : planet(p) {}
 

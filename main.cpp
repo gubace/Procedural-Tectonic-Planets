@@ -123,13 +123,13 @@ static bool fullScreen = false;
 void updateDisplayedColors() {
     if (display_plates_mode == 0) {
         mesh.colors = planet.vertexColorsForPlates();
-        printf("Updated colors for plates display.\n");
+        //printf("Updated colors for plates display.\n");
     } else if (display_plates_mode == 1) {
         mesh.colors = planet.vertexColorsForCrustTypes();
-        printf("Updated colors for crust types display.\n");
+        //printf("Updated colors for crust types display.\n");
     } else if (display_plates_mode == 2) {
         mesh.colors = planet.vertexColorsForCrustAndPlateBoundaries();
-        printf("Updated colors for crust and plate boundaries display.\n");
+        //printf("Updated colors for crust and plate boundaries display.\n");
     }
     glutPostRedisplay();
 }
@@ -163,7 +163,7 @@ void init() {
     glEnable(GL_COLOR_MATERIAL);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
-    planet.generatePlates(2);
+    planet.generatePlates(15);
     planet.assignCrustParameters();
 
     
@@ -442,6 +442,7 @@ void key (unsigned char keyPressed, int x, int y) {
     case 'm': //Press m key to move the plates
         movement_controller.movePlates(timeStep); // TODO: change time management
         mesh = planet;
+        updateDisplayedColors();
         // update plates display and detect subduction candidates immediately
         //g_subductionCandidates = movement_controller.detectPotentialSubductions(1e-4f);
         //printf("Detected %zu subduction candidates\n", g_subductionCandidates.size());
@@ -545,7 +546,7 @@ int main (int argc, char ** argv) {
     glutInit (&argc, argv);
     glutInitDisplayMode (GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
     glutInitWindowSize (SCREENWIDTH, SCREENHEIGHT);
-    window = glutCreateWindow ("TP HAI917I");
+    window = glutCreateWindow ("Procedural Planet with Tectonic Plates Simulation");
 
     init ();
     glutIdleFunc (idle);
