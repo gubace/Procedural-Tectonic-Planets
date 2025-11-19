@@ -155,8 +155,8 @@ void initLight () {
 void init() {
     camera.resize (SCREENWIDTH, SCREENHEIGHT);
     initLight ();
-    glCullFace (GL_BACK);
-    glDisable (GL_CULL_FACE);
+    glCullFace (GL_FRONT);
+    glEnable(GL_CULL_FACE);
     glDepthFunc (GL_LESS);
     glEnable (GL_DEPTH_TEST);
     glClearColor (0.2f, 0.2f, 0.3f, 1.0f);
