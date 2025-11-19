@@ -469,7 +469,7 @@ void key (unsigned char keyPressed, int x, int y) {
         break;
 
 
-    case 's': //Switches between face normals and vertices normals
+    case 's': //End programm
         display_smooth_normals = !display_smooth_normals;
         break;
 

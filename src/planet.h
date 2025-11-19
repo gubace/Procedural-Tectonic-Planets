@@ -41,5 +41,9 @@ public:
     std::vector<Vec3> vertexColorsForPlates() const;
     std::vector<Vec3> vertexColorsForCrustTypes() const;
     std::vector<Vec3> vertexColorsForCrustAndPlateBoundaries() const;
+
+
+    unsigned int planet::findclosestVertex(const Vec3& point, planet& srcPlanet);
+    void planet::resample(planet& srcPlanet);
 };
 
