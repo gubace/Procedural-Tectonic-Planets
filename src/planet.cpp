@@ -36,6 +36,8 @@ void Planet::generatePlates(unsigned int n_plates) {
     if (vertices.empty()) return;
     if (n_plates > vertices.size()) n_plates = vertices.size();
 
+    verticesToPlates.resize(vertices.size());
+
     // === Initialisation du bruit ===
     FastNoiseLite noise;
     noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
@@ -158,22 +160,40 @@ void Planet::generatePlates(unsigned int n_plates) {
         if (k < 0) k = 0;
         plates[k].vertices_indices.push_back((unsigned int)v);
         colors[v] = plate_colors[k];
+        verticesToPlates[(unsigned int)v] = k;
     }
+    
+    splitPlates();
 
     std::uniform_real_distribution<float> dist01(0.1f, 0.9f);
-        const float TWO_PI = 6.28318530717958647692f;
-        for (int i = 0; i < n_plates; ++i) {
-            Plate & plate = plates[i];
-            
-            
-                plate.plate_velocity = dist01(rng);
-                float z = 2.0f * dist01(rng) - 1.0f;
-                float theta = TWO_PI * dist01(rng);
-                float rxy = std::sqrt(std::max(0.0f, 1.0f - z * z));
-                plate.rotation_axis = Vec3(rxy * std::cos(theta), rxy * std::sin(theta), z);
-            
-        }
+    const float TWO_PI = 6.28318530717958647692f;
+    for (int i = 0; i < n_plates; ++i) {
+        Plate & plate = plates[i];
+        plate.plate_velocity = dist01(rng);
+        float z = 2.0f * dist01(rng) - 1.0f;
+        float theta = TWO_PI * dist01(rng);
+        float rxy = std::sqrt(std::max(0.0f, 1.0f - z * z));
+        plate.rotation_axis = Vec3(rxy * std::cos(theta), rxy * std::sin(theta), z);
+    }
+}
 
+
+void Planet::splitPlates() {
+    for (int i = 0; i < triangles.size(); i++) {
+        Triangle t = triangles[i];
+        unsigned int vIdx0 = t.v[0];
+        unsigned int plateV0 = verticesToPlates[vIdx0];
+        
+        unsigned int vIdx1 = t.v[1];
+        unsigned int plateV1 = verticesToPlates[vIdx1];
+
+        unsigned int vIdx2 = t.v[2];
+        unsigned int plateV2 = verticesToPlates[vIdx2];
+
+        if (plateV0 != plateV1 || plateV0 != plateV2 || plateV1 != plateV2) {
+            removeTriangle(i);
+        }
+    }
 }
 
 

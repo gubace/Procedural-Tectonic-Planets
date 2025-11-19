@@ -24,6 +24,7 @@ class Plate {
 class Planet : public Mesh {
 public:
     std::vector<Plate> plates;
+    std::vector<unsigned int> verticesToPlates;
     std::vector<std::unique_ptr<Crust>> crust_data;
 
     float radius = 1.0f;
@@ -33,6 +34,7 @@ public:
     }
 
     void generatePlates(unsigned int n_plates);
+    void splitPlates();
     void assignCrustParameters();
     void printCrustAt(unsigned int vertex_index);
 

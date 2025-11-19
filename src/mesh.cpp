@@ -118,3 +118,7 @@ void Mesh::addNoise(){
 void Mesh::computeNormals(){
     computeTrianglesNormals();
 }
+
+void Mesh::removeTriangle(unsigned int idx) {
+    triangles.erase(triangles.begin() + idx);
+}
