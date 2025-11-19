@@ -1,11 +1,13 @@
 #include "movement.h"
-#include "subduction.h"
+#include "tectonicPhenomenon.h"
 #include "planet.h"
 
 #include <iostream>
 #include <unordered_set>
 #include <limits>
 #include <algorithm>
+#include <memory>
+#include <vector>
 
 
 //utils =========================================
@@ -63,25 +65,21 @@ void Movement::movePlates(float deltaTime) {
         }
 
 
-std::vector<SubductionCandidate> Movement::detectPotentialSubductions(float convergenceThreshold){
-    std::vector<SubductionCandidate> out;
+std::vector<std::unique_ptr<TectonicPhenomenon>> Movement::detectPhenomena(float convergenceThreshold){
+    std::vector<std::unique_ptr<TectonicPhenomenon>> out;
     if (planet.plates.empty() || planet.vertices.empty()) return out;
 
-    // --- helper: plate_of per-vertex ---
+    // plate_of per-vertex
     std::vector<int> plate_of = assignPlatePerVertex(planet);
 
-    // --- build vertex neighbours from triangles ---
     std::vector<std::vector<unsigned int>> neighbors = buildVertexNeighbors(planet);
 
-
-    // --- plate centroids (approx) ---
     size_t P = planet.plates.size();
     std::vector<Vec3> plate_centroid(P, Vec3(0.0f,0.0f,0.0f));
     std::vector<unsigned int> plate_count(P, 0u);
     populate_plate_centroids(plate_centroid, plate_count, P, planet);
-  
 
-    // --- helper: average oceanic age for a plate (sample up to N vertices) ---
+
     auto plate_average_oceanic_age = [&](unsigned int pidx)->float {
         const auto &plate = planet.plates[pidx];
         float sum = 0.0f; unsigned int c = 0;
@@ -95,7 +93,7 @@ std::vector<SubductionCandidate> Movement::detectPotentialSubductions(float conv
         return (c>0) ? (sum / (float)c) : 0.0f;
     };
 
-    // --- iterate boundary vertex pairs (avoid duplicates) ---
+
     struct Key { unsigned int a,b,v; };
     struct KeyHash { size_t operator()(Key const& k) const noexcept { return (k.a*73856093u) ^ (k.b*19349663u) ^ (k.v*83492791u); } };
     struct KeyEq { bool operator()(Key const& x, Key const& y) const noexcept { return x.a==y.a && x.b==y.b && x.v==y.v; } };
@@ -103,7 +101,6 @@ std::vector<SubductionCandidate> Movement::detectPotentialSubductions(float conv
 
     for (unsigned int v = 0; v < planet.vertices.size(); ++v) {
         int pa = plate_of[v];
-
         if (pa < 0) continue;
 
         for (unsigned int nb : neighbors[v]) {
@@ -115,14 +112,15 @@ std::vector<SubductionCandidate> Movement::detectPotentialSubductions(float conv
             if (seen.find(k) != seen.end()) continue;
             seen.insert(k);
 
-            // compute linear velocities at vertex for both plates
             Vec3 r = planet.vertices[v];
+
             // plate A
             const Plate &plateA = planet.plates[pa];
             Vec3 omegaA = plateA.rotation_axis;
             omegaA.normalize();
             omegaA *= plateA.plate_velocity;
             Vec3 vA = Vec3::cross(omegaA, r);
+
             // plate B
             const Plate &plateB = planet.plates[pb];
             Vec3 omegaB = plateB.rotation_axis;
@@ -138,9 +136,8 @@ std::vector<SubductionCandidate> Movement::detectPotentialSubductions(float conv
 
             Vec3 rel = vA - vB;
             float conv = Vec3::dot(rel, dir); // positive => A towards B
-            if (conv <= convergenceThreshold) continue;
 
-            // determine crust types at the boundary: sample v for pa, nb for pb
+            
             bool isOceanicA = false, isOceanicB = false;
             if (v < planet.crust_data.size() && planet.crust_data[v]) {
                 isOceanicA = (dynamic_cast<OceanicCrust*>(planet.crust_data[v].get()) != nullptr);
@@ -149,57 +146,72 @@ std::vector<SubductionCandidate> Movement::detectPotentialSubductions(float conv
                 isOceanicB = (dynamic_cast<OceanicCrust*>(planet.crust_data[nb].get()) != nullptr);
             }
 
-            // decide under/over plate according to rules
-            unsigned int plate_under = pa, plate_over = pb;
-            SubductionCandidate::Type candType = SubductionCandidate::Type::Oceanic_Continental;
-            std::string reason;
+            // Détection de convergence (subduction ou collision)
+            if (conv > convergenceThreshold) {
+                // decide under/over plate according to rules
+                unsigned int plate_under = pa, plate_over = pb;
+                Subduction::SubductionType subType;
+                bool isCollision = false;
+                std::string reason;
 
-            if (isOceanicA && isOceanicB) {
-                // older plate subducts
-                float ageA = plate_average_oceanic_age(pa);
-                float ageB = plate_average_oceanic_age(pb);
-                if (ageA > ageB) { plate_under = pa; plate_over = pb; reason = "oceanic-oceanic: older subducts"; }
-                else { plate_under = pb; plate_over = pa; reason = "oceanic-oceanic: older subducts"; }
-                candType = SubductionCandidate::Type::Oceanic_Oceanic;
-            } else if (isOceanicA && !isOceanicB) {
-                plate_under = pa; plate_over = pb;
-                candType = SubductionCandidate::Type::Oceanic_Continental;
-                reason = "oceanic under continental";
-            } else if (!isOceanicA && isOceanicB) {
-                plate_under = pb; plate_over = pa;
-                candType = SubductionCandidate::Type::Oceanic_Continental;
-                reason = "oceanic under continental";
-            } else {
-                // continental-continental -> forced/partial subduction (choose smaller plate as under)
-                size_t sizeA = plate_count[pa], sizeB = plate_count[pb];
-                if (sizeA < sizeB) { plate_under = pa; plate_over = pb; }
-                else { plate_under = pb; plate_over = pa; }
-                candType = SubductionCandidate::Type::Continental_Continental;
-                reason = "continental-continental: forced subduction/collision";
+                if (isOceanicA && isOceanicB) {
+                    // older plate subducts
+                    float ageA = plate_average_oceanic_age(pa);
+                    float ageB = plate_average_oceanic_age(pb);
+                    if (ageA > ageB) { 
+                        plate_under = pa; plate_over = pb; 
+                        reason = "oceanic-oceanic: older subducts"; 
+                    } else { 
+                        plate_under = pb; plate_over = pa; 
+                        reason = "oceanic-oceanic: older subducts"; 
+                    }
+                    subType = Subduction::SubductionType::Oceanic_Oceanic;
+                } else if (isOceanicA && !isOceanicB) {
+                    plate_under = pa; plate_over = pb;
+                    subType = Subduction::SubductionType::Oceanic_Continental;
+                    reason = "oceanic under continental";
+                } else if (!isOceanicA && isOceanicB) {
+                    plate_under = pb; plate_over = pa;
+                    subType = Subduction::SubductionType::Oceanic_Continental;
+                    reason = "oceanic under continental";
+                } else {
+                    // continental-continental -> collision
+                    isCollision = true;
+
+                    float collisionMagnitude = conv;
+                    reason = "continental-continental collision";
+                    out.push_back(std::make_unique<ContinentalCollision>(
+                        (unsigned int)pa, (unsigned int)pb, v,
+                        collisionMagnitude, reason
+                    ));
+                }
+
+                if (isCollision) continue;
+                // Créer le phénomène de subduction
+                out.push_back(std::make_unique<Subduction>(
+                    (unsigned int)pa, (unsigned int)pb, v,
+                    plate_under, plate_over, conv,
+                    subType, reason
+                ));
             }
+            // Détection de divergence (rifting)
+            else if (conv < -convergenceThreshold) {
+                float divergence = std::abs(conv);
+                std::string riftReason;
+                
+                if (isOceanicA && isOceanicB) {
+                    riftReason = "oceanic-oceanic rifting: mid-ocean ridge";
+                } else if (!isOceanicA && !isOceanicB) {
+                    riftReason = "continental-continental rifting: continental rift zone";
+                } else {
+                    riftReason = "mixed rifting zone";
+                }
 
-            // ensure the chosen under-plate is actually the one moving toward the other:
-            float proj_under = 0.0f, proj_over = 0.0f;
-            if (plate_under == (unsigned int)pa) {
-                proj_under = Vec3::dot(vA, dir);
-                proj_over  = Vec3::dot(vB, dir);
-            } else {
-                proj_under = Vec3::dot(vB, dir);
-                proj_over  = Vec3::dot(vA, dir);
+                out.push_back(std::make_unique<Rifting>(
+                    (unsigned int)pa, (unsigned int)pb, v,
+                    divergence, riftReason
+                ));
             }
-            // if the selected under plate is not the one moving more toward the other, skip (not a real plunge)
-            if (proj_under <= proj_over + 1e-6f) continue;
-
-            SubductionCandidate sc;
-            sc.vertex_index = v;
-            sc.plate_a = (unsigned int)pa;
-            sc.plate_b = (unsigned int)pb;
-            sc.plate_under = plate_under;
-            sc.plate_over = plate_over;
-            sc.convergence = conv;
-            sc.type = candType;
-            sc.reason = reason;
-            out.push_back(sc);
         }
     }
 

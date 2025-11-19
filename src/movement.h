@@ -2,10 +2,11 @@
 
 #include "Vec3.h"
 #include "planet.h"
-#include "subduction.h"
+#include "tectonicPhenomenon.h"
 
 #include <iostream>
-
+#include <memory>
+#include <vector>
 
 //---------------------------------------Movement Class--------------------------------------------
 class Movement {
@@ -17,7 +18,7 @@ class Movement {
 
         void movePlates(float deltaTime);
 
-        std::vector<SubductionCandidate> detectPotentialSubductions(float convergenceThreshold = 0.01f);
+        std::vector<std::unique_ptr<TectonicPhenomenon>> detectPhenomena(float convergenceThreshold = 0.001);
     
     private:
         void movePlate(Plate& plate, float deltaTime);

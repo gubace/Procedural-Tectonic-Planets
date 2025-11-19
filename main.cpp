@@ -22,6 +22,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <map>
+#include <memory>
 
 #include <algorithm>
 #include <GL/glut.h>
@@ -32,8 +33,9 @@
 #include "src/Vec3.h"
 #include "src/Camera.h"
 #include "src/planet.h"
+#include "src/tectonicPhenomenon.h"
 #include "src/movement.h"
-#include "src/subduction.h"
+
 
 
 enum DisplayMode{ WIRE=0, SOLID=1, LIGHTED_WIRE=2, LIGHTED=3 };
@@ -97,8 +99,8 @@ bool display_directions;
 DisplayMode displayMode;
 int weight_type;
 
-static std::vector<SubductionCandidate> g_subductionCandidates;
-static bool display_subductions = false;
+std::vector<std::unique_ptr<TectonicPhenomenon>> tectonicPhenomena;
+static bool display_phenomena = false;
 
 
 // -------------------------------------------
@@ -378,8 +380,8 @@ void draw () {
         drawPlateArrows(planet, 0.5f);
     }
 
-    if (display_subductions) {
-        drawSubductionMarkers(planet, g_subductionCandidates);
+    if (display_phenomena) {
+        drawTectonicPhenomenaMarkers(planet, tectonicPhenomena, 0.02f);
     }    
 
     glEnable(GL_LIGHTING);
@@ -447,11 +449,11 @@ void key (unsigned char keyPressed, int x, int y) {
         break;
 
     case 'b': // toggle subduction markers and compute once
-        display_subductions = !display_subductions;
-        if (display_subductions) {
-            g_subductionCandidates = movement_controller.detectPotentialSubductions(1e-4f);
-            printf("Detected %zu subduction candidates\n", g_subductionCandidates.size());
-            printf("Subduction markers ON (%zu candidates)\n", g_subductionCandidates.size());
+        display_phenomena = !display_phenomena;
+        if (display_phenomena) {
+            tectonicPhenomena = movement_controller.detectPhenomena(1e-4f);
+            printf("Detected %zu subduction candidates\n", tectonicPhenomena.size());
+            printf("Subduction markers ON (%zu candidates)\n", tectonicPhenomena.size());
         } else {
             printf("Subduction markers OFF\n");
         }
