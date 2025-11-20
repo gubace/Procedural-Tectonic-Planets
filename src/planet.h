@@ -1,31 +1,28 @@
 #pragma once
 
-#include "Vec3.h"
-#include "mesh.h"
-#include "crust.h"
-#include <vector>
 #include <memory>
 #include <string>
+#include <vector>
 
-
-
+#include "Vec3.h"
+#include "crust.h"
+#include "mesh.h"
 
 //---------------------------------------Planet Class--------------------------------------------
 
-
 class Plate {
-    public:
-        std::vector<unsigned int> vertices_indices;
-        float plate_velocity;
-        Vec3 rotation_axis;
+   public:
+    std::vector<unsigned int> vertices_indices;
+    float plate_velocity;
+    Vec3 rotation_axis;
 };
 
-
 class Planet : public Mesh {
-public:
+   public:
     std::vector<Plate> plates;
     std::vector<unsigned int> verticesToPlates;
     std::vector<std::unique_ptr<Crust>> crust_data;
+    std::vector<std::vector<unsigned int>> neighbors;
 
     float radius = 1.0f;
 
@@ -38,12 +35,11 @@ public:
     void assignCrustParameters();
     void printCrustAt(unsigned int vertex_index);
 
+    void detectVerticesNeighbors();
     std::vector<Vec3> vertexColorsForPlates() const;
     std::vector<Vec3> vertexColorsForCrustTypes() const;
     std::vector<Vec3> vertexColorsForCrustAndPlateBoundaries() const;
 
-
-    unsigned int planet::findclosestVertex(const Vec3& point, planet& srcPlanet);
-    void planet::resample(planet& srcPlanet);
+    // unsigned int planet::findclosestVertex(const Vec3& point, planet& srcPlanet);
+    // void planet::resample(planet& srcPlanet);
 };
-

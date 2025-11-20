@@ -1,13 +1,15 @@
 #include "planet.h"
-#include "FastNoiseLite.h"
-#include "crust.h"
-#include <random>
+
 #include <iostream>
 #include <limits>
-#include <unordered_set>
 #include <memory>
+#include <random>
+#include <unordered_set>
 
-//convert HSV->RGB 
+#include "FastNoiseLite.h"
+#include "crust.h"
+
+// convert HSV->RGB
 static Vec3 hsv2rgb(float h, float s, float v) {
     float r = 0, g = 0, b = 0;
     if (s <= 0.0f) {
@@ -20,15 +22,66 @@ static Vec3 hsv2rgb(float h, float s, float v) {
         float q = v * (1.0f - s * f);
         float t = v * (1.0f - s * (1.0f - f));
         switch (i % 6) {
-            case 0: r = v; g = t; b = p; break;
-            case 1: r = q; g = v; b = p; break;
-            case 2: r = p; g = v; b = t; break;
-            case 3: r = p; g = q; b = v; break;
-            case 4: r = t; g = p; b = v; break;
-            case 5: r = v; g = p; b = q; break;
+            case 0:
+                r = v;
+                g = t;
+                b = p;
+                break;
+            case 1:
+                r = q;
+                g = v;
+                b = p;
+                break;
+            case 2:
+                r = p;
+                g = v;
+                b = t;
+                break;
+            case 3:
+                r = p;
+                g = q;
+                b = v;
+                break;
+            case 4:
+                r = t;
+                g = p;
+                b = v;
+                break;
+            case 5:
+                r = v;
+                g = p;
+                b = q;
+                break;
         }
     }
-    return Vec3(r*0.2, g*0.6, b);
+    return Vec3(r * 0.2, g * 0.6, b);
+}
+
+void Planet::detectVerticesNeighbors() {
+    neighbors.resize(vertices.size());
+
+    // Construire la liste des voisins (adjacence)
+    for (const Triangle& t : triangles) {
+        unsigned int a = t[0], b = t[1], c = t[2];
+        if (a < vertices.size() && b < vertices.size()) {
+            neighbors[a].push_back(b);
+            neighbors[b].push_back(a);
+        }
+        if (b < vertices.size() && c < vertices.size()) {
+            neighbors[b].push_back(c);
+            neighbors[c].push_back(b);
+        }
+        if (c < vertices.size() && a < vertices.size()) {
+            neighbors[c].push_back(a);
+            neighbors[a].push_back(c);
+        }
+    }
+
+    // Nettoyer les doublons
+    for (auto& nb : neighbors) {
+        std::sort(nb.begin(), nb.end());
+        nb.erase(std::unique(nb.begin(), nb.end()), nb.end());
+    }
 }
 
 void Planet::generatePlates(unsigned int n_plates) {
@@ -80,17 +133,16 @@ void Planet::generatePlates(unsigned int n_plates) {
         Vec3 offset = Vec3(
             c[0] + 0.15f * n * c[1],
             c[1] + 0.15f * n * c[2],
-            c[2] + 0.15f * n * c[0]
-        );
+            c[2] + 0.15f * n * c[0]);
         offset.normalize();
         centroids[k] = offset * radius;
     }
 
     std::vector<int> assign(vertices.size(), -1);
-    
+
     // === Étape d’assignation (Voronoï sphérique) ===
-    const float jitterStrength = 0.06f; // Force de la perturbation
-    
+    const float jitterStrength = 0.06f;  // Force de la perturbation
+
     for (size_t v = 0; v < vertices.size(); ++v) {
         float bestDist = std::numeric_limits<float>::infinity();
         int bestK = -1;
@@ -100,20 +152,19 @@ void Planet::generatePlates(unsigned int n_plates) {
         for (unsigned int k = 0; k < n_plates; ++k) {
             Vec3 cNorm = centroids[k];
             cNorm.normalize();
-            
+
             // Distance angulaire de base
-            float angle = std::acos(std::max(-1.0f, std::min(1.0f, Vec3::dot(vNorm,cNorm))));
-            
+            float angle = std::acos(std::max(-1.0f, std::min(1.0f, Vec3::dot(vNorm, cNorm))));
+
             // Ajouter du bruit à la distance
             float n = noise.GetNoise(
                 vNorm[0] * 2.0f + k * 1000.0f,  // Offset par plaque
-                vNorm[1] * 2.0f + k * 1000.0f, 
-                vNorm[2] * 2.0f + k * 1000.0f
-            );
-            
+                vNorm[1] * 2.0f + k * 1000.0f,
+                vNorm[2] * 2.0f + k * 1000.0f);
+
             // Distance perturbée
             float dist = angle + jitterStrength * n;
-            
+
             if (dist < bestDist) {
                 bestDist = dist;
                 bestK = (int)k;
@@ -162,13 +213,14 @@ void Planet::generatePlates(unsigned int n_plates) {
         colors[v] = plate_colors[k];
         verticesToPlates[(unsigned int)v] = k;
     }
-    
-    splitPlates();
+
+    detectVerticesNeighbors();
+    // splitPlates();
 
     std::uniform_real_distribution<float> dist01(0.1f, 0.9f);
     const float TWO_PI = 6.28318530717958647692f;
     for (int i = 0; i < n_plates; ++i) {
-        Plate & plate = plates[i];
+        Plate& plate = plates[i];
         plate.plate_velocity = dist01(rng);
         float z = 2.0f * dist01(rng) - 1.0f;
         float theta = TWO_PI * dist01(rng);
@@ -177,13 +229,12 @@ void Planet::generatePlates(unsigned int n_plates) {
     }
 }
 
-
 void Planet::splitPlates() {
     for (int i = (int)triangles.size() - 1; i >= 0; i--) {
         Triangle t = triangles[i];
         unsigned int vIdx0 = t.v[0];
         unsigned int plateV0 = verticesToPlates[vIdx0];
-        
+
         unsigned int vIdx1 = t.v[1];
         unsigned int plateV1 = verticesToPlates[vIdx1];
 
@@ -196,17 +247,15 @@ void Planet::splitPlates() {
     }
 }
 
-
 void Planet::printCrustAt(unsigned int vertex_index) {
     if (vertex_index >= crust_data.size() || !crust_data[vertex_index]) return;
     crust_data[vertex_index]->printInfo();
 }
 
-
 void Planet::assignCrustParameters() {
     crust_data.resize(vertices.size());
 
-    //bruit
+    // bruit
     FastNoiseLite noise;
     noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
     noise.SetFrequency(0.8f / radius);
@@ -228,18 +277,25 @@ void Planet::assignCrustParameters() {
 
     // build vertex neighbors (adjacency) to detect plate boundaries
     std::vector<std::vector<unsigned int>> neighbors(vertices.size());
-    for (const Triangle &t : triangles) {
+    for (const Triangle& t : triangles) {
         unsigned int a = t[0], b = t[1], c = t[2];
-        if (a < vertices.size() && b < vertices.size()) { neighbors[a].push_back(b); neighbors[b].push_back(a); }
-        if (b < vertices.size() && c < vertices.size()) { neighbors[b].push_back(c); neighbors[c].push_back(b); }
-        if (c < vertices.size() && a < vertices.size()) { neighbors[c].push_back(a); neighbors[a].push_back(c); }
+        if (a < vertices.size() && b < vertices.size()) {
+            neighbors[a].push_back(b);
+            neighbors[b].push_back(a);
+        }
+        if (b < vertices.size() && c < vertices.size()) {
+            neighbors[b].push_back(c);
+            neighbors[c].push_back(b);
+        }
+        if (c < vertices.size() && a < vertices.size()) {
+            neighbors[c].push_back(a);
+            neighbors[a].push_back(c);
+        }
     }
-    for (auto &nb : neighbors) {
+    for (auto& nb : neighbors) {
         std::sort(nb.begin(), nb.end());
         nb.erase(std::unique(nb.begin(), nb.end()), nb.end());
     }
-
-
 
     // iterate vertices and generate parameters
     for (size_t i = 0; i < vertices.size(); ++i) {
@@ -252,50 +308,49 @@ void Planet::assignCrustParameters() {
         int myPlate = (i < plate_of.size() ? plate_of[i] : -1);
         if (myPlate >= 0) {
             for (unsigned int nb : neighbors[i]) {
-                if (nb < plate_of.size() && plate_of[nb] != myPlate) { isBoundary = true; break; }
+                if (nb < plate_of.size() && plate_of[nb] != myPlate) {
+                    isBoundary = true;
+                    break;
+                }
             }
         }
 
-        if (n < continent_threshold) { // oceanic
+        if (n < continent_threshold) {  // oceanic
 
             float elevation = n * 4000.0f;
             float thickness = 7.0f + 2.0f * (n + 1.0f) * 0.5f + (isBoundary ? 1.0f : 0.0f);
 
             // age
-            float localNoise = noise.GetNoise(p[0]*2.3f, p[1]*1.7f, p[2]*2.9f);
+            float localNoise = noise.GetNoise(p[0] * 2.3f, p[1] * 1.7f, p[2] * 2.9f);
             float age = (0.5f * (localNoise + 1.0f)) * 200.0f;
             if (isBoundary) age *= 0.2f;
 
-            Vec3 ridge_dir = Vec3(0.0f, 0.0f, 0.0f); // TODO : compute ridge direction properly
+            Vec3 ridge_dir = Vec3(0.0f, 0.0f, 0.0f);  // TODO : compute ridge direction properly
 
             crust_data[i].reset(new OceanicCrust(thickness, elevation, age, ridge_dir));
-        } 
-        else { // continental
+        } else {  // continental
 
             float elevation = (n - continent_threshold) * 3000.0f;
             float thickness = 30.0f + 10.0f * n + (isBoundary ? 2.0f : 0.0f);
 
-            float ageNoise = noise.GetNoise(p[0]*1.2f + 10.0f, p[1]*0.9f + 10.0f, p[2]*1.7f + 10.0f);
+            float ageNoise = noise.GetNoise(p[0] * 1.2f + 10.0f, p[1] * 0.9f + 10.0f, p[2] * 1.7f + 10.0f);
             float orogeny_age = (0.5f * (ageNoise + 1.0f)) * 800.0f;
             if (!isBoundary) orogeny_age *= 1.2f;
 
             // orogeny type chosen from noise sample
-            float typeSample = noise.GetNoise(p[0]*2.0f + 5.0f, p[1]*1.3f + 5.0f, p[2]*2.7f + 5.0f);
-            int typeIdx = static_cast<int>(std::floor((0.5f*(typeSample+1.0f)) * 4.0f));
+            float typeSample = noise.GetNoise(p[0] * 2.0f + 5.0f, p[1] * 1.3f + 5.0f, p[2] * 2.7f + 5.0f);
+            int typeIdx = static_cast<int>(std::floor((0.5f * (typeSample + 1.0f)) * 4.0f));
             typeIdx = std::max(0, std::min(3, typeIdx));
             OrogenyType orogeny_type = static_cast<OrogenyType>(typeIdx);
 
-            Vec3 fold_dir = Vec3(0.0f, 0.0f, 0.0f); //TODO: compute proper tangent
+            Vec3 fold_dir = Vec3(0.0f, 0.0f, 0.0f);  // TODO: compute proper tangent
 
-            if (noise.GetNoise(p[0]*4.7f+9.1f, p[1]*3.3f+8.2f, p[2]*2.8f+7.3f) < 0.0f) fold_dir *= -1.0f;
+            if (noise.GetNoise(p[0] * 4.7f + 9.1f, p[1] * 3.3f + 8.2f, p[2] * 2.8f + 7.3f) < 0.0f) fold_dir *= -1.0f;
 
             crust_data[i].reset(new ContinentalCrust(thickness, elevation, orogeny_age, orogeny_type, fold_dir));
         }
     }
 }
-
-
-
 
 std::vector<Vec3> Planet::vertexColorsForPlates() const {
     std::vector<Vec3> out(vertices.size(), Vec3(0.5f, 0.5f, 0.5f));
@@ -322,8 +377,8 @@ std::vector<Vec3> Planet::vertexColorsForCrustTypes() const {
         const OceanicCrust* oc = dynamic_cast<const OceanicCrust*>(crust_data[i].get());
         const ContinentalCrust* cc = dynamic_cast<const ContinentalCrust*>(crust_data[i].get());
 
-        auto clamp01 = [](float v)->float { return std::max(0.0f, std::min(1.0f, v)); };
-        auto mix = [](const Vec3 &a, const Vec3 &b, float t)->Vec3 { return a*(1.0f-t) + b*t; };
+        auto clamp01 = [](float v) -> float { return std::max(0.0f, std::min(1.0f, v)); };
+        auto mix = [](const Vec3& a, const Vec3& b, float t) -> Vec3 { return a * (1.0f - t) + b * t; };
 
         if (oc) {
             // Oceanic : base blue, vary with elevation (depth -> darker) and age (older -> darker/desaturated)
@@ -338,36 +393,31 @@ std::vector<Vec3> Planet::vertexColorsForCrustTypes() const {
             col *= ageFactor;
 
             out[i] = col;
-        }
-        else if (cc) {
-            // Continental : vert -> marron -> blanc 
-            float elev = cc->relief_elevation * 3.0f; // multicateur arbitraire
+        } else if (cc) {
+            // Continental : vert -> marron -> blanc
+            float elev = cc->relief_elevation * 3.0f;  // multicateur arbitraire
             // map elevation 0..4000
             float t = clamp01(elev / 4000.0f);
             Vec3 lowland(0.15f, 0.7f, 0.18f);
             Vec3 mountain(0.45f, 0.30f, 0.10f);
             Vec3 col = mix(lowland, mountain, t);
 
-
             if (elev > 3000.0f) {
                 float snow = clamp01((elev - 2500.0f) / 1500.0f);
-                col = mix(col, Vec3(1.0f,1.0f,1.0f), snow);
+                col = mix(col, Vec3(1.0f, 1.0f, 1.0f), snow);
             }
 
-
             // small modulation by orogeny_age (older -> slightly darker)
-            float oa = cc->orogeny_age; // in Myr
+            float oa = cc->orogeny_age;  // in Myr
             col *= (1.0f - clamp01(oa / 1200.0f) * 0.25f);
 
             out[i] = col;
-        }
-        else {
+        } else {
             out[i] = Vec3(0.6f, 0.6f, 0.6f);
         }
     }
     return out;
 }
-
 
 std::vector<Vec3> Planet::vertexColorsForCrustAndPlateBoundaries() const {
     std::vector<Vec3> out = vertexColorsForCrustTypes();
@@ -382,21 +432,6 @@ std::vector<Vec3> Planet::vertexColorsForCrustAndPlateBoundaries() const {
         }
     }
 
-    // Construire la liste des voisins (adjacence)
-    std::vector<std::vector<unsigned int>> neighbors(vertices.size());
-    for (const Triangle &t : triangles) {
-        unsigned int a = t[0], b = t[1], c = t[2];
-        if (a < vertices.size() && b < vertices.size()) { neighbors[a].push_back(b); neighbors[b].push_back(a); }
-        if (b < vertices.size() && c < vertices.size()) { neighbors[b].push_back(c); neighbors[c].push_back(b); }
-        if (c < vertices.size() && a < vertices.size()) { neighbors[c].push_back(a); neighbors[a].push_back(c); }
-    }
-
-    // Nettoyer les doublons
-    for (auto &nb : neighbors) {
-        std::sort(nb.begin(), nb.end());
-        nb.erase(std::unique(nb.begin(), nb.end()), nb.end());
-    }
-
     // Colorer directement les sommets appartenant à une frontière
     for (size_t i = 0; i < vertices.size(); ++i) {
         int plate = (i < plate_of.size() ? plate_of[i] : -1);
@@ -404,7 +439,7 @@ std::vector<Vec3> Planet::vertexColorsForCrustAndPlateBoundaries() const {
 
         for (unsigned int j : neighbors[i]) {
             if (j < plate_of.size() && plate_of[j] != plate) {
-                out[i] = Vec3(1.0,0.0,0.0);  // couleur unique pour les bords
+                out[i] = Vec3(1.0, 0.0, 0.0);  // couleur unique pour les bords
                 break;
             }
         }
