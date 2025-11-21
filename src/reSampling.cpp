@@ -23,10 +23,11 @@ unsigned int Planet::findclosestVertex(const Vec3& point, Planet& srcPlanet){
 
 void Planet::resample(Planet& srcPlanet) {
     
-    crust_data.resize(vertices.size());
-    verticesToPlates.resize(vertices.size());
+    size_t N = vertices.size();
+    crust_data.resize(N);
+    verticesToPlates.resize(N);
 
-    for(int i = 0; i < vertices.size(); ++i) {
+    for(int i = 0; i < N; ++i) { //TODO c'est lent Octree ?
         Vec3 currentVertex = vertices[i];
         unsigned int closestIndex = srcPlanet.findclosestVertex(currentVertex, srcPlanet);
         
