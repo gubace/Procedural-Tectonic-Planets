@@ -27,7 +27,7 @@ class Planet : public Mesh {
     float radius = 1.0f;
 
     Planet(float r) : radius(r) {
-        setupSphere(radius, 512, 256);
+        setupSphere(radius, 256, 128);
     }
 
     void generatePlates(unsigned int n_plates);
@@ -40,6 +40,6 @@ class Planet : public Mesh {
     std::vector<Vec3> vertexColorsForCrustTypes() const;
     std::vector<Vec3> vertexColorsForCrustAndPlateBoundaries() const;
 
-    // unsigned int planet::findclosestVertex(const Vec3& point, planet& srcPlanet);
-    // void planet::resample(planet& srcPlanet);
+    unsigned int findclosestVertex(const Vec3& point, Planet& srcPlanet);
+    void resample(Planet& srcPlanet);
 };

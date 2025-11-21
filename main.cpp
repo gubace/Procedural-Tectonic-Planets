@@ -23,6 +23,7 @@
 #include <cstdlib>
 #include <map>
 #include <memory>
+#include <utility>
 
 #include <algorithm>
 #include <GL/glut.h>
@@ -462,6 +463,21 @@ void key (unsigned char keyPressed, int x, int y) {
 
     case 'n': //Press n key to display normals
         display_normals = !display_normals;
+        break;
+
+    case 'r'://resample
+        {
+            Planet newPlanet(1.0f);
+            //newPlanet.setupSphere(1.0f, 512, 128);
+
+            newPlanet.resample(planet);
+
+            planet = std::move(newPlanet);
+            
+            mesh = planet;
+            updateDisplayedColors();
+            printf("Resampled planet to higher resolution.\n");
+        }
         break;
 
     case '1': //Toggle loaded mesh display
