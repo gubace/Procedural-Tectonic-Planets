@@ -29,9 +29,30 @@ void Planet::resample(Planet& srcPlanet) {
     for(int i = 0; i < vertices.size(); ++i) {
         Vec3 currentVertex = vertices[i];
         unsigned int closestIndex = srcPlanet.findclosestVertex(currentVertex, srcPlanet);
-
+        
         if (closestIndex < srcPlanet.crust_data.size() && srcPlanet.crust_data[closestIndex]) {
-            crust_data[i] = std::move(srcPlanet.crust_data[closestIndex]);
+            const Crust* srcCrust = srcPlanet.crust_data[closestIndex].get();
+            
+            const OceanicCrust* oc = dynamic_cast<const OceanicCrust*>(srcCrust);
+            if (oc) {
+                crust_data[i] = std::make_unique<OceanicCrust>(
+                    oc->thickness, 
+                    oc->relief_elevation, 
+                    oc->age, 
+                    oc->ridge_dir
+                );
+            } else {
+                const ContinentalCrust* cc = dynamic_cast<const ContinentalCrust*>(srcCrust);
+                if (cc) {
+                    crust_data[i] = std::make_unique<ContinentalCrust>(
+                        cc->thickness, 
+                        cc->relief_elevation, 
+                        cc->orogeny_age, 
+                        cc->orogeny_type, 
+                        cc->fold_dir
+                    );
+                }
+            }
         }
 
         unsigned int plateIndex = srcPlanet.verticesToPlates[closestIndex];

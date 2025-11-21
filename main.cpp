@@ -128,9 +128,6 @@ void updateDisplayedColors() {
     } else if (display_plates_mode == 1) {
         mesh.colors = planet.vertexColorsForCrustTypes();
         //printf("Updated colors for crust types display.\n");
-    } else if (display_plates_mode == 2) {
-        mesh.colors = planet.vertexColorsForCrustAndPlateBoundaries();
-        //printf("Updated colors for crust and plate boundaries display.\n");
     }
     glutPostRedisplay();
 }
@@ -436,7 +433,7 @@ void key (unsigned char keyPressed, int x, int y) {
         break;
 
     case 'p': //Press p key to display plates
-        display_plates_mode = (display_plates_mode + 1) % 3;
+        display_plates_mode = (display_plates_mode + 1) % 2;
         updateDisplayedColors();
         break;
 

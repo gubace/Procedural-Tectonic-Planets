@@ -370,7 +370,9 @@ std::vector<Vec3> Planet::vertexColorsForCrustTypes() const {
     for (size_t i = 0; i < vertices.size(); ++i) {
         if (i >= crust_data.size() || !crust_data[i]) {
             out[i] = Vec3(0.6f, 0.6f, 0.6f);
+            std::cout << "No crust data at vertex " << i << "\n"<<std::endl;
             continue;
+            
         }
 
         // Dynamic cast to identify crust type
@@ -379,6 +381,8 @@ std::vector<Vec3> Planet::vertexColorsForCrustTypes() const {
 
         auto clamp01 = [](float v) -> float { return std::max(0.0f, std::min(1.0f, v)); };
         auto mix = [](const Vec3& a, const Vec3& b, float t) -> Vec3 { return a * (1.0f - t) + b * t; };
+
+        //std::cout << "Crust at vertex " << i << ": "<<std::endl;
 
         if (oc) {
             // Oceanic : base blue, vary with elevation (depth -> darker) and age (older -> darker/desaturated)
@@ -416,34 +420,5 @@ std::vector<Vec3> Planet::vertexColorsForCrustTypes() const {
             out[i] = Vec3(0.6f, 0.6f, 0.6f);
         }
     }
-    return out;
-}
-
-std::vector<Vec3> Planet::vertexColorsForCrustAndPlateBoundaries() const {
-    std::vector<Vec3> out = vertexColorsForCrustTypes();
-    if (plates.empty()) return out;
-
-    // Associer chaque sommet à une plaque
-    std::vector<int> plate_of(vertices.size(), -1);
-    for (size_t k = 0; k < plates.size(); ++k) {
-        for (unsigned int idx : plates[k].vertices_indices) {
-            if (idx < plate_of.size())
-                plate_of[idx] = static_cast<int>(k);
-        }
-    }
-
-    // Colorer directement les sommets appartenant à une frontière
-    for (size_t i = 0; i < vertices.size(); ++i) {
-        int plate = (i < plate_of.size() ? plate_of[i] : -1);
-        if (plate < 0) continue;
-
-        for (unsigned int j : neighbors[i]) {
-            if (j < plate_of.size() && plate_of[j] != plate) {
-                out[i] = Vec3(1.0, 0.0, 0.0);  // couleur unique pour les bords
-                break;
-            }
-        }
-    }
-
     return out;
 }
