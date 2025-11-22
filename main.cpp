@@ -378,7 +378,7 @@ void draw () {
     }
 
     if (display_phenomena) {
-        drawTectonicPhenomenaMarkers(planet, 0.02f);
+        drawTectonicPhenomenaMarkers(planet, movement_controller.tectonicPhenomena, 0.02f);
     }    
 
     glEnable(GL_LIGHTING);
@@ -449,8 +449,8 @@ void key (unsigned char keyPressed, int x, int y) {
     case 'b': // toggle subduction markers and compute once
         display_phenomena = !display_phenomena;
         if (display_phenomena) {
-            printf("Detected %zu subduction candidates\n", planet.tectonicPhenomena.size());
-            printf("Subduction markers ON (%zu candidates)\n", planet.tectonicPhenomena.size());
+            printf("Detected %zu plate interaction points\n", movement_controller.tectonicPhenomena.size());
+            printf("Subduction markers ON (%zu candidates)\n", movement_controller.tectonicPhenomena.size());
         } else {
             printf("Subduction markers OFF\n");
         }

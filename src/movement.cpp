@@ -31,7 +31,8 @@ void Movement::movePlates(float deltaTime) {
     for (Plate& plate : planet.plates) {
         movePlate(plate, deltaTime);
     }
-    planet.tectonicPhenomena = std::move(detectPhenomena());
+    tectonicPhenomena = detectPhenomena();
+    triggerEvents();
 }
 
 std::vector<std::unique_ptr<TectonicPhenomenon>> Movement::detectPhenomena() {
@@ -217,5 +218,11 @@ void Movement::movePlate(Plate& plate, float deltaTime) {
 
         // Mise à jour de la position du sommet
         vertexPos = rotatedPos;
+    }
+}
+
+void Movement::triggerEvents() {
+    for (const auto& phenomenon : tectonicPhenomena) {
+        phenomenon->triggerEvent(planet);
     }
 }

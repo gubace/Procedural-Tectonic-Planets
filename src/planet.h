@@ -24,7 +24,6 @@ class Planet : public Mesh {
     std::vector<unsigned int> verticesToPlates;
     std::vector<std::unique_ptr<Crust>> crust_data;
     std::vector<std::vector<unsigned int>> neighbors;
-    std::vector<std::unique_ptr<TectonicPhenomenon>> tectonicPhenomena;
 
     float radius = 1.0f;
 
