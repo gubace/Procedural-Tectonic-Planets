@@ -35,6 +35,8 @@ void Movement::movePlates(float deltaTime) {
     triggerEvents();
 }
 
+// private ========================================
+
 std::vector<std::unique_ptr<TectonicPhenomenon>> Movement::detectPhenomena() {
     std::vector<std::unique_ptr<TectonicPhenomenon>> out;
     if (planet.plates.empty() || planet.vertices.empty()) return out;
@@ -193,7 +195,6 @@ std::vector<std::unique_ptr<TectonicPhenomenon>> Movement::detectPhenomena() {
     return out;
 }
 
-// private ========================================
 void Movement::movePlate(Plate& plate, float deltaTime) {
     if (plate.plate_velocity == 0.0) {
         return;
