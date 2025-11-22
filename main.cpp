@@ -440,9 +440,6 @@ void key (unsigned char keyPressed, int x, int y) {
         movement_controller.movePlates(timeStep); // TODO: change time management
         mesh = planet;
         updateDisplayedColors();
-        // update plates display and detect subduction candidates immediately
-        //g_subductionCandidates = movement_controller.detectPotentialSubductions(1e-4f);
-        //printf("Detected %zu subduction candidates\n", g_subductionCandidates.size());
         timeStep++;
         break;
 
