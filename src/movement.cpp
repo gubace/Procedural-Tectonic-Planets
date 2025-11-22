@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "planet.h"
-#include "tectonicPhenomenon.h"
 
 void populate_plate_centroids(std::vector<Vec3>& plate_centroid, std::vector<unsigned int>& plate_count, size_t P, Planet& planet) {
     for (size_t p = 0; p < P; ++p) {
@@ -32,9 +31,10 @@ void Movement::movePlates(float deltaTime) {
     for (Plate& plate : planet.plates) {
         movePlate(plate, deltaTime);
     }
+    planet.tectonicPhenomena = std::move(detectPhenomena());
 }
 
-std::vector<std::unique_ptr<TectonicPhenomenon>> Movement::detectPhenomena(float convergenceThreshold) {
+std::vector<std::unique_ptr<TectonicPhenomenon>> Movement::detectPhenomena() {
     std::vector<std::unique_ptr<TectonicPhenomenon>> out;
     if (planet.plates.empty() || planet.vertices.empty()) return out;
 

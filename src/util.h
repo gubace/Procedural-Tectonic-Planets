@@ -95,12 +95,11 @@ static void drawPlateArrows(const Planet & planet, float visualScale = 0.4f) {
 
 
 
-static void drawTectonicPhenomenaMarkers(const Planet & planet, 
-                                         const std::vector<std::unique_ptr<TectonicPhenomenon>> & phenomena, 
-                                         float markerSize = 0.02f) {
+static void drawTectonicPhenomenaMarkers(const Planet & planet, float markerSize = 0.02f) {
     glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
     glDisable(GL_LIGHTING);
     
+    const std::vector<std::unique_ptr<TectonicPhenomenon>> & phenomena = planet.tectonicPhenomena;
     for (const auto& phenomenon : phenomena) {
         unsigned int vid = phenomenon->getVertexIndex();
         if (vid >= planet.vertices.size()) continue;

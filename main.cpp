@@ -100,7 +100,6 @@ bool display_directions;
 DisplayMode displayMode;
 int weight_type;
 
-std::vector<std::unique_ptr<TectonicPhenomenon>> tectonicPhenomena;
 static bool display_phenomena = false;
 
 
@@ -379,7 +378,7 @@ void draw () {
     }
 
     if (display_phenomena) {
-        drawTectonicPhenomenaMarkers(planet, tectonicPhenomena, 0.02f);
+        drawTectonicPhenomenaMarkers(planet, 0.02f);
     }    
 
     glEnable(GL_LIGHTING);
@@ -450,9 +449,8 @@ void key (unsigned char keyPressed, int x, int y) {
     case 'b': // toggle subduction markers and compute once
         display_phenomena = !display_phenomena;
         if (display_phenomena) {
-            tectonicPhenomena = movement_controller.detectPhenomena(1e-4f);
-            printf("Detected %zu subduction candidates\n", tectonicPhenomena.size());
-            printf("Subduction markers ON (%zu candidates)\n", tectonicPhenomena.size());
+            printf("Detected %zu subduction candidates\n", planet.tectonicPhenomena.size());
+            printf("Subduction markers ON (%zu candidates)\n", planet.tectonicPhenomena.size());
         } else {
             printf("Subduction markers OFF\n");
         }
