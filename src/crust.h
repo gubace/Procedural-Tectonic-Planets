@@ -33,8 +33,6 @@ inline const char* OrogenyTypeToString(OrogenyType t) {
 //---------------------------------------Crust Class--------------------------------------------
 class Crust {
    public:
-    static const float minZ = -1000; // TODO: jsp Timothée must know
-    static const float maxZ = 1000; // TODO: jsp
     CrustType type;
     float thickness;         // e
     float relief_elevation;  // z

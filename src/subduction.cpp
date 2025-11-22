@@ -7,6 +7,8 @@
 float r_s = 10.0f; // Distance that impacts uplift effect
 float max_velocity = 5.0f; // TODO: idk, Timothée knows
 float subductionUplift = 0.1f;
+float minZ = -1000; // TODO: jsp Timothée must know
+float maxZ = 1000; // TODO: jsp
 
 float f(float d) {
     if (d <= 0.0f) return 1.0f;
@@ -39,8 +41,6 @@ float relativeVelocity(Plate & plateUnder, Plate & plateOver) {
 }
 
 float elevationImpact(float z) {
-    float minZ = Crust::minZ;
-    float maxZ = Crust::maxZ;
     if (maxZ <= minZ) return 0.0f;
     float normalizedZ = (z - minZ) / (maxZ - minZ);
     if (normalizedZ < 0.0f) normalizedZ = 0.0f;
