@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <string>
+#include <vector>
 
 class Planet; // forward declaration to avoid circular include with planet.h
 
@@ -11,6 +12,7 @@ class TectonicPhenomenon {
         ContinentalCollision,
         Rifting
     };
+    std::vector<unsigned int> verticesClosestToPhenomenon; // list of vertices whose closes phenomenon index is this
 
     TectonicPhenomenon(Type t, unsigned int plateA, unsigned int plateB, unsigned int vertexIndex)
         : type(t), plate_a(plateA), plate_b(plateB), vertex_index(vertexIndex) {}
