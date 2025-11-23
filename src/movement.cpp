@@ -28,7 +28,7 @@ void populate_plate_centroids(std::vector<Vec3>& plate_centroid, std::vector<uns
 // public ========================================
 
 void Movement::movePlates(float deltaTime) {
-    for (Plate& plate : planet.plates) {
+    for (Plate& plate : planet->plates) {
         movePlate(plate, deltaTime);
     }
     tectonicPhenomena = detectPhenomena();
@@ -39,22 +39,22 @@ void Movement::movePlates(float deltaTime) {
 
 std::vector<std::unique_ptr<TectonicPhenomenon>> Movement::detectPhenomena() {
     std::vector<std::unique_ptr<TectonicPhenomenon>> out;
-    if (planet.plates.empty() || planet.vertices.empty()) return out;
+    if (planet->plates.empty() || planet->vertices.empty()) return out;
 
-    std::vector<std::vector<unsigned int>> neighbors = planet.neighbors;
+    std::vector<std::vector<unsigned int>> neighbors = planet->neighbors;
 
-    size_t P = planet.plates.size();
+    size_t P = planet->plates.size();
     std::vector<Vec3> plate_centroid(P, Vec3(0.0f, 0.0f, 0.0f));
     std::vector<unsigned int> plate_count(P, 0u);
-    populate_plate_centroids(plate_centroid, plate_count, P, planet);
+    populate_plate_centroids(plate_centroid, plate_count, P, *planet);
 
     auto plate_average_oceanic_age = [&](unsigned int pidx) -> float {
-        const auto& plate = planet.plates[pidx];
+        const auto& plate = planet->plates[pidx];
         float sum = 0.0f;
         unsigned int c = 0;
         for (unsigned int vid : plate.vertices_indices) {
-            if (vid < planet.crust_data.size() && planet.crust_data[vid]) {
-                auto oc = dynamic_cast<OceanicCrust*>(planet.crust_data[vid].get());
+            if (vid < planet->crust_data.size() && planet->crust_data[vid]) {
+                auto oc = dynamic_cast<OceanicCrust*>(planet->crust_data[vid].get());
                 if (oc) {
                     sum += oc->age;
                     ++c;
@@ -76,12 +76,12 @@ std::vector<std::unique_ptr<TectonicPhenomenon>> Movement::detectPhenomena() {
     };
     std::unordered_set<Key, KeyHash, KeyEq> seen;
 
-    for (unsigned int v = 0; v < planet.vertices.size(); ++v) {
-        int pa = planet.verticesToPlates[v];
+    for (unsigned int v = 0; v < planet->vertices.size(); ++v) {
+        int pa = planet->verticesToPlates[v];
         if (pa < 0) continue;
 
         for (unsigned int nb : neighbors[v]) {
-            int pb = planet.verticesToPlates[nb];
+            int pb = planet->verticesToPlates[nb];
             if (pb < 0 || pb == pa) continue;
             unsigned int A = (unsigned int)std::min(pa, pb);
             unsigned int B = (unsigned int)std::max(pa, pb);
@@ -89,17 +89,17 @@ std::vector<std::unique_ptr<TectonicPhenomenon>> Movement::detectPhenomena() {
             if (seen.find(k) != seen.end()) continue;
             seen.insert(k);
 
-            Vec3 r = planet.vertices[v];
+            Vec3 r = planet->vertices[v];
 
             // plate A
-            const Plate& plateA = planet.plates[pa];
+            const Plate& plateA = planet->plates[pa];
             Vec3 omegaA = plateA.rotation_axis;
             omegaA.normalize();
             omegaA *= plateA.plate_velocity;
             Vec3 vA = Vec3::cross(omegaA, r);
 
             // plate B
-            const Plate& plateB = planet.plates[pb];
+            const Plate& plateB = planet->plates[pb];
             Vec3 omegaB = plateB.rotation_axis;
             omegaB.normalize();
             omegaB *= plateB.plate_velocity;
@@ -115,11 +115,11 @@ std::vector<std::unique_ptr<TectonicPhenomenon>> Movement::detectPhenomena() {
             float conv = Vec3::dot(rel, dir);  // positive => A towards B
 
             bool isOceanicA = false, isOceanicB = false;
-            if (v < planet.crust_data.size() && planet.crust_data[v]) {
-                isOceanicA = (dynamic_cast<OceanicCrust*>(planet.crust_data[v].get()) != nullptr);
+            if (v < planet->crust_data.size() && planet->crust_data[v]) {
+                isOceanicA = (dynamic_cast<OceanicCrust*>(planet->crust_data[v].get()) != nullptr);
             }
-            if (nb < planet.crust_data.size() && planet.crust_data[nb]) {
-                isOceanicB = (dynamic_cast<OceanicCrust*>(planet.crust_data[nb].get()) != nullptr);
+            if (nb < planet->crust_data.size() && planet->crust_data[nb]) {
+                isOceanicB = (dynamic_cast<OceanicCrust*>(planet->crust_data[nb].get()) != nullptr);
             }
 
             // Détection de convergence (subduction ou collision)
@@ -202,7 +202,7 @@ void Movement::movePlate(Plate& plate, float deltaTime) {
 
     for (int v = 0; v < plate.vertices_indices.size(); v++) {
         unsigned int vertexIndex = plate.vertices_indices[v];
-        Vec3& vertexPos = planet.vertices[vertexIndex];
+        Vec3& vertexPos = planet->vertices[vertexIndex];
 
         // Calcul du déplacement circulaire autour de l'axe de rotation
         Vec3 toVertex = vertexPos;  // assuming planet is centered at origin
@@ -223,20 +223,20 @@ void Movement::movePlate(Plate& plate, float deltaTime) {
 }
 
 void Movement::assignClosestPhenomenonToVertices() {
-    for (int vertexIdx = 0; vertexIdx < planet.vertices.size(); vertexIdx++) {
+    for (int vertexIdx = 0; vertexIdx < planet->vertices.size(); vertexIdx++) {
         int closestPhenomenon = -1;
         float closestDistance = 999.0f;
         for (int phenomenonIdx = 0; phenomenonIdx < tectonicPhenomena.size(); phenomenonIdx++) {
             const auto& phenomenon = tectonicPhenomena[phenomenonIdx];
 
-            if (phenomenon->getPlateA() != planet.verticesToPlates[vertexIdx] &&
-                phenomenon->getPlateB() != planet.verticesToPlates[vertexIdx]) {
+            if (phenomenon->getPlateA() != planet->verticesToPlates[vertexIdx] &&
+                phenomenon->getPlateB() != planet->verticesToPlates[vertexIdx]) {
                 continue; // this phenomenon does not involve the plate of the vertex
             }
 
             unsigned int phenomenonVertexIdx = phenomenon->getVertexIndex();
-            Vec3 phenomenonPos = planet.vertices[phenomenonVertexIdx];
-            Vec3 vertexPos = planet.vertices[vertexIdx];
+            Vec3 phenomenonPos = planet->vertices[phenomenonVertexIdx];
+            Vec3 vertexPos = planet->vertices[vertexIdx];
             float distance = (phenomenonPos - vertexPos).length();
             if (distance < closestDistance) {
                 closestDistance = distance;
@@ -249,6 +249,6 @@ void Movement::assignClosestPhenomenonToVertices() {
 
 void Movement::triggerEvents() {
     for (const auto& phenomenon : tectonicPhenomena) {
-        phenomenon->triggerEvent(planet);
+        phenomenon->triggerEvent(*planet);
     }
 }

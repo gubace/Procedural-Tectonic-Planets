@@ -28,7 +28,7 @@ class Planet : public Mesh {
     float radius = 1.0f;
 
     Planet(float r) : radius(r) {
-        setupSphere(radius, 256, 128);
+        setupSphere(radius, 512, 256);
     }
 
     void generatePlates(unsigned int n_plates);

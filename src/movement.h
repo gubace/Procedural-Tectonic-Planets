@@ -11,13 +11,13 @@
 //---------------------------------------Movement Class--------------------------------------------
 class Movement {
    public:
-    Planet& planet;
-    float movementAttenuation = 0.00001;
+    Planet* planet; //pointeur pour pouvoir copier
+    float movementAttenuation = 0.0001;
     float convergenceThreshold = 0.00001;
 
     std::vector<std::unique_ptr<TectonicPhenomenon>> tectonicPhenomena;
     
-    Movement(Planet& p) : planet(p) {}
+    Movement(Planet& p) : planet(&p) {}
 
     void movePlates(float deltaTime);
 

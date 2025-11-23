@@ -460,15 +460,16 @@ void key (unsigned char keyPressed, int x, int y) {
     case 'r'://resample
         {
             Planet newPlanet(1.0f);
-            //newPlanet.setupSphere(1.0f, 512, 128);
-
             newPlanet.resample(planet);
 
             planet = std::move(newPlanet);
+
+            movement_controller.planet = &planet;
+            planet.detectVerticesNeighbors();
             
             mesh = planet;
             updateDisplayedColors();
-            printf("Resampled planet to higher resolution.\n");
+            printf("Resampled planet.\n");
         }
         break;
 

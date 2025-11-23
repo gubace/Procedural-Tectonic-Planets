@@ -3,6 +3,7 @@
 
 #include "planet.h"
 #include "crust.h"
+#include "SphericalGrid.h"
 
 
 unsigned int Planet::findclosestVertex(const Vec3& point, Planet& srcPlanet){
@@ -27,9 +28,14 @@ void Planet::resample(Planet& srcPlanet) {
     crust_data.resize(N);
     verticesToPlates.resize(N);
 
+    std::vector<Vec3> srcVerticesCopy = srcPlanet.vertices;
+
+    SphericalGrid accel(srcVerticesCopy, 64); // résolution 64x64
+    printf("SphericalGrid built with %zu vertices\n", srcVerticesCopy.size());
+
     for(int i = 0; i < N; ++i) { //TODO c'est lent Octree ?
         Vec3 currentVertex = vertices[i];
-        unsigned int closestIndex = srcPlanet.findclosestVertex(currentVertex, srcPlanet);
+        unsigned int closestIndex = accel.nearest(currentVertex);
         
         if (closestIndex < srcPlanet.crust_data.size() && srcPlanet.crust_data[closestIndex]) {
             const Crust* srcCrust = srcPlanet.crust_data[closestIndex].get();
