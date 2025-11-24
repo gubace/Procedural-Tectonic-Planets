@@ -359,7 +359,7 @@ void Planet::assignCrustParameters() {
             // age
             float localNoise = noise.GetNoise(p[0] * 2.3f, p[1] * 1.7f, p[2] * 2.9f);
             float age = (0.5f * (localNoise + 1.0f)) * 200.0f;
-            if (isBoundary) age *= 0.2f;
+            //if (isBoundary) age *= 0.2f;
 
             Vec3 ridge_dir = Vec3(0.0f, 0.0f, 0.0f);  // TODO : compute ridge direction properly
 
@@ -371,7 +371,7 @@ void Planet::assignCrustParameters() {
 
             float ageNoise = noise.GetNoise(p[0] * 1.2f + 10.0f, p[1] * 0.9f + 10.0f, p[2] * 1.7f + 10.0f);
             float orogeny_age = (0.5f * (ageNoise + 1.0f)) * 800.0f;
-            if (!isBoundary) orogeny_age *= 1.2f;
+            //if (!isBoundary) orogeny_age *= 1.2f;
 
             // orogeny type chosen from noise sample
             float typeSample = noise.GetNoise(p[0] * 2.0f + 5.0f, p[1] * 1.3f + 5.0f, p[2] * 2.7f + 5.0f);
