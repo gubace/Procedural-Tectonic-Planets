@@ -80,6 +80,12 @@ void Planet::resample(Planet& srcPlanet) {
     for(int i = 0; i < plates.size(); ++i) {
         plates[i].plate_velocity = srcPlanet.plates[i].plate_velocity;
         plates[i].rotation_axis = srcPlanet.plates[i].rotation_axis;
+
     }
+
+    detectVerticesNeighbors();
+    findFrontierVertices();
+    fillClosestFrontierVertices();
+
 
 }

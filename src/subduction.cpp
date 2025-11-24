@@ -7,9 +7,9 @@
 #include "tectonicPhenomenon.h"
 #include "planet.h"
 
-float r_s = 10.0f; // Distance that impacts uplift effect
+float r_s = 0.1f; // Distance that impacts uplift effect
 float max_velocity = 5.0f; // TODO: idk, Timothée knows -> In fact Timothée doesn't know either
-float subductionUplift = 0.1f;
+float subductionUplift = 1000.0f;
 float minZ = -8000; 
 float maxZ = 8000; 
 
@@ -57,10 +57,16 @@ void Subduction::triggerEvent(Planet& planet) {
     Plate& plateOver = planet.plates[plate_over];
 
     unsigned int phenomenonVertexIndex = getVertexIndex();
+    
 
     std::vector<unsigned int> verticesClosestToPhenomenon = plateOver.closestFrontierVertices[phenomenonVertexIndex];
     for (unsigned int vertexIndex : verticesClosestToPhenomenon) {
         unsigned int vertex_plate = planet.verticesToPlates[vertexIndex];
+
+        if (plate_under == vertex_plate) {
+            planet.crust_data[vertexIndex]->is_under_subduction = true;
+            continue; // We don't care about the plate that is under
+        }
 
         Vec3 vertex = planet.vertices[vertexIndex];
         Vec3 subductionVertex = planet.vertices[phenomenonVertexIndex];
@@ -71,7 +77,7 @@ void Subduction::triggerEvent(Planet& planet) {
         float newElevation = subductionUplift * f(d) * g(v) * h(z);
         planet.crust_data[vertexIndex]->relief_elevation += newElevation;
         
-        //std::cout << " - Vertex " << vertexIndex << " elevated by " << newElevation << " to " << planet.crust_data[vertexIndex]->relief_elevation << std::endl;
+        std::cout << " - Vertex " << vertexIndex << " elevated by " << newElevation << " to " << planet.crust_data[vertexIndex]->relief_elevation << std::endl;
     }
     
 }

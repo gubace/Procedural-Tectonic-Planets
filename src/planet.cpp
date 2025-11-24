@@ -232,15 +232,15 @@ void Planet::generatePlates(unsigned int n_plates) {
 }
 
 void Planet::findFrontierVertices() {
-    for (int i = 0; i < vertices.size(); i++) {
-        std::vector<unsigned int> vertexNeighbors = neighbors[i];
+    for (unsigned int i = 0; i < vertices.size(); i++) {
+        const std::vector<unsigned int>& vertexNeighbors = neighbors[i];
         unsigned int currentPlateIdx = verticesToPlates[i];
 
-        for (int n = 0; n < vertexNeighbors.size(); n++) {
-            unsigned int neighborPlateIdx = verticesToPlates[n];
+        for (unsigned int n = 0; n < vertexNeighbors.size(); n++) {
+            unsigned int neighborIdx = vertexNeighbors[n];
+            unsigned int neighborPlateIdx = verticesToPlates[neighborIdx];
             if (neighborPlateIdx != currentPlateIdx) {
-                Plate &currentPlate = plates[currentPlateIdx];
-                currentPlate.closestFrontierVertices.insert({ i, std::vector<unsigned int>() });
+                plates[currentPlateIdx].closestFrontierVertices[i] = std::vector<unsigned int>();
                 break;
             }
         }
@@ -248,26 +248,38 @@ void Planet::findFrontierVertices() {
 }
 
 void Planet::fillClosestFrontierVertices() {
-    // Parcourir toutes les plaques
+    // Pour chaque plaque
     for (Plate& plate : plates) {
-
-        // Parcourir tous les sommets de la plaque
-        for (unsigned int vertexIndex : plate.vertices_indices) {
-            float minDistance = std::numeric_limits<float>::max();
-            
-            for(const auto& frontierPair : plate.closestFrontierVertices) {
-                unsigned int frontierIndex = frontierPair.first;
-                
-                Vec3 diff = vertices[vertexIndex];
-                diff -= vertices[frontierIndex];
-                float distance = diff.length();
-                
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    plate.closestFrontierVertices[frontierIndex].push_back(vertexIndex);
-                }
-            }  
+        // Construire la liste des sommets frontières de cette plaque
+        std::vector<unsigned int> frontierVertices;
+        for (const auto& pair : plate.closestFrontierVertices) {
+            frontierVertices.push_back(pair.first);
         }
+
+        if (frontierVertices.empty()) continue; // Pas de frontières détectées
+
+        // Pour chaque sommet de la plaque, trouver le sommet frontière le plus proche
+        std::map<unsigned int, std::vector<unsigned int>> newMapping;
+        
+        for (unsigned int vertexIdx : plate.vertices_indices) {
+            float minDist = std::numeric_limits<float>::max();
+            unsigned int closestFrontier = frontierVertices[0];
+
+            // Chercher le sommet frontière le plus proche
+            for (unsigned int frontierIdx : frontierVertices) {
+                float dist = (vertices[vertexIdx] - vertices[frontierIdx]).length();
+                if (dist < minDist) {
+                    minDist = dist;
+                    closestFrontier = frontierIdx;
+                }
+            }
+
+            // Ajouter ce sommet à la liste des sommets associés à cette frontière
+            newMapping[closestFrontier].push_back(vertexIdx);
+        }
+
+        // Remplacer l'ancienne structure par la nouvelle
+        plate.closestFrontierVertices = newMapping;
     }
 }
 
@@ -341,7 +353,7 @@ void Planet::assignCrustParameters() {
 
         if (n < continent_threshold) {  // oceanic
 
-            float elevation = 0.0f;
+            float elevation = n * 8000.0f;
             float thickness = 7.0f + 2.0f * (n + 1.0f) * 0.5f + (isBoundary ? 1.0f : 0.0f);
 
             // age
@@ -354,7 +366,7 @@ void Planet::assignCrustParameters() {
             crust_data[i].reset(new OceanicCrust(thickness, elevation, age, ridge_dir));
         } else {  // continental
 
-            float elevation = (n - continent_threshold) * 3000.0f;
+            float elevation = (n - continent_threshold) * 3500.0f;
             float thickness = 30.0f + 10.0f * n + (isBoundary ? 2.0f : 0.0f);
 
             float ageNoise = noise.GetNoise(p[0] * 1.2f + 10.0f, p[1] * 0.9f + 10.0f, p[2] * 1.7f + 10.0f);
