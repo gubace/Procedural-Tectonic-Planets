@@ -33,7 +33,6 @@ void Movement::movePlates(float deltaTime) {
     }
     tectonicPhenomena = detectPhenomena();
     triggerEvents();
-    assignClosestPhenomenonToVertices();
 }
 
 // private ========================================
@@ -220,31 +219,6 @@ void Movement::movePlate(Plate& plate, float deltaTime) {
 
         // Mise à jour de la position du sommet
         vertexPos = rotatedPos;
-    }
-}
-
-void Movement::assignClosestPhenomenonToVertices() {
-    for (int vertexIdx = 0; vertexIdx < planet->vertices.size(); vertexIdx++) {
-        int closestPhenomenon = -1;
-        float closestDistance = 999.0f;
-        for (int phenomenonIdx = 0; phenomenonIdx < tectonicPhenomena.size(); phenomenonIdx++) {
-            const auto& phenomenon = tectonicPhenomena[phenomenonIdx];
-
-            if (phenomenon->getPlateA() != planet->verticesToPlates[vertexIdx] &&
-                phenomenon->getPlateB() != planet->verticesToPlates[vertexIdx]) {
-                continue; // this phenomenon does not involve the plate of the vertex
-            }
-
-            unsigned int phenomenonVertexIdx = phenomenon->getVertexIndex();
-            Vec3 phenomenonPos = planet->vertices[phenomenonVertexIdx];
-            Vec3 vertexPos = planet->vertices[vertexIdx];
-            float distance = (phenomenonPos - vertexPos).length();
-            if (distance < closestDistance) {
-                closestDistance = distance;
-                closestPhenomenon = phenomenonIdx;
-            }            
-        }
-        tectonicPhenomena[closestPhenomenon]->verticesClosestToPhenomenon.push_back(vertexIdx);
     }
 }
 

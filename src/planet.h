@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <map> 
 
 #include "Vec3.h"
 #include "crust.h"
@@ -16,6 +17,7 @@ class Plate {
     std::vector<unsigned int> vertices_indices;
     float plate_velocity;
     Vec3 rotation_axis;
+    std::map<unsigned int, std::vector<unsigned int>> closestFrontierVertices;
 };
 
 class Planet : public Mesh {
@@ -28,11 +30,12 @@ class Planet : public Mesh {
     float radius = 1.0f;
 
     Planet(float r) : radius(r) {
-        setupSphere(radius, 256, 128);
+        setupSphere(radius, 512, 256);
     }
 
     void generatePlates(unsigned int n_plates);
-    void splitPlates();
+    void findFrontierVertices();
+    void fillClosestFrontierVertices();
     void assignCrustParameters();
     void printCrustAt(unsigned int vertex_index);
 

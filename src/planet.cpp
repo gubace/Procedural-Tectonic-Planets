@@ -215,7 +215,8 @@ void Planet::generatePlates(unsigned int n_plates) {
     }
 
     detectVerticesNeighbors();
-    // splitPlates();
+    findFrontierVertices();
+    fillClosestFrontierVertices();
 
     std::uniform_real_distribution<float> dist01(0.1f, 0.9f);
     const float TWO_PI = 6.28318530717958647692f;
@@ -229,20 +230,28 @@ void Planet::generatePlates(unsigned int n_plates) {
     }
 }
 
-void Planet::splitPlates() {
-    for (int i = (int)triangles.size() - 1; i >= 0; i--) {
-        Triangle t = triangles[i];
-        unsigned int vIdx0 = t.v[0];
-        unsigned int plateV0 = verticesToPlates[vIdx0];
+void Planet::findFrontierVertices() {
+    for (int i = 0; i < vertices.size(); i++) {
+        std::vector<unsigned int> vertexNeighbors = neighbors[i];
+        unsigned int currentPlateIdx = verticesToPlates[i];
 
-        unsigned int vIdx1 = t.v[1];
-        unsigned int plateV1 = verticesToPlates[vIdx1];
+        for (int n = 0; n < vertexNeighbors.size(); n++) {
+            unsigned int neighborPlateIdx = verticesToPlates[n];
+            if (neighborPlateIdx != currentPlateIdx) {
+                Plate currentPlate = plates[currentPlateIdx];
+                currentPlate.closestFrontierVertices.insert({ i, std::vector<unsigned int>() });
+                return;
+            }
+        }
+    }
+}
 
-        unsigned int vIdx2 = t.v[2];
-        unsigned int plateV2 = verticesToPlates[vIdx2];
-
-        if (plateV0 != plateV1 || plateV0 != plateV2 || plateV1 != plateV2) {
-            removeTriangle(i);
+void Planet::fillClosestFrontierVertices() {
+    for (Plate &plate : plates) {
+        for(unsigned int i : plate.vertices_indices) {
+            for (init-statement; condition; inc-expression) {
+            
+            }
         }
     }
 }

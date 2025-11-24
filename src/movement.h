@@ -25,5 +25,4 @@ class Movement {
     void movePlate(Plate& plate, float deltaTime);
     void triggerEvents();
     std::vector<std::unique_ptr<TectonicPhenomenon>> detectPhenomena();
-    void assignClosestPhenomenonToVertices();
 };
