@@ -33,6 +33,7 @@ void Movement::movePlates(float deltaTime) {
     }
     tectonicPhenomena = detectPhenomena();
     triggerEvents();
+    assignClosestPhenomenonToVertices();
 }
 
 // private ========================================

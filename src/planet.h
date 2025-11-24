@@ -39,6 +39,7 @@ class Planet : public Mesh {
     void detectVerticesNeighbors();
     std::vector<Vec3> vertexColorsForPlates() const;
     std::vector<Vec3> vertexColorsForCrustTypes() const;
+    std::vector<Vec3> vertexColorsForElevation() const;
 
     unsigned int findclosestVertex(const Vec3& point, Planet& srcPlanet);
     void resample(Planet& srcPlanet);

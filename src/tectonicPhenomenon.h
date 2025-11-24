@@ -12,7 +12,7 @@ class TectonicPhenomenon {
         ContinentalCollision,
         Rifting
     };
-    std::vector<unsigned int> verticesClosestToPhenomenon; // list of vertices whose closes phenomenon index is this
+    mutable std::vector<unsigned int> verticesClosestToPhenomenon; // list of vertices whose closes phenomenon index is this
 
     TectonicPhenomenon(Type t, unsigned int plateA, unsigned int plateB, unsigned int vertexIndex)
         : type(t), plate_a(plateA), plate_b(plateB), vertex_index(vertexIndex) {}
@@ -27,7 +27,7 @@ class TectonicPhenomenon {
 
     // Méthode virtuelle pure pour obtenir une description spécifique
     virtual std::string getDescription() const = 0;
-    virtual void triggerEvent(Planet & planet) const = 0;
+    virtual void triggerEvent(Planet & planet) = 0;
 
    protected:
     Type type;
@@ -59,7 +59,8 @@ class Subduction : public TectonicPhenomenon {
     float getConvergence() const { return convergence; }
     SubductionType getSubductionType() const { return subduction_type; }
 
-    void triggerEvent(Planet& planet) const override;
+    void triggerEvent(Planet& planet) override;
+
     std::string getDescription() const override {
         return "Subduction: " + reason + " (Convergence: " + std::to_string(convergence) + ")";
     }
@@ -82,7 +83,7 @@ class ContinentalCollision : public TectonicPhenomenon {
 
     float getMagnitude() const { return magnitude; }
 
-    void triggerEvent(Planet& planet) const override;
+    void triggerEvent(Planet& planet) override;
     std::string getDescription() const override {
         return "Continental Collision: " + description + " (Magnitude: " + std::to_string(magnitude) + ")";
     }
@@ -102,7 +103,7 @@ class Rifting : public TectonicPhenomenon {
 
     float getDivergence() const { return divergence; }
 
-    void triggerEvent(Planet& planet) const override;
+    void triggerEvent(Planet& planet) override;
     std::string getDescription() const override {
         return "Rifting: " + description + " (Divergence: " + std::to_string(divergence) + ")";
     }

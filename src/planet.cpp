@@ -317,7 +317,7 @@ void Planet::assignCrustParameters() {
 
         if (n < continent_threshold) {  // oceanic
 
-            float elevation = n * 4000.0f;
+            float elevation = 0.0f;
             float thickness = 7.0f + 2.0f * (n + 1.0f) * 0.5f + (isBoundary ? 1.0f : 0.0f);
 
             // age
@@ -362,6 +362,40 @@ std::vector<Vec3> Planet::vertexColorsForPlates() const {
             if (idx < out.size()) out[idx] = col;
         }
     }
+    return out;
+}
+
+
+std::vector<Vec3> Planet::vertexColorsForElevation() const {
+    std::vector<Vec3> out(vertices.size(), Vec3(0.0f, 0.0f, 0.0f)); // Initialisation sombre par défaut
+
+    // Trouver les altitudes minimale et maximale pour normaliser les couleurs
+    float minElevation = -8000.0f;
+    float maxElevation = 8000.0f;
+
+    for (size_t i = 0; i < vertices.size(); ++i) {
+        if (i < crust_data.size() && crust_data[i]) {
+            const Crust* crust = crust_data[i].get();
+            minElevation = std::min(minElevation, crust->relief_elevation);
+            maxElevation = std::max(maxElevation, crust->relief_elevation);
+        }
+    }
+
+    // Éviter les divisions par zéro si toutes les altitudes sont identiques
+    float elevationRange = maxElevation - minElevation;
+    if (elevationRange < 1e-6f) elevationRange = 1.0f;
+
+    // Générer les couleurs en fonction de l'altitude
+    for (size_t i = 0; i < vertices.size(); ++i) {
+        if (i < crust_data.size() && crust_data[i]) {
+            const Crust* crust = crust_data[i].get();
+            float normalizedElevation = (crust->relief_elevation - minElevation) / elevationRange;
+            out[i] = Vec3(normalizedElevation, normalizedElevation, normalizedElevation); // Gris en fonction de l'altitude
+        } else {
+            out[i] = Vec3(0.0f, 0.0f, 0.0f); // Noir si pas de données de croûte
+        }
+    }
+
     return out;
 }
 

@@ -30,10 +30,10 @@ void Planet::resample(Planet& srcPlanet) {
 
     std::vector<Vec3> srcVerticesCopy = srcPlanet.vertices;
 
-    SphericalGrid accel(srcVerticesCopy, 64); // résolution 64x64
+    SphericalGrid accel(srcVerticesCopy, srcPlanet, 64); // résolution 64x64
     printf("SphericalGrid built with %zu vertices\n", srcVerticesCopy.size());
 
-    for(int i = 0; i < N; ++i) { //TODO c'est lent Octree ?
+    for(int i = 0; i < N; ++i) {
         Vec3 currentVertex = vertices[i];
         unsigned int closestIndex = accel.nearest(currentVertex);
         

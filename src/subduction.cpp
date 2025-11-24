@@ -1,14 +1,18 @@
 #include <iostream>
+#include <cmath>
+#include <cstdio>
+#include <limits>
+#include <vector>
 
 #include "tectonicPhenomenon.h"
 #include "planet.h"
-
+#include "SphericalGrid.h"
 
 float r_s = 10.0f; // Distance that impacts uplift effect
-float max_velocity = 5.0f; // TODO: idk, Timothée knows
+float max_velocity = 5.0f; // TODO: idk, Timothée knows -> In fact Timothée doesn't know either
 float subductionUplift = 0.1f;
-float minZ = -1000; // TODO: jsp Timothée must know
-float maxZ = 1000; // TODO: jsp
+float minZ = -8000; 
+float maxZ = 8000; 
 
 float f(float d) {
     if (d <= 0.0f) return 1.0f;
@@ -48,15 +52,24 @@ float elevationImpact(float z) {
     return normalizedZ;
 }
 
-void Subduction::triggerEvent(Planet& planet) const {
-    // std::cout << "Subduction event triggered at vertex " << getVertexIndex() << " between plates " << getPlateA() << " and " << getPlateB() << std::endl;
+void Subduction::triggerEvent(Planet& planet) {
+    //std::cout << "Subduction event triggered at vertex " << getVertexIndex() << " between plates " << getPlateA() << " and " << getPlateB() << std::endl;
     Plate& plateUnder = planet.plates[plate_under];
     Plate& plateOver = planet.plates[plate_over];
 
     unsigned int phenomenonVertexIndex = getVertexIndex();
+
+    //SphericalGrid accel(planet.vertices, planet, 64);
+
+    //verticesClosestToPhenomenon = accel.neighbors(planet.vertices[phenomenonVertexIndex]);
+
+    //std::cout << " - Affecting " << verticesClosestToPhenomenon.size() << " vertices near the subduction front." << std::endl;
+
     for (unsigned int vertexIndex : verticesClosestToPhenomenon) {
         unsigned int vertex_plate = planet.verticesToPlates[vertexIndex];
+
         if (plate_under == vertex_plate) {
+            planet.crust_data[vertexIndex]->is_under_subduction = true;
             continue; // We don't care about the plate that is under
         }
 
@@ -68,6 +81,8 @@ void Subduction::triggerEvent(Planet& planet) const {
 
         float newElevation = subductionUplift * f(d) * g(v) * h(z);
         planet.crust_data[vertexIndex]->relief_elevation += newElevation;
+        
+        //std::cout << " - Vertex " << vertexIndex << " elevated by " << newElevation << " to " << planet.crust_data[vertexIndex]->relief_elevation << std::endl;
     }
     
 }

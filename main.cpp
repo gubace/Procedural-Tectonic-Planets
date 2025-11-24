@@ -127,6 +127,9 @@ void updateDisplayedColors() {
     } else if (display_plates_mode == 1) {
         mesh.colors = planet.vertexColorsForCrustTypes();
         //printf("Updated colors for crust types display.\n");
+    } else if (display_plates_mode == 2) {
+        mesh.colors = planet.vertexColorsForElevation();
+        //printf("Updated colors for elevation display.\n");
     }
     glutPostRedisplay();
 }
@@ -157,10 +160,11 @@ void init() {
     glDepthFunc (GL_LESS);
     glEnable (GL_DEPTH_TEST);
     glClearColor (0.2f, 0.2f, 0.3f, 1.0f);
+
     glEnable(GL_COLOR_MATERIAL);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
-    planet.generatePlates(15);
+    planet.generatePlates(3);
     planet.assignCrustParameters();
 
     
@@ -432,7 +436,7 @@ void key (unsigned char keyPressed, int x, int y) {
         break;
 
     case 'p': //Press p key to display plates
-        display_plates_mode = (display_plates_mode + 1) % 2;
+        display_plates_mode = (display_plates_mode + 1) % 3;
         updateDisplayedColors();
         break;
 

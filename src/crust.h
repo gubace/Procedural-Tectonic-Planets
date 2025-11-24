@@ -37,6 +37,8 @@ class Crust {
     float thickness;         // e
     float relief_elevation;  // z
 
+    bool is_under_subduction = false;
+
     Crust(CrustType t, float thick, float elev)
         : type(t), thickness(thick), relief_elevation(elev) {}
 
@@ -66,7 +68,7 @@ class OceanicCrust : public Crust {
 class ContinentalCrust : public Crust {
    public:
     float orogeny_age;         // ac
-    OrogenyType orogeny_type;  // use enum instead of string
+    OrogenyType orogeny_type;  
     Vec3 fold_dir;             // f
 
     ContinentalCrust(float thick, float elev, float orogeny_age_,
