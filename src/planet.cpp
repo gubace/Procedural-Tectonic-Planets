@@ -8,6 +8,7 @@
 
 #include "FastNoiseLite.h"
 #include "crust.h"
+#include "SphericalGrid.h"
 
 // convert HSV->RGB
 static Vec3 hsv2rgb(float h, float s, float v) {
@@ -238,20 +239,34 @@ void Planet::findFrontierVertices() {
         for (int n = 0; n < vertexNeighbors.size(); n++) {
             unsigned int neighborPlateIdx = verticesToPlates[n];
             if (neighborPlateIdx != currentPlateIdx) {
-                Plate currentPlate = plates[currentPlateIdx];
+                Plate &currentPlate = plates[currentPlateIdx];
                 currentPlate.closestFrontierVertices.insert({ i, std::vector<unsigned int>() });
-                return;
+                break;
             }
         }
     }
 }
 
 void Planet::fillClosestFrontierVertices() {
-    for (Plate &plate : plates) {
-        for(unsigned int i : plate.vertices_indices) {
-            for (init-statement; condition; inc-expression) {
+    // Parcourir toutes les plaques
+    for (Plate& plate : plates) {
+
+        // Parcourir tous les sommets de la plaque
+        for (unsigned int vertexIndex : plate.vertices_indices) {
+            float minDistance = std::numeric_limits<float>::max();
             
-            }
+            for(const auto& frontierPair : plate.closestFrontierVertices) {
+                unsigned int frontierIndex = frontierPair.first;
+                
+                Vec3 diff = vertices[vertexIndex];
+                diff -= vertices[frontierIndex];
+                float distance = diff.length();
+                
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    plate.closestFrontierVertices[frontierIndex].push_back(vertexIndex);
+                }
+            }  
         }
     }
 }
