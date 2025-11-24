@@ -12,7 +12,6 @@ class TectonicPhenomenon {
         ContinentalCollision,
         Rifting
     };
-    mutable std::vector<unsigned int> verticesClosestToPhenomenon; // list of vertices whose closes phenomenon index is this
 
     TectonicPhenomenon(Type t, unsigned int plateA, unsigned int plateB, unsigned int vertexIndex)
         : type(t), plate_a(plateA), plate_b(plateB), vertex_index(vertexIndex) {}
