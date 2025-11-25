@@ -1,9 +1,11 @@
 #include <utility>
 #include <limits>
+#include <utility>
 
 #include "planet.h"
 #include "crust.h"
 #include "SphericalGrid.h"
+#include "tectonicPhenomenon.h"
 
 
 unsigned int Planet::findclosestVertex(const Vec3& point, Planet& srcPlanet){
@@ -36,8 +38,32 @@ void Planet::resample(Planet& srcPlanet) {
     for(int i = 0; i < N; ++i) {
         Vec3 currentVertex = vertices[i];
         unsigned int closestIndex = accel.nearest(currentVertex);
+
+        if((srcPlanet.vertices[closestIndex] - currentVertex).squareLength() > 0.0005f) {
+            std::cout << "Creating rifting event at vertex " << i << " due to large distance to closest vertex.\n";
+            std::pair<uint32_t, uint32_t> nearestDifferentPlates = accel.nearestFromDifferentPlates(currentVertex, srcPlanet);
+            
+            // Calculer le point milieu sur la ridge
+            Vec3 q = (srcPlanet.vertices[nearestDifferentPlates.first] + srcPlanet.vertices[nearestDifferentPlates.second]) * 0.5f;
+            
+            Vec3 closestPlateBoundary = srcPlanet.vertices[nearestDifferentPlates.first];
+
+
+
+            Rifting riftingEvent(
+                srcPlanet.verticesToPlates[nearestDifferentPlates.first],
+                srcPlanet.verticesToPlates[nearestDifferentPlates.second],
+                i,
+                0.02f,
+                closestPlateBoundary,
+                q,
+                "Auto-generated rifting event during resampling"
+            );
+
+            riftingEvent.triggerEvent(*this);
+        }
         
-        if (closestIndex < srcPlanet.crust_data.size() && srcPlanet.crust_data[closestIndex]) {
+        else if (closestIndex < srcPlanet.crust_data.size() && srcPlanet.crust_data[closestIndex]) {
             const Crust* srcCrust = srcPlanet.crust_data[closestIndex].get();
             
             const OceanicCrust* oc = dynamic_cast<const OceanicCrust*>(srcCrust);

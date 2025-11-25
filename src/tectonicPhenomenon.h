@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+#include "Vec3.h"
+
 class Planet; // forward declaration to avoid circular include with planet.h
 
 class TectonicPhenomenon {
@@ -94,10 +96,25 @@ class ContinentalCollision : public TectonicPhenomenon {
 
 class Rifting : public TectonicPhenomenon {
    public:
+
     Rifting(unsigned int plateA, unsigned int plateB, unsigned int vertexIndex,
             float divergenceRate, const std::string& description)
+            : TectonicPhenomenon(Type::Rifting, plateA, plateB, vertexIndex),
+            divergence(divergenceRate),
+            description(description) {}
+
+    Rifting(unsigned int plateA,
+            unsigned int plateB, 
+            unsigned int vertexIndex,
+            float divergenceRate,
+            Vec3 closestPlateBoundary,
+            Vec3 q, 
+            const std::string& description)
+
         : TectonicPhenomenon(Type::Rifting, plateA, plateB, vertexIndex),
           divergence(divergenceRate),
+          closestPlateBoundary(closestPlateBoundary),
+          q(q),
           description(description) {}
 
     float getDivergence() const { return divergence; }
@@ -108,6 +125,8 @@ class Rifting : public TectonicPhenomenon {
     }
 
    private:
+    Vec3 q = Vec3(0.0f,0.0f,0.0f);
+    Vec3 closestPlateBoundary;
     float divergence;
-    std::string description;
+    std::string description = "";
 };
