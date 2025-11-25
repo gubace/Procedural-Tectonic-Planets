@@ -143,3 +143,51 @@ static void drawTectonicPhenomenaMarkers(const Planet & planet, const std::vecto
     
     glPopAttrib();
 }
+
+// convert HSV->RGB
+static Vec3 hsv2rgb(float h, float s, float v) {
+    float r = 0, g = 0, b = 0;
+    if (s <= 0.0f) {
+        r = g = b = v;
+    } else {
+        float hh = h * 6.0f;
+        int i = (int)std::floor(hh);
+        float f = hh - i;
+        float p = v * (1.0f - s);
+        float q = v * (1.0f - s * f);
+        float t = v * (1.0f - s * (1.0f - f));
+        switch (i % 6) {
+            case 0:
+                r = v;
+                g = t;
+                b = p;
+                break;
+            case 1:
+                r = q;
+                g = v;
+                b = p;
+                break;
+            case 2:
+                r = p;
+                g = v;
+                b = t;
+                break;
+            case 3:
+                r = p;
+                g = q;
+                b = v;
+                break;
+            case 4:
+                r = t;
+                g = p;
+                b = v;
+                break;
+            case 5:
+                r = v;
+                g = p;
+                b = q;
+                break;
+        }
+    }
+    return Vec3(r * 0.2, g * 0.6, b);
+}

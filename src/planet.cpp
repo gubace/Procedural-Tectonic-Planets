@@ -1,4 +1,4 @@
-#include "planet.h"
+
 
 #include <iostream>
 #include <limits>
@@ -6,57 +6,14 @@
 #include <random>
 #include <unordered_set>
 
+
+#include "planet.h"
 #include "FastNoiseLite.h"
 #include "crust.h"
 #include "SphericalGrid.h"
+#include "util.h"
 
-// convert HSV->RGB
-static Vec3 hsv2rgb(float h, float s, float v) {
-    float r = 0, g = 0, b = 0;
-    if (s <= 0.0f) {
-        r = g = b = v;
-    } else {
-        float hh = h * 6.0f;
-        int i = (int)std::floor(hh);
-        float f = hh - i;
-        float p = v * (1.0f - s);
-        float q = v * (1.0f - s * f);
-        float t = v * (1.0f - s * (1.0f - f));
-        switch (i % 6) {
-            case 0:
-                r = v;
-                g = t;
-                b = p;
-                break;
-            case 1:
-                r = q;
-                g = v;
-                b = p;
-                break;
-            case 2:
-                r = p;
-                g = v;
-                b = t;
-                break;
-            case 3:
-                r = p;
-                g = q;
-                b = v;
-                break;
-            case 4:
-                r = t;
-                g = p;
-                b = v;
-                break;
-            case 5:
-                r = v;
-                g = p;
-                b = q;
-                break;
-        }
-    }
-    return Vec3(r * 0.2, g * 0.6, b);
-}
+
 
 void Planet::detectVerticesNeighbors() {
     neighbors.resize(vertices.size());
@@ -247,38 +204,31 @@ void Planet::findFrontierVertices() {
     }
 }
 
-void Planet::fillClosestFrontierVertices() {
-    // Pour chaque plaque
+void Planet::fillClosestFrontierVertices() { //TODO Optimiser cette fonction
+
     for (Plate& plate : plates) {
-        // Construire la liste des sommets frontières de cette plaque
         std::vector<unsigned int> frontierVertices;
         for (const auto& pair : plate.closestFrontierVertices) {
             frontierVertices.push_back(pair.first);
         }
 
-        if (frontierVertices.empty()) continue; // Pas de frontières détectées
-
-        // Pour chaque sommet de la plaque, trouver le sommet frontière le plus proche
+        if (frontierVertices.empty()) continue;
         std::map<unsigned int, std::vector<unsigned int>> newMapping;
-        
+
         for (unsigned int vertexIdx : plate.vertices_indices) {
             float minDist = std::numeric_limits<float>::max();
             unsigned int closestFrontier = frontierVertices[0];
 
-            // Chercher le sommet frontière le plus proche
             for (unsigned int frontierIdx : frontierVertices) {
                 float dist = (vertices[vertexIdx] - vertices[frontierIdx]).length();
+
                 if (dist < minDist) {
                     minDist = dist;
                     closestFrontier = frontierIdx;
                 }
             }
-
-            // Ajouter ce sommet à la liste des sommets associés à cette frontière
             newMapping[closestFrontier].push_back(vertexIdx);
         }
-
-        // Remplacer l'ancienne structure par la nouvelle
         plate.closestFrontierVertices = newMapping;
     }
 }

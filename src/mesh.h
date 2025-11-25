@@ -50,7 +50,7 @@ class Mesh {
         
         void computeNormals();
 
-        void setupSphere(float radius = 1.0f, unsigned int sectors = 32, unsigned int stacks = 16);
+        void setupSphere(float radius, unsigned int numPoints);
 
         void removeTriangle(unsigned int idx);
 };

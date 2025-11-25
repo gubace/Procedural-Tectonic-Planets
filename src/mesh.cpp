@@ -1,124 +1,242 @@
 #include "mesh.h"
+#include "SphericalGrid.h"
 
-void Mesh::setupSphere(float radius, unsigned int sectors, unsigned int stacks) {
-    if (sectors < 3) sectors = 3;
-    if (stacks < 2) stacks = 2;
+#include <map>
+#include <cmath>
+#include <set>
+#include <limits>
+#include <algorithm>
+
+
+
+void Mesh::setupSphere(float radius, unsigned int numPoints) {
     vertices.clear();
     normals.clear();
     triangles.clear();
     triangle_normals.clear();
-
+    
+    if (numPoints < 4) numPoints = 4;
+    
     const float PI = 3.14159265358979323846f;
+    const float PHI = (1.0f + std::sqrt(5.0f)) / 2.0f;
+    
+    //Generate Fibonacci sphere points
+    std::cout << "Generating " << numPoints << " Fibonacci points..." << std::endl;
+    for (unsigned int i = 0; i < numPoints; ++i) {
+        float y = 1.0f - (2.0f * i) / (numPoints - 1.0f);
+        float radiusAtY = std::sqrt(1.0f - y * y);
+        const float goldenAngle = 2.0f * PI * (1.0f - 1.0f / PHI);
+        float theta = goldenAngle * i;
+        
+        float x = radiusAtY * std::cos(theta);
+        float z = radiusAtY * std::sin(theta);
+        
+        Vec3 pos(x * radius, y * radius, z * radius);
+        vertices.push_back(pos);
+        
+        Vec3 normal(x, y, z);
+        normal.normalize();
+        normals.push_back(normal);
+    }
+    
+    
+    unsigned int northPole = 0;
+    unsigned int southPole = numPoints - 1;
+    
+    std::cout << "Building neighbor graph..." << std::endl;
+    
+    const unsigned int K = 8; // Ne pas toucher ce paramètre
+    std::vector<std::set<unsigned int>> adjacency(numPoints);
+    
+    const unsigned int gridRes = std::max(32u, (unsigned int)std::sqrt(numPoints) / 2);
+    std::vector<std::vector<unsigned int>> spatialGrid(gridRes * gridRes);
+    
 
-    // Generate vertices (stacks+1) x (sectors+1) to duplicate seam vertex for simpler indexing
-    for (unsigned int i = 0; i <= stacks; ++i) {
-        float stackRatio = static_cast<float>(i) / static_cast<float>(stacks); // 0..1
-        float phi = PI * stackRatio; // 0..pi
+    for (unsigned int i = 0; i < numPoints; ++i) {
+        Vec3 p = vertices[i] / vertices[i].length();
+        float theta = std::atan2(p[2], p[0]);
+        float phi   = std::acos(p[1]);
+        
+        int u = (int)((theta + PI) / (2.0f * PI) * gridRes) % gridRes;
+        int v = (int)(phi / PI * gridRes);
+        if (v >= (int)gridRes) v = gridRes - 1;
+        
+        spatialGrid[v * gridRes + u].push_back(i);
+    }
+    
 
-        float sinPhi = std::sin(phi);
-        float cosPhi = std::cos(phi);
+    for (unsigned int i = 0; i < numPoints; ++i) {
+        Vec3 p = vertices[i] / vertices[i].length();
+        float theta = std::atan2(p[2], p[0]);
+        float phi   = std::acos(p[1]);
+        
+        int u = (int)((theta + PI) / (2.0f * PI) * gridRes) % gridRes;
+        int v = (int)(phi / PI * gridRes);
+        if (v >= (int)gridRes) v = gridRes - 1;
+        
+        std::vector<std::pair<float, unsigned int>> candidates;
+        
 
-        for (unsigned int j = 0; j <= sectors; ++j) {
-            float sectorRatio = static_cast<float>(j) / static_cast<float>(sectors); // 0..1
-            float theta = 2.0f * PI * sectorRatio; // 0..2pi
+        int searchRadius = 2;
+        float absLat = std::abs(p[1]);
+        if (absLat > 0.98f) searchRadius = 8;
+        else if (absLat > 0.95f) searchRadius = 6;
+        else if (absLat > 0.90f) searchRadius = 5;
+        else if (absLat > 0.80f) searchRadius = 4;
+        
+        // Search in adaptive neighborhood
+        for (int dv = -searchRadius; dv <= searchRadius; ++dv) {
+            for (int du = -searchRadius; du <= searchRadius; ++du) {
+                int nu = (u + du + gridRes) % gridRes;
+                int nv = v + dv;
+                if (nv < 0 || nv >= (int)gridRes) continue;
+                
+                for (unsigned int j : spatialGrid[nv * gridRes + nu]) {
+                    if (i == j) continue;
+                    float dist = (vertices[i] - vertices[j]).squareLength();
+                    candidates.push_back({dist, j});
+                }
+            }
+        }
+        
 
-            float sinTheta = std::sin(theta);
-            float cosTheta = std::cos(theta);
-
-            float x = radius * sinPhi * cosTheta;
-            float y = radius * cosPhi;
-            float z = radius * sinPhi * sinTheta;
-
-            Vec3 pos(x, y, z);
-            vertices.push_back(pos);
-
-            // vertex normal (normalized position)
-            float nx = sinPhi * cosTheta;
-            float ny = cosPhi;
-            float nz = sinPhi * sinTheta;
-            float len = std::sqrt(nx*nx + ny*ny + nz*nz);
-            if (len == 0.f) len = 1.f;
-            normals.push_back( Vec3(nx/len, ny/len, nz/len) );
+        unsigned int kNeighbors = K;
+        
+        if (candidates.size() > 0) {
+            std::partial_sort(candidates.begin(), 
+                             candidates.begin() + std::min(kNeighbors, (unsigned int)candidates.size()),
+                             candidates.end());
+            
+            for (unsigned int k = 0; k < std::min(kNeighbors, (unsigned int)candidates.size()); ++k) {
+                unsigned int j = candidates[k].second;
+                adjacency[i].insert(j);
+                adjacency[j].insert(i);
+            }
         }
     }
+    
 
-    // Generate triangles using indexing
-    unsigned int ringVerts = sectors + 1;
-    for (unsigned int i = 0; i < stacks; ++i) {
-        for (unsigned int j = 0; j < sectors; ++j) {
-            unsigned int first = i * ringVerts + j;
-            unsigned int second = first + ringVerts;
+    auto connectPoleToRing = [&](unsigned int pole) {
+        std::vector<std::pair<float, unsigned int>> nearPole;
+        
+        for (unsigned int i = 0; i < numPoints; ++i) {
+            if (i == pole) continue;
+            float dist = (vertices[i] - vertices[pole]).squareLength();
+            nearPole.push_back({dist, i});
+        }
+        
+        std::sort(nearPole.begin(), nearPole.end());
+        
+        unsigned int ringSize = std::min(8u, (unsigned int)nearPole.size());
+        std::vector<unsigned int> ring;
+        
+        for (unsigned int k = 0; k < ringSize; ++k) {
+            unsigned int neighbor = nearPole[k].second;
+            adjacency[pole].insert(neighbor);
+            adjacency[neighbor].insert(pole);
+            ring.push_back(neighbor);
+        }
+        
 
-            // two triangles per rectangular patch
-            triangles.push_back( Triangle(first, second, first + 1) );
-            triangles.push_back( Triangle(first + 1, second, second + 1) );
+        Vec3 polePos = vertices[pole];
+        Vec3 poleNormal = polePos / polePos.length();
+        
+
+        Vec3 refVec = (std::abs(poleNormal[1]) < 0.9f) ? Vec3(0, 1, 0) : Vec3(1, 0, 0);
+        Vec3 tangent = Vec3::cross(poleNormal, refVec);
+        tangent.normalize();
+        Vec3 bitangent = Vec3::cross(poleNormal, tangent);
+        
+        std::vector<std::pair<float, unsigned int>> angledRing;
+        for (unsigned int idx : ring) {
+            Vec3 toNeighbor = vertices[idx] - polePos;
+            float x = Vec3::dot(toNeighbor, tangent);
+            float y = Vec3::dot(toNeighbor, bitangent);
+            float angle = std::atan2(y, x);
+            angledRing.push_back({angle, idx});
+        }
+        
+        std::sort(angledRing.begin(), angledRing.end());
+        
+
+        for (size_t i = 0; i < angledRing.size(); ++i) {
+            unsigned int curr = angledRing[i].second;
+            unsigned int next = angledRing[(i + 1) % angledRing.size()].second;
+            adjacency[curr].insert(next);
+            adjacency[next].insert(curr);
+        }
+    };
+    
+    std::cout << "Connecting poles..." << std::endl;
+    connectPoleToRing(northPole);
+    connectPoleToRing(southPole);
+    
+
+    std::cout << "Building triangles..." << std::endl;
+    std::set<std::tuple<unsigned int, unsigned int, unsigned int>> triangle_set;
+    
+    for (unsigned int v0 = 0; v0 < numPoints; ++v0) {
+        std::vector<unsigned int> neighbors(adjacency[v0].begin(), adjacency[v0].end());
+        
+        if (neighbors.size() < 2) continue;
+        
+
+        for (size_t i = 0; i < neighbors.size(); ++i) {
+            unsigned int v1 = neighbors[i];
+            
+            for (size_t j = i + 1; j < neighbors.size(); ++j) {
+                unsigned int v2 = neighbors[j];
+                
+
+                if (adjacency[v1].find(v2) != adjacency[v1].end()) {
+
+                    std::vector<unsigned int> tri = {v0, v1, v2};
+                    std::sort(tri.begin(), tri.end());
+                    
+                    auto tri_tuple = std::make_tuple(tri[0], tri[1], tri[2]);
+                    
+                    if (triangle_set.find(tri_tuple) == triangle_set.end()) {
+                        triangle_set.insert(tri_tuple);
+                        
+
+                        Vec3 center = (vertices[v0] + vertices[v1] + vertices[v2]) / 3.0f;
+                        Vec3 e01 = vertices[v1] - vertices[v0];
+                        Vec3 e02 = vertices[v2] - vertices[v0];
+                        Vec3 normal = Vec3::cross(e01, e02);
+                        
+
+                        if (Vec3::dot(normal, center) <= 0) {
+                            triangles.push_back(Triangle(v0, v1, v2));
+                        } else {
+                            triangles.push_back(Triangle(v0, v2, v1));
+                        }
+                    }
+                }
+            }
         }
     }
-
-    // Compute triangle normals
+    
+    // Step 4: Compute triangle normals
+    std::cout << "Computing normals..." << std::endl;
     triangle_normals.resize(triangles.size());
     for (size_t t = 0; t < triangles.size(); ++t) {
-        const Triangle &tri = triangles[t];
-        const Vec3 &p0 = vertices[tri[0]];
-        const Vec3 &p1 = vertices[tri[1]];
-        const Vec3 &p2 = vertices[tri[2]];
-
-        // edge vectors
-        Vec3 e1 = p1;
-        e1 -= p0;
-        Vec3 e2 = p2;
-        e2 -= p0;
-
-        // cross product e1 x e2
-        Vec3 n( e1[1]*e2[2] - e1[2]*e2[1],
-                e1[2]*e2[0] - e1[0]*e2[2],
-                e1[0]*e2[1] - e1[1]*e2[0] );
-
-        // normalize
-        float nl = std::sqrt(n[0]*n[0] + n[1]*n[1] + n[2]*n[2]);
-        if (nl == 0.f) nl = 1.f;
-        n /= nl;
-
+        const Triangle& tri = triangles[t];
+        const Vec3& p0 = vertices[tri[0]];
+        const Vec3& p1 = vertices[tri[1]];
+        const Vec3& p2 = vertices[tri[2]];
+        
+        Vec3 e1 = p1 - p0;
+        Vec3 e2 = p2 - p0;
+        
+        Vec3 n = Vec3::cross(e1, e2);
+        n.normalize();
+        
         triangle_normals[t] = n;
     }
-
+    
     isSphere = true;
     colors.resize(vertices.size());
-}
-
-void Mesh::computeTrianglesNormals(){
-
-        triangle_normals.clear();
-        for( unsigned int i = 0 ; i < triangles.size() ;i++ ){
-            const Vec3 & e0 = vertices[triangles[i][1]] - vertices[triangles[i][0]];
-            const Vec3 & e1 = vertices[triangles[i][2]] - vertices[triangles[i][0]];
-            Vec3 n = Vec3::cross( e0, e1 );
-            n.normalize();
-            triangle_normals.push_back( n );
-            }
-
-
-        
-        }
-
-void Mesh::addNoise(){
-        for( unsigned int i = 0 ; i < vertices.size() ; i ++ ){
-            float factor = 0.03;
-            const Vec3 & p = vertices[i];
-            const Vec3 & n = normals[i];
-            vertices[i] = Vec3( p[0] + factor*((double)(rand()) / (double)
-            (RAND_MAX))*n[0], p[1] + factor*((double)(rand()) / (double)
-            (RAND_MAX))*n[1], p[2] + factor*((double)(rand()) / (double)
-            (RAND_MAX))*n[2]);
-        }
-    }
-
-
-
-void Mesh::computeNormals(){
-    computeTrianglesNormals();
-}
-
-void Mesh::removeTriangle(unsigned int idx) {
-    triangles.erase(triangles.begin() + idx);
+    
+    std::cout << "Fibonacci sphere created with " << vertices.size() 
+              << " vertices and " << triangles.size() << " triangles." << std::endl;
 }

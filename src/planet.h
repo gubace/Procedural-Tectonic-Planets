@@ -30,7 +30,7 @@ class Planet : public Mesh {
     float radius = 1.0f;
 
     Planet(float r) : radius(r) {
-        setupSphere(radius, 256, 128); //TODO Better sphere
+        setupSphere(radius, 8192 * 4); 
     }
 
     void generatePlates(unsigned int n_plates);

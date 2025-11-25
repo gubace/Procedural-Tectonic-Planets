@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <cmath>
+#include <limits>
 
 #include "Vec3.h"
 #include "planet.h"
