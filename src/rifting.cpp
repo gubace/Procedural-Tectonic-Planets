@@ -46,11 +46,9 @@ void Rifting::triggerEvent(Planet& planet) {
         zBar = planet.crust_data[vertexIndex]->relief_elevation;
     }
     
-    // Blend ridge profile with interpolated elevation
     // z(p,t) = (1-α) * zΓ + α * z̄
     float newElevation = (1.0f - alpha) * zGamma + alpha * zBar;
     
-    // Blend with oceanic depth for areas away from ridge
     float riftInfluenceRadius = 0.15f;
     float blendFactor = std::min(1.0f, dGamma / (riftInfluenceRadius * 0.5f));
     newElevation = (1.0f - blendFactor) * newElevation + blendFactor * zOceanic;
@@ -60,18 +58,16 @@ void Rifting::triggerEvent(Planet& planet) {
     pNorm.normalize();
     Vec3 ridgeDir = Vec3::cross(p - ridgePosition, pNorm);
     ridgeDir.normalize();
+
     
-    // Compute age of the oceanic crust
-    // Age proportional to distance from ridge divided by divergence rate
-    float age = dGamma / (divergence + 1e-6f); // Age in millions of years
+    float age = dGamma / (divergence + 1e-6f);
     
-    // Create or update oceanic crust at this vertex
+
     if (vertexIndex < planet.crust_data.size()) {
-        // Check if it's already oceanic crust
         OceanicCrust* existingOceanic = dynamic_cast<OceanicCrust*>(planet.crust_data[vertexIndex].get());
         
         if (existingOceanic) {
-            // Update existing oceanic crust (keep younger age)
+
             existingOceanic->relief_elevation = newElevation;
             existingOceanic->age = std::min(existingOceanic->age, age);
             existingOceanic->ridge_dir = ridgeDir;
@@ -80,8 +76,6 @@ void Rifting::triggerEvent(Planet& planet) {
                       << " | elevation: " << newElevation 
                       << " | age: " << age << " Ma" << std::endl;
         } else {
-            // Convert to oceanic crust or create new
-            // Typical oceanic crust thickness: 6-7 km
             float thickness = 6000.0f + (newElevation > 0 ? newElevation * 0.5f : 0.0f);
             
             planet.crust_data[vertexIndex] = std::make_unique<OceanicCrust>(
