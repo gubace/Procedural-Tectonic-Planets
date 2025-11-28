@@ -129,7 +129,7 @@ static void drawTectonicPhenomenaMarkers(const Planet & planet, const std::vecto
             case TectonicPhenomenon::Type::ContinentalCollision:
                 col = Vec3(0.8f, 0.0f, 0.8f); // purple
                 break;
-            case TectonicPhenomenon::Type::Rifting:
+            case TectonicPhenomenon::Type::crustGeneration:
                 col = Vec3(0.0f, 0.8f, 1.0f); // cyan
                 break;
         }

@@ -185,7 +185,7 @@ std::vector<std::unique_ptr<TectonicPhenomenon>> Movement::detectPhenomena() {
                     riftReason = "mixed rifting zone";
                 }
 
-                out.push_back(std::make_unique<Rifting>(
+                out.push_back(std::make_unique<crustGeneration>(
                     (unsigned int)pa, (unsigned int)pb, v,
                     divergence, riftReason));
             }

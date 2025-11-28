@@ -12,3 +12,12 @@ Move the plates and modify the parameters according to the type of interaction b
 
 Here, remeshing is performed to keep the plates well-formed. A new sphere is created and the plates are reconstructed. For the new sphere, the most relevant points of the plates are taken after subduction and collision have been applied.
 At this stage, plate rifting and oceanic crust generation are computed.
+
+
+#done
+
+## ContinentalCollision -> figure out
+
+## Plate Rifting like in the paper -> random event were a plate cut itself
+
+## Start Amplification step.

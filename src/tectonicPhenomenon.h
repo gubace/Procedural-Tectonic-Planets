@@ -12,7 +12,7 @@ class TectonicPhenomenon {
     enum class Type : uint8_t {
         Subduction,
         ContinentalCollision,
-        Rifting
+        crustGeneration
     };
 
     TectonicPhenomenon(Type t, unsigned int plateA, unsigned int plateB, unsigned int vertexIndex)
@@ -94,16 +94,16 @@ class ContinentalCollision : public TectonicPhenomenon {
     std::string description;
 };
 
-class Rifting : public TectonicPhenomenon {
+class crustGeneration : public TectonicPhenomenon {
    public:
 
-    Rifting(unsigned int plateA, unsigned int plateB, unsigned int vertexIndex,
+    crustGeneration(unsigned int plateA, unsigned int plateB, unsigned int vertexIndex,
             float divergenceRate, const std::string& description)
-            : TectonicPhenomenon(Type::Rifting, plateA, plateB, vertexIndex),
+            : TectonicPhenomenon(Type::crustGeneration, plateA, plateB, vertexIndex),
             divergence(divergenceRate),
             description(description) {}
 
-    Rifting(unsigned int plateA,
+    crustGeneration(unsigned int plateA,
             unsigned int plateB, 
             unsigned int vertexIndex,
             float divergenceRate,
@@ -111,7 +111,7 @@ class Rifting : public TectonicPhenomenon {
             Vec3 q, 
             const std::string& description)
 
-        : TectonicPhenomenon(Type::Rifting, plateA, plateB, vertexIndex),
+        : TectonicPhenomenon(Type::crustGeneration, plateA, plateB, vertexIndex),
           divergence(divergenceRate),
           closestPlateBoundary(closestPlateBoundary),
           q(q),
@@ -121,7 +121,7 @@ class Rifting : public TectonicPhenomenon {
 
     void triggerEvent(Planet& planet) override;
     std::string getDescription() const override {
-        return "Rifting: " + description + " (Divergence: " + std::to_string(divergence) + ")";
+        return "crustGeneration: " + description + " (Divergence: " + std::to_string(divergence) + ")";
     }
 
    private:

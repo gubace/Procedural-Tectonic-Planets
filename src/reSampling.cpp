@@ -50,7 +50,7 @@ void Planet::resample(Planet& srcPlanet) {
 
 
 
-            Rifting riftingEvent(
+            crustGeneration crustGenerationEvent(
                 srcPlanet.verticesToPlates[nearestDifferentPlates.first],
                 srcPlanet.verticesToPlates[nearestDifferentPlates.second],
                 i,
@@ -60,7 +60,7 @@ void Planet::resample(Planet& srcPlanet) {
                 "Auto-generated rifting event during resampling"
             );
 
-            riftingEvent.triggerEvent(*this);
+            crustGenerationEvent.triggerEvent(*this);
         }
         
         else if (closestIndex < srcPlanet.crust_data.size() && srcPlanet.crust_data[closestIndex]) {

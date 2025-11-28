@@ -5,16 +5,16 @@
 #include "planet.h"
 #include "crust.h"
 
-void Rifting::triggerEvent(Planet& planet) {
+void crustGeneration::triggerEvent(Planet& planet) {
 
     if (q.length() == 0) {
-        //std::cerr << "Error: Ridge position 'q' is not defined for rifting event." << std::endl;
+        //std::cerr << "Error: Ridge position 'q' is not defined for crustGeneration event." << std::endl;
         return;
     }
 
     unsigned int vertexIndex = getVertexIndex();
     
-    std::cout << "Rifting event triggered at vertex " << vertexIndex 
+    std::cout << "crustGeneration event triggered at vertex " << vertexIndex 
               << " between plates " << getPlateA() << " and " << getPlateB() << std::endl;
     
     Vec3 p = planet.vertices[vertexIndex];
