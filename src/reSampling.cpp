@@ -39,7 +39,7 @@ void Planet::resample(Planet& srcPlanet) {
         Vec3 currentVertex = vertices[i];
         unsigned int closestIndex = accel.nearest(currentVertex);
 
-        if((srcPlanet.vertices[closestIndex] - currentVertex).squareLength() > 0.0005f) {
+        if((srcPlanet.vertices[closestIndex] - currentVertex).squareLength() > 0.0002f) {
             std::cout << "Creating rifting event at vertex " << i << " due to large distance to closest vertex.\n";
             std::pair<uint32_t, uint32_t> nearestDifferentPlates = accel.nearestFromDifferentPlates(currentVertex, srcPlanet);
             

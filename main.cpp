@@ -411,7 +411,7 @@ void key (unsigned char keyPressed, int x, int y) {
         break;
 
     case 'm': //Press m key to move the plates
-        if (nbSteps < 25) {
+        if (nbSteps < 15) {
             movement_controller.movePlates(timeStep);
             mesh = planet;
             updateDisplayedColors();
@@ -435,31 +435,6 @@ void key (unsigned char keyPressed, int x, int y) {
         }
         break;
 
-    case 'k':
-    {
-        // Faire avancer la simulation
-        for(int i = 0; i < 25; i++) {
-            movement_controller.movePlates(timeStep);
-            mesh = planet;
-            updateDisplayedColors();
-            timeStep++;
-        }
-        
-        
-        Planet newPlanet(1.0f);
-        newPlanet.resample(planet);
-        
-        planet = std::move(newPlanet);
-        
-        
-        movement_controller = Movement(planet);
-
-        mesh = planet;
-        updateDisplayedColors();
-
-        printf("Resampled planet.\n");
-    }
-    break;
 
     case 'b': // toggle subduction markers and compute once
         display_phenomena = !display_phenomena;
@@ -487,6 +462,7 @@ void key (unsigned char keyPressed, int x, int y) {
             
             mesh = planet;
             updateDisplayedColors();
+            nbSteps = 0;
             printf("Resampled planet.\n");
         }
         break;

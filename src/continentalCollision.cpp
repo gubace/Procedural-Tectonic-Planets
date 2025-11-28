@@ -9,7 +9,7 @@
 #include "planet.h"
 #include "crust.h"
 
-const float COLLISION_RADIUS = 0.2f;        // Rayon d'influence de la collision
+const float COLLISION_RADIUS = 0.1f;        // Rayon d'influence de la collision
 const float MOUNTAIN_HEIGHT = 3000.0f;      // Hauteur des montagnes créées (en mètres)
 const float MOUNTAIN_WIDTH = 0.04f;         // Largeur de la zone de montagne
 const float SMOOTHNESS = 5.0f; 

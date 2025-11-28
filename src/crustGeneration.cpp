@@ -35,7 +35,7 @@ void crustGeneration::triggerEvent(Planet& planet) {
     float zGamma = maxElevation * std::exp(-(dGamma * dGamma) / (2.0f * width * width));
     
     
-    float baseDepth = -4000.0f;
+    float baseDepth = -8000.0f;
     float coefficient = 350.0f;
     float zOceanic = baseDepth - coefficient * std::sqrt(dGamma);
     
@@ -46,9 +46,10 @@ void crustGeneration::triggerEvent(Planet& planet) {
     }
     
     
-    float newElevation = (1.0f - alpha) * zGamma + alpha * zBar;
+    //float newElevation = (1.0f - alpha) * zGamma + alpha * zBar;
+    float newElevation = -2000.0f;;
     
-    float riftInfluenceRadius = 0.15f;
+    float riftInfluenceRadius = 0.08f;
     float blendFactor = std::min(1.0f, dGamma / (riftInfluenceRadius * 0.5f));
     newElevation = (1.0f - blendFactor) * newElevation + blendFactor * zOceanic;
     
@@ -72,7 +73,7 @@ void crustGeneration::triggerEvent(Planet& planet) {
             existingOceanic->ridge_dir = ridgeDir;
             
         } else {
-            float thickness = 6000.0f + (newElevation > 0 ? newElevation * 0.5f : 0.0f);
+            float thickness = 1000.0f + (newElevation > 0 ? newElevation * 0.5f : 0.0f);
             
             planet.crust_data[vertexIndex] = std::make_unique<OceanicCrust>(
                 thickness,
