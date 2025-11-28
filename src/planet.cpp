@@ -319,7 +319,7 @@ void Planet::assignCrustParameters() {
             crust_data[i].reset(new OceanicCrust(thickness, elevation, age, ridge_dir));
         } else {  // continental
 
-            float elevation = (n - continent_threshold) * 3500.0f;
+            float elevation = (n - continent_threshold) * 2000.0f;
             float thickness = 30.0f + 10.0f * n + (isBoundary ? 2.0f : 0.0f);
 
             float ageNoise = noise.GetNoise(p[0] * 1.2f + 10.0f, p[1] * 0.9f + 10.0f, p[2] * 1.7f + 10.0f);
@@ -435,7 +435,7 @@ std::vector<Vec3> Planet::vertexColorsForCrustTypes() const {
             Vec3 mountain(0.45f, 0.30f, 0.10f);
             Vec3 col = mix(lowland, mountain, t);
 
-            if (elev > 3000.0f) {
+            if (elev > 4000.0f) {
                 float snow = clamp01((elev - 2500.0f) / 1500.0f);
                 col = mix(col, Vec3(1.0f, 1.0f, 1.0f), snow);
             }

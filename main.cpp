@@ -49,37 +49,6 @@ struct Transformation {
 };
 
 
-bool contain(std::vector<unsigned int> const & i_vector, unsigned int element) {
-    for (unsigned int i = 0; i < i_vector.size(); i++) {
-        if (i_vector[i] == element) return true;
-    }
-    return false;
-}
-
-void collect_one_ring (std::vector<Vec3> const & i_vertices,
-                       std::vector< Triangle > const & i_triangles,
-                       std::vector<std::vector<unsigned int> > & o_one_ring) {
-    o_one_ring.clear();
-    o_one_ring.resize(i_vertices.size()); //one-ring of each vertex, i.e. a list of vertices with which it shares an edge
-    //Parcourir les triangles et ajouter les voisins dans le 1-voisinage
-    //Attention verifier que l'indice n'est pas deja present
-    for (unsigned int i = 0; i < i_triangles.size(); i++) {
-        //Tous les points opposés dans le triangle sont reliés
-        for (int j = 0; j < 3; j++) {
-            for (int k = 0; k < 3; k++) {
-                if (j != k) {
-                    if (!contain(o_one_ring[i_triangles[i][j]], i_triangles[i][k])) {
-                        o_one_ring[i_triangles[i][j]].push_back(i_triangles[i][k]);
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-
-
 
 
 //Input mesh loaded at the launch of the application
@@ -87,6 +56,7 @@ Mesh mesh;
 
 Planet planet(1.0f);
 Movement movement_controller(planet);
+int nbSteps = 0;
 float timeStep = 1.0f;
 
 std::vector< float > current_field; //normalized filed of each vertex
@@ -441,10 +411,28 @@ void key (unsigned char keyPressed, int x, int y) {
         break;
 
     case 'm': //Press m key to move the plates
-        movement_controller.movePlates(timeStep);
-        mesh = planet;
-        updateDisplayedColors();
-        timeStep++;
+        if (nbSteps < 25) {
+            movement_controller.movePlates(timeStep);
+            mesh = planet;
+            updateDisplayedColors();
+            timeStep++;
+            nbSteps++;
+            printf("Moved plates: step %d\n", nbSteps);
+        }else {
+            nbSteps = 0;
+            Planet newPlanet(1.0f);
+            newPlanet.resample(planet);
+            
+            planet = std::move(newPlanet);
+            
+            
+            movement_controller = Movement(planet);
+
+            mesh = planet;
+            updateDisplayedColors();
+
+            printf("Resampled planet.\n");
+        }
         break;
 
     case 'k':
