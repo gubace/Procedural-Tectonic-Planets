@@ -8,8 +8,8 @@
 #include "planet.h"
 
 float r_s = 0.1f; // Distance that impacts uplift effect
-float max_velocity = 5.0f; // TODO: idk, Timothée knows -> In fact Timothée doesn't know either
-float subductionUplift = 100.0f;
+float max_velocity = 1.0f; // TODO: idk, Timothée knows -> In fact Timothée doesn't know either
+float subductionUplift = 500.0f;
 float minZ = -8000; 
 float maxZ = 8000; 
 

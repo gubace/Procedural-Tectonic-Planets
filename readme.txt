@@ -16,8 +16,16 @@ At this stage, plate rifting and oceanic crust generation are computed.
 
 #done
 
-## ContinentalCollision -> figure out
+## ContinentalCollision -> done ?
+
+## Assure plates are 1 bloc
+
+## Fix ocean holes in continents
 
 ## Plate Rifting like in the paper -> random event were a plate cut itself
 
 ## Start Amplification step.
+
+## fix triangulation -> Delaunay
+
+## GUI ?

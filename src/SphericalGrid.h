@@ -173,6 +173,77 @@ public:
         return {0, 1};
     }
 
+
+
+
+    std::vector<uint32_t> kNearest(const Vec3& q, unsigned int k = 8) const {
+        Vec3 qn = q / q.length();
+        
+        float theta = std::atan2(qn[1], qn[0]);
+        float phi = std::acos(qn[2]);
+        
+        int u = (int)((theta + M_PI) / (2.0f * M_PI) * m_resolution) % m_resolution;
+        int v = (int)(phi / M_PI * m_resolution);
+        if (v >= (int)m_resolution) v = m_resolution - 1;
+        
+        // Min-heap pour maintenir les k plus proches
+        // pair<distance², index>
+        std::vector<std::pair<float, uint32_t>> kClosest;
+        kClosest.reserve(k);
+        
+        auto updateKClosest = [&](float d2, uint32_t idx) {
+            if (kClosest.size() < k) {
+                kClosest.push_back({d2, idx});
+                std::push_heap(kClosest.begin(), kClosest.end());
+            } else if (d2 < kClosest.front().first) {
+                // Remplacer le plus éloigné
+                std::pop_heap(kClosest.begin(), kClosest.end());
+                kClosest.back() = {d2, idx};
+                std::push_heap(kClosest.begin(), kClosest.end());
+            }
+        };
+        
+        // Chercher dans un rayon croissant
+        for (int radius = 1; radius <= 5; ++radius) {
+            for (int dv = -radius; dv <= radius; ++dv) {
+                for (int du = -radius; du <= radius; ++du) {
+                    int nu = (u + du + m_resolution) % m_resolution;
+                    int nv = v + dv;
+                    if (nv < 0 || nv >= (int)m_resolution) continue;
+                    
+                    for (uint32_t idx : m_cells[nv * m_resolution + nu]) {
+                        float d2 = (m_points[idx] - q).squareLength();
+                        updateKClosest(d2, idx);
+                    }
+                }
+            }
+            
+            // Early exit si on a k candidats et qu'on est assez loin
+            if (kClosest.size() >= k) {
+                // Estimer si les cellules suivantes peuvent contenir des points plus proches
+                float maxDistInHeap = kClosest.front().first;
+                float cellSize = (2.0f * M_PI) / m_resolution;
+                float nextRadius = (radius + 1) * cellSize;
+                
+                // Si le prochain radius est certainement plus loin que notre max, on arrête
+                if (nextRadius * nextRadius > maxDistInHeap * 1.5f) {
+                    break;
+                }
+            }
+        }
+        
+        // Extraire et trier les résultats
+        std::sort_heap(kClosest.begin(), kClosest.end());
+        
+        std::vector<uint32_t> result;
+        result.reserve(k);
+        for (const auto& p : kClosest) {
+            result.push_back(p.second);
+        }
+        
+        return result;
+    }
+
 private:
     const std::vector<Vec3>& m_points;
     unsigned int m_resolution;

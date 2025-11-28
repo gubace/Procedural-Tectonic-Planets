@@ -88,10 +88,48 @@ void Planet::resample(Planet& srcPlanet) {
             }
         }
 
-        unsigned int plateIndex = srcPlanet.verticesToPlates[closestIndex];
+        unsigned int plateIndex;
+        std::vector<unsigned int> neighbors = accel.kNearest(currentVertex, 8);
+        
+        if (neighbors.empty()) {
+            plateIndex = srcPlanet.verticesToPlates[closestIndex];
+        } else {
+            std::map<unsigned int, int> plateVotes;
+            
+            for (unsigned int neighborIdx : neighbors) {
+                if (neighborIdx < srcPlanet.verticesToPlates.size()) {
+                    unsigned int neighborPlate = srcPlanet.verticesToPlates[neighborIdx];
+                    plateVotes[neighborPlate]++;
+                }
+            }
+            
+            unsigned int majorityPlate = srcPlanet.verticesToPlates[closestIndex];
+            int maxVotes = 0;
+            
+            for (const auto& vote : plateVotes) {
+                if (vote.second > maxVotes) {
+                    maxVotes = vote.second;
+                    majorityPlate = vote.first;
+                }
+            }
+            
+
+            unsigned int closestPlate = srcPlanet.verticesToPlates[closestIndex];
+            int sameAsClosest = plateVotes[closestPlate];
+            
+            if (sameAsClosest < 3) {
+                plateIndex = majorityPlate;
+                std::cout << "Isolated vertex " << i << " reassigned from plate " 
+                          << closestPlate << " to plate " << majorityPlate 
+                          << " (votes: " << sameAsClosest << "/" << neighbors.size() << ")\n";
+            } else {
+                plateIndex = closestPlate;
+            }
+        }
         verticesToPlates[i] = plateIndex;
-        if (i % 1000 == 0) {
-            // std::cout << "Resampling vertex " << i << "/" << vertices.size() << "\n";
+
+        if (i % 5000 == 0) {
+            std::cout << "Resampling vertex " << i << "/" << vertices.size() << "\n";
         }
     }
 
@@ -113,10 +151,8 @@ void Planet::resample(Planet& srcPlanet) {
     findFrontierVertices();
     fillClosestFrontierVertices();
 
-    
-    for (Plate& plate : plates) {
-        plate.fillTerranes(*this);
-    }
+
+    fillAllTerranes();
 
 
 }

@@ -30,7 +30,7 @@ void crustGeneration::triggerEvent(Planet& planet) {
     float alpha = dGamma / (dGamma + dP + 1e-6f);
     
 
-    float maxElevation = 2500.0f;
+    float maxElevation = 4000.0f;
     float width = 0.05f;
     float zGamma = maxElevation * std::exp(-(dGamma * dGamma) / (2.0f * width * width));
     

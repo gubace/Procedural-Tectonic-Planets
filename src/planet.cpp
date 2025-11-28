@@ -306,12 +306,12 @@ void Planet::assignCrustParameters() {
 
         if (n < continent_threshold) {  // oceanic
 
-            float elevation = n * 8000.0f;
+            float elevation = -4000.0f;
             float thickness = 7.0f + 2.0f * (n + 1.0f) * 0.5f + (isBoundary ? 1.0f : 0.0f);
 
             // age
             float localNoise = noise.GetNoise(p[0] * 2.3f, p[1] * 1.7f, p[2] * 2.9f);
-            float age = (0.5f * (localNoise + 1.0f)) * 200.0f;
+            float age = 100.0f;//(0.5f * (localNoise + 1.0f)) * 200.0f;
             //if (isBoundary) age *= 0.2f;
 
             Vec3 ridge_dir = Vec3(0.0f, 0.0f, 0.0f);  // TODO : compute ridge direction properly
@@ -319,11 +319,11 @@ void Planet::assignCrustParameters() {
             crust_data[i].reset(new OceanicCrust(thickness, elevation, age, ridge_dir));
         } else {  // continental
 
-            float elevation = (n - continent_threshold) * 2500.0f;
+            float elevation = 100.0f;//(n - continent_threshold) * 2500.0f;
             float thickness = 30.0f + 10.0f * n + (isBoundary ? 2.0f : 0.0f);
 
             float ageNoise = noise.GetNoise(p[0] * 1.2f + 10.0f, p[1] * 0.9f + 10.0f, p[2] * 1.7f + 10.0f);
-            float orogeny_age = (0.5f * (ageNoise + 1.0f)) * 800.0f;
+            float orogeny_age = 10.0f;// (0.5f * (ageNoise + 1.0f)) * 800.0f;
             //if (!isBoundary) orogeny_age *= 1.2f;
 
             // orogeny type chosen from noise sample
