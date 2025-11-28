@@ -36,6 +36,7 @@
 #include "src/planet.h"
 #include "src/tectonicPhenomenon.h"
 #include "src/movement.h"
+#include "src/erosion.h"
 
 
 
@@ -57,6 +58,7 @@ Mesh mesh;
 Planet planet(1.0f);
 Movement movement_controller(planet);
 int nbSteps = 0;
+Erosion erosion_controller(planet);
 float timeStep = 1.0f;
 
 std::vector< float > current_field; //normalized filed of each vertex
@@ -413,6 +415,7 @@ void key (unsigned char keyPressed, int x, int y) {
     case 'm': //Press m key to move the plates
         if (nbSteps < 15) {
             movement_controller.movePlates(timeStep);
+            erosion_controller.erosion();
             mesh = planet;
             updateDisplayedColors();
             timeStep++;
