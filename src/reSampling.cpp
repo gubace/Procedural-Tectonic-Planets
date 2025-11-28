@@ -113,5 +113,10 @@ void Planet::resample(Planet& srcPlanet) {
     findFrontierVertices();
     fillClosestFrontierVertices();
 
+    
+    for (Plate& plate : plates) {
+        plate.fillTerranes(*this);
+    }
+
 
 }

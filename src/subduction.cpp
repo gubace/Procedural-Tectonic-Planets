@@ -9,7 +9,7 @@
 
 float r_s = 0.1f; // Distance that impacts uplift effect
 float max_velocity = 5.0f; // TODO: idk, Timothée knows -> In fact Timothée doesn't know either
-float subductionUplift = 1000.0f;
+float subductionUplift = 100.0f;
 float minZ = -8000; 
 float maxZ = 8000; 
 
@@ -77,7 +77,7 @@ void Subduction::triggerEvent(Planet& planet) {
         float newElevation = subductionUplift * f(d) * g(v) * h(z);
         planet.crust_data[vertexIndex]->relief_elevation += newElevation;
         
-        std::cout << " - Vertex " << vertexIndex << " elevated by " << newElevation << " to " << planet.crust_data[vertexIndex]->relief_elevation << std::endl;
+        //std::cout << " - Vertex " << vertexIndex << " elevated by " << newElevation << " to " << planet.crust_data[vertexIndex]->relief_elevation << std::endl;
     }
     
 }

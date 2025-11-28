@@ -164,7 +164,7 @@ void init() {
     glEnable(GL_COLOR_MATERIAL);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
-    planet.generatePlates(3);
+    planet.generatePlates(10);
     planet.assignCrustParameters();
 
     
@@ -441,11 +441,37 @@ void key (unsigned char keyPressed, int x, int y) {
         break;
 
     case 'm': //Press m key to move the plates
-        movement_controller.movePlates(timeStep); // TODO: change time management
+        movement_controller.movePlates(timeStep);
         mesh = planet;
         updateDisplayedColors();
         timeStep++;
         break;
+
+    case 'k':
+    {
+        // Faire avancer la simulation
+        for(int i = 0; i < 25; i++) {
+            movement_controller.movePlates(timeStep);
+            mesh = planet;
+            updateDisplayedColors();
+            timeStep++;
+        }
+        
+        
+        Planet newPlanet(1.0f);
+        newPlanet.resample(planet);
+        
+        planet = std::move(newPlanet);
+        
+        
+        movement_controller = Movement(planet);
+
+        mesh = planet;
+        updateDisplayedColors();
+
+        printf("Resampled planet.\n");
+    }
+    break;
 
     case 'b': // toggle subduction markers and compute once
         display_phenomena = !display_phenomena;

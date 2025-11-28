@@ -18,6 +18,10 @@ class Plate {
     float plate_velocity;
     Vec3 rotation_axis;
     std::map<unsigned int, std::vector<unsigned int>> closestFrontierVertices;
+    std::vector<std::vector<unsigned int>> terranes;
+    std::vector<Vec3> terraneCentroids;
+
+    void fillTerranes(const Planet& planet);
 };
 
 class Planet : public Mesh {
@@ -30,7 +34,7 @@ class Planet : public Mesh {
     float radius = 1.0f;
 
     Planet(float r) : radius(r) {
-        setupSphere(radius, 8192 * 4); 
+        setupSphere(radius, 8192 * 8); 
     }
 
     void generatePlates(unsigned int n_plates);
@@ -43,6 +47,8 @@ class Planet : public Mesh {
     std::vector<Vec3> vertexColorsForPlates() const;
     std::vector<Vec3> vertexColorsForCrustTypes() const;
     std::vector<Vec3> vertexColorsForElevation() const;
+
+    void fillAllTerranes();
 
     unsigned int findclosestVertex(const Vec3& point, Planet& srcPlanet);
     void resample(Planet& srcPlanet);

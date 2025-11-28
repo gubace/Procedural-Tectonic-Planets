@@ -60,7 +60,7 @@ std::vector<std::unique_ptr<TectonicPhenomenon>> Movement::detectPhenomena() {
                     ++c;
                 }
             }
-            if (c >= 50) break;  // limit cost
+            if (c >= 50) break;
         }
         return (c > 0) ? (sum / (float)c) : 0.0f;
     };
@@ -69,12 +69,33 @@ std::vector<std::unique_ptr<TectonicPhenomenon>> Movement::detectPhenomena() {
         unsigned int a, b, v;
     };
     struct KeyHash {
-        size_t operator()(Key const& k) const noexcept { return (k.a * 73856093u) ^ (k.b * 19349663u) ^ (k.v * 83492791u); }
+        size_t operator()(Key const& k) const noexcept { 
+            return (k.a * 73856093u) ^ (k.b * 19349663u) ^ (k.v * 83492791u); 
+        }
     };
     struct KeyEq {
-        bool operator()(Key const& x, Key const& y) const noexcept { return x.a == y.a && x.b == y.b && x.v == y.v; }
+        bool operator()(Key const& x, Key const& y) const noexcept { 
+            return x.a == y.a && x.b == y.b && x.v == y.v; 
+        }
     };
     std::unordered_set<Key, KeyHash, KeyEq> seen;
+
+    // ✅ Nouveau: tracker les collisions déjà détectées par paire de plaques
+    struct CollisionKey {
+        unsigned int plateA, plateB;
+        bool operator==(const CollisionKey& other) const {
+            return (plateA == other.plateA && plateB == other.plateB) ||
+                   (plateA == other.plateB && plateB == other.plateA);
+        }
+    };
+    struct CollisionKeyHash {
+        size_t operator()(const CollisionKey& k) const noexcept {
+            unsigned int a = std::min(k.plateA, k.plateB);
+            unsigned int b = std::max(k.plateA, k.plateB);
+            return (a * 73856093u) ^ (b * 19349663u);
+        }
+    };
+    std::unordered_set<CollisionKey, CollisionKeyHash> collisionsSeen;
 
     for (unsigned int v = 0; v < planet->vertices.size(); ++v) {
         int pa = planet->verticesToPlates[v];
@@ -91,28 +112,25 @@ std::vector<std::unique_ptr<TectonicPhenomenon>> Movement::detectPhenomena() {
 
             Vec3 r = planet->vertices[v];
 
-            // plate A
             const Plate& plateA = planet->plates[pa];
             Vec3 omegaA = plateA.rotation_axis;
             omegaA.normalize();
             omegaA *= plateA.plate_velocity;
             Vec3 vA = Vec3::cross(omegaA, r);
 
-            // plate B
             const Plate& plateB = planet->plates[pb];
             Vec3 omegaB = plateB.rotation_axis;
             omegaB.normalize();
             omegaB *= plateB.plate_velocity;
             Vec3 vB = Vec3::cross(omegaB, r);
 
-            // convergence direction (centroidB - centroidA)
             Vec3 dir = plate_centroid[pb] - plate_centroid[pa];
             float dirlen = dir.length();
             if (dirlen < 1e-8f) continue;
             dir /= dirlen;
 
             Vec3 rel = vA - vB;
-            float conv = Vec3::dot(rel, dir);  // positive => A towards B
+            float conv = Vec3::dot(rel, dir);
 
             bool isOceanicA = false, isOceanicB = false;
             if (v < planet->crust_data.size() && planet->crust_data[v]) {
@@ -122,28 +140,25 @@ std::vector<std::unique_ptr<TectonicPhenomenon>> Movement::detectPhenomena() {
                 isOceanicB = (dynamic_cast<OceanicCrust*>(planet->crust_data[nb].get()) != nullptr);
             }
 
-            // Détection de convergence (subduction ou collision)
+            // Détection de convergence
             if (conv > convergenceThreshold) {
-                // decide under/over plate according to rules
                 unsigned int plate_under = pa, plate_over = pb;
                 Subduction::SubductionType subType;
                 bool isCollision = false;
                 std::string reason;
 
                 if (isOceanicA && isOceanicB) {
-                    // older plate subducts
                     float ageA = plate_average_oceanic_age(pa);
                     float ageB = plate_average_oceanic_age(pb);
                     if (ageA > ageB) {
                         plate_under = pa;
                         plate_over = pb;
-                        reason = "oceanic-oceanic: older subducts";
                     } else {
                         plate_under = pb;
                         plate_over = pa;
-                        reason = "oceanic-oceanic: older subducts";
                     }
                     subType = Subduction::SubductionType::Oceanic_Oceanic;
+                    reason = "oceanic-oceanic: older subducts";
                 } else if (isOceanicA && !isOceanicB) {
                     plate_under = pa;
                     plate_over = pb;
@@ -155,24 +170,34 @@ std::vector<std::unique_ptr<TectonicPhenomenon>> Movement::detectPhenomena() {
                     subType = Subduction::SubductionType::Oceanic_Continental;
                     reason = "oceanic under continental";
                 } else {
-                    // continental-continental -> collision
+                    // ✅ Continental-continental collision
                     isCollision = true;
-
-                    float collisionMagnitude = conv;
-                    reason = "continental-continental collision";
-                    out.push_back(std::make_unique<ContinentalCollision>(
-                        (unsigned int)pa, (unsigned int)pb, v,
-                        collisionMagnitude, reason));
+                    
+                    // Vérifier si collision déjà détectée pour cette paire de plaques
+                    CollisionKey collKey{(unsigned int)pa, (unsigned int)pb};
+                    if (collisionsSeen.find(collKey) == collisionsSeen.end()) {
+                        collisionsSeen.insert(collKey);
+                        
+                        float collisionMagnitude = conv;
+                        reason = "continental-continental collision";
+                        
+                        out.push_back(std::make_unique<ContinentalCollision>(
+                            (unsigned int)pa, (unsigned int)pb, v,
+                            collisionMagnitude, reason));
+                        
+                        std::cout << "Collision detected between plates " << pa 
+                                  << " and " << pb << " at vertex " << v << std::endl;
+                    }
                 }
 
                 if (isCollision) continue;
-                // Créer le phénomène de subduction
+                
                 out.push_back(std::make_unique<Subduction>(
                     (unsigned int)pa, (unsigned int)pb, v,
                     plate_under, plate_over, conv,
                     subType, reason));
             }
-            // Détection de divergence (rifting)
+            // Détection de divergence
             else if (conv < -convergenceThreshold) {
                 float divergence = std::abs(conv);
                 std::string riftReason;

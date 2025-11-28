@@ -186,6 +186,9 @@ void Planet::generatePlates(unsigned int n_plates) {
         float rxy = std::sqrt(std::max(0.0f, 1.0f - z * z));
         plate.rotation_axis = Vec3(rxy * std::cos(theta), rxy * std::sin(theta), z);
     }
+
+
+
 }
 
 void Planet::findFrontierVertices() {
@@ -336,6 +339,12 @@ void Planet::assignCrustParameters() {
             crust_data[i].reset(new ContinentalCrust(thickness, elevation, orogeny_age, orogeny_type, fold_dir));
         }
     }
+
+    for (Plate& plate : plates) {
+        plate.fillTerranes(*this);
+        std::cout << "Plate with " << plate.vertices_indices.size() << " vertices has " 
+                  << plate.terranes.size() << " terranes." << std::endl;
+    }
 }
 
 std::vector<Vec3> Planet::vertexColorsForPlates() const {
@@ -441,4 +450,11 @@ std::vector<Vec3> Planet::vertexColorsForCrustTypes() const {
         }
     }
     return out;
+}
+
+
+void Planet::fillAllTerranes() {
+    for (Plate& plate : plates) {
+        plate.fillTerranes(*this);
+    }
 }
