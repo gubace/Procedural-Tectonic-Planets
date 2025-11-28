@@ -185,8 +185,8 @@ std::vector<std::unique_ptr<TectonicPhenomenon>> Movement::detectPhenomena() {
                             (unsigned int)pa, (unsigned int)pb, v,
                             collisionMagnitude, reason));
                         
-                        std::cout << "Collision detected between plates " << pa 
-                                  << " and " << pb << " at vertex " << v << std::endl;
+                        // std::cout << "Collision detected between plates " << pa 
+                        //           << " and " << pb << " at vertex " << v << std::endl;
                     }
                 }
 

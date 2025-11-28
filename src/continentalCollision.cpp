@@ -26,9 +26,9 @@ float smoothMountainProfile(float distance, float width, float smoothness){
 
 
 void ContinentalCollision::triggerEvent(Planet& planet) {
-    std::cout << "\n========================================" << std::endl;
-    std::cout << "Continental Collision Event Triggered!" << std::endl;
-    std::cout << "========================================" << std::endl;
+    // std::cout << "\n========================================" << std::endl;
+    // std::cout << "Continental Collision Event Triggered!" << std::endl;
+    // std::cout << "========================================" << std::endl;
     
     unsigned int collisionVertex = getVertexIndex();
     unsigned int plateAIdx = getPlateA();
@@ -47,8 +47,8 @@ void ContinentalCollision::triggerEvent(Planet& planet) {
     Plate& plateA = planet.plates[plateAIdx];
     Plate& plateB = planet.plates[plateBIdx];
     
-    std::cout << "Collision at vertex " << collisionVertex 
-              << " between plates " << plateAIdx << " and " << plateBIdx << std::endl;
+    // std::cout << "Collision at vertex " << collisionVertex 
+    //           << " between plates " << plateAIdx << " and " << plateBIdx << std::endl;
     
     
     Vec3 collisionPoint = planet.vertices[collisionVertex];
@@ -83,7 +83,7 @@ void ContinentalCollision::triggerEvent(Planet& planet) {
     }
     
     if (!foundTerraneA || !foundTerraneB) {
-        std::cout << "  No terranes found for collision. Aborting." << std::endl;
+        // std::cout << "  No terranes found for collision. Aborting." << std::endl;
         return;
     }
     
@@ -92,8 +92,8 @@ void ContinentalCollision::triggerEvent(Planet& planet) {
     Vec3 centroidA = plateA.terraneCentroids[terraneA_idx];
     Vec3 centroidB = plateB.terraneCentroids[terraneB_idx];
     
-    std::cout << "  Terrane A: " << terraneA.size() << " vertices" << std::endl;
-    std::cout << "  Terrane B: " << terraneB.size() << " vertices" << std::endl;
+    // std::cout << "  Terrane A: " << terraneA.size() << " vertices" << std::endl;
+    // std::cout << "  Terrane B: " << terraneB.size() << " vertices" << std::endl;
     
 
     bool terraneA_wins = terraneA.size() >= terraneB.size();
@@ -107,10 +107,10 @@ void ContinentalCollision::triggerEvent(Planet& planet) {
     size_t winningTerraneIdx = terraneA_wins ? terraneA_idx : terraneB_idx;
     size_t losingTerraneIdx = terraneA_wins ? terraneB_idx : terraneA_idx;
     
-    std::cout << "  Winner: Plate " << winningPlateIdx << " (terrane with " 
-              << winningTerrane.size() << " vertices)" << std::endl;
-    std::cout << "  Loser: Plate " << losingPlateIdx << " (terrane with " 
-              << losingTerrane.size() << " vertices)" << std::endl;
+    // std::cout << "  Winner: Plate " << winningPlateIdx << " (terrane with " 
+    //           << winningTerrane.size() << " vertices)" << std::endl;
+    // std::cout << "  Loser: Plate " << losingPlateIdx << " (terrane with " 
+    //           << losingTerrane.size() << " vertices)" << std::endl;
     
     std::vector<unsigned int> verticesToTransfer;
     std::unordered_set<unsigned int> transferSet;
@@ -125,11 +125,11 @@ void ContinentalCollision::triggerEvent(Planet& planet) {
         }
     }
     
-    std::cout << "  Vertices to transfer: " << verticesToTransfer.size() 
-              << " (within radius " << COLLISION_RADIUS << ")" << std::endl;
+    // std::cout << "  Vertices to transfer: " << verticesToTransfer.size() 
+    //           << " (within radius " << COLLISION_RADIUS << ")" << std::endl;
     
     if (verticesToTransfer.empty()) {
-        std::cout << "  No vertices close enough to transfer. Aborting." << std::endl;
+        // std::cout << "  No vertices close enough to transfer. Aborting." << std::endl;
         return;
     }
     
@@ -182,7 +182,7 @@ void ContinentalCollision::triggerEvent(Planet& planet) {
         }
     }
     
-    std::cout << "  Mountains created: " << mountainsCreated << " peaks" << std::endl;
+    // std::cout << "  Mountains created: " << mountainsCreated << " peaks" << std::endl;
     
     //Transférer les vertices à la plaque gagnante
     for (unsigned int vIdx : verticesToTransfer) {
@@ -246,7 +246,7 @@ void ContinentalCollision::triggerEvent(Planet& planet) {
         Plate& losingPlateRef = planet.plates[losingPlateIdx];
         losingPlateRef.terranes.erase(losingPlateRef.terranes.begin() + losingTerraneIdx);
         losingPlateRef.terraneCentroids.erase(losingPlateRef.terraneCentroids.begin() + losingTerraneIdx);
-        std::cout << "  Losing terrane completely absorbed and removed." << std::endl;
+        // std::cout << "  Losing terrane completely absorbed and removed." << std::endl;
     } else {
         // Recalculer le centroïde de la terrane perdante
         Vec3 newLosingCentroid(0.0f, 0.0f, 0.0f);
@@ -265,10 +265,10 @@ void ContinentalCollision::triggerEvent(Planet& planet) {
             plateA.terraneCentroids[losingTerraneIdx] = newLosingCentroid;
         }
         
-        std::cout << "  Losing terrane reduced to " << losingTerrane.size() << " vertices." << std::endl;
+        // std::cout << "  Losing terrane reduced to " << losingTerrane.size() << " vertices." << std::endl;
     }
     
-    std::cout << "  Collision completed successfully!" << std::endl;
-    std::cout << "  Merged terrane now has " << winningTerrane.size() << " vertices" << std::endl;
-    std::cout << "========================================\n" << std::endl;
+    // std::cout << "  Collision completed successfully!" << std::endl;
+    // std::cout << "  Merged terrane now has " << winningTerrane.size() << " vertices" << std::endl;
+    // std::cout << "========================================\n" << std::endl;
 }

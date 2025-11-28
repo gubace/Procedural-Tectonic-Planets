@@ -40,7 +40,7 @@ void Planet::resample(Planet& srcPlanet) {
         unsigned int closestIndex = accel.nearest(currentVertex);
 
         if((srcPlanet.vertices[closestIndex] - currentVertex).squareLength() > 0.0002f) {
-            std::cout << "Creating rifting event at vertex " << i << " due to large distance to closest vertex.\n";
+            // std::cout << "Creating rifting event at vertex " << i << " due to large distance to closest vertex.\n";
             std::pair<uint32_t, uint32_t> nearestDifferentPlates = accel.nearestFromDifferentPlates(currentVertex, srcPlanet);
             
             // Calculer le point milieu sur la ridge
@@ -91,7 +91,7 @@ void Planet::resample(Planet& srcPlanet) {
         unsigned int plateIndex = srcPlanet.verticesToPlates[closestIndex];
         verticesToPlates[i] = plateIndex;
         if (i % 1000 == 0) {
-            std::cout << "Resampling vertex " << i << "/" << vertices.size() << "\n";
+            // std::cout << "Resampling vertex " << i << "/" << vertices.size() << "\n";
         }
     }
 
