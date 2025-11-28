@@ -12,7 +12,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Enable debug symbols and disable optimizations for debugging
 set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wextra")
 
 # Source collection
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)

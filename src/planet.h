@@ -31,10 +31,13 @@ class Planet : public Mesh {
     std::vector<std::unique_ptr<Crust>> crust_data;
     std::vector<std::vector<unsigned int>> neighbors;
 
+    float max_elevation = 8000.0f;
+    float min_elevation = -8000.0f;
+
     float radius = 1.0f;
 
     Planet(float r) : radius(r) {
-        setupSphere(radius, 8192 * 4); 
+        setupSphere(radius, 8192 * 4);
     }
 
     void generatePlates(unsigned int n_plates);

@@ -9,11 +9,12 @@ class Erosion {
    public:
     Planet& planet;
 
-    static constexpr float erosion_coefficient = 5.0;
+    static constexpr float erosion_coefficient = 50.0;
     static constexpr float dampening_coefficient = 0.05;
     static constexpr float sediment_coefficient = 0.05;
-    static constexpr float max_elevation = 8000;
-    static constexpr float min_elevation = -8000;
+
+    float max_elevation = planet.max_elevation;
+    float min_elevation = planet.min_elevation;
 
     Erosion(Planet & p) : planet(p) { }
 

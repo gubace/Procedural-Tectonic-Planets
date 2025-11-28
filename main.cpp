@@ -37,6 +37,7 @@
 #include "src/tectonicPhenomenon.h"
 #include "src/movement.h"
 #include "src/erosion.h"
+#include "src/rifting.h"
 
 
 
@@ -137,7 +138,7 @@ void init() {
     glEnable(GL_COLOR_MATERIAL);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
-    planet.generatePlates(10);
+    planet.generatePlates(8);
     planet.assignCrustParameters();
 
     
@@ -439,6 +440,20 @@ void key (unsigned char keyPressed, int x, int y) {
         }
         break;
 
+    case 'i': //trigger plat rifting
+        {
+            bool riftingOccurred = PlateRifting::triggerRifting(planet);
+            if (riftingOccurred) {
+                std::cout << "Rifting successful! Updating structures..." << std::endl;
+                planet.findFrontierVertices();
+                planet.fillClosestFrontierVertices();
+                mesh = planet;
+                updateDisplayedColors();
+            } else {
+                std::cout << "No rifting occurred." << std::endl;
+            }
+        }
+        break;
 
     case 'b': // toggle subduction markers and compute once
         display_phenomena = !display_phenomena;

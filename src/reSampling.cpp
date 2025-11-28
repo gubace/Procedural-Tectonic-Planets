@@ -6,7 +6,7 @@
 #include "crust.h"
 #include "SphericalGrid.h"
 #include "tectonicPhenomenon.h"
-
+#include "rifting.h"
 
 unsigned int Planet::findclosestVertex(const Vec3& point, Planet& srcPlanet){
     unsigned int closestIndex = 0;
@@ -26,6 +26,7 @@ unsigned int Planet::findclosestVertex(const Vec3& point, Planet& srcPlanet){
 
 void Planet::resample(Planet& srcPlanet) {
     
+
     size_t N = vertices.size();
     crust_data.resize(N);
     verticesToPlates.resize(N);
@@ -113,15 +114,11 @@ void Planet::resample(Planet& srcPlanet) {
                 }
             }
             
-
             unsigned int closestPlate = srcPlanet.verticesToPlates[closestIndex];
             int sameAsClosest = plateVotes[closestPlate];
             
             if (sameAsClosest < 3) {
                 plateIndex = majorityPlate;
-                std::cout << "Isolated vertex " << i << " reassigned from plate " 
-                          << closestPlate << " to plate " << majorityPlate 
-                          << " (votes: " << sameAsClosest << "/" << neighbors.size() << ")\n";
             } else {
                 plateIndex = closestPlate;
             }
@@ -144,7 +141,6 @@ void Planet::resample(Planet& srcPlanet) {
     for(int i = 0; i < plates.size(); ++i) {
         plates[i].plate_velocity = srcPlanet.plates[i].plate_velocity;
         plates[i].rotation_axis = srcPlanet.plates[i].rotation_axis;
-
     }
 
     detectVerticesNeighbors();

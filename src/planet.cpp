@@ -4,6 +4,7 @@
 #include <limits>
 #include <memory>
 #include <random>
+#include <algorithm>
 #include <unordered_set>
 
 
@@ -256,6 +257,10 @@ void Planet::assignCrustParameters() {
 
     const float continent_threshold = 0.15f;
 
+    // ✅ Utiliser les constantes de la classe
+    const float ocean_depth_range = std::abs(min_elevation);  // 8000.0f
+    const float continent_height_range = max_elevation;        // 8000.0f
+
     // Build mapping vertex -> plate index (if plates exist)
     std::vector<int> plate_of(vertices.size(), -1);
     for (size_t p = 0; p < plates.size(); ++p) {
@@ -265,23 +270,23 @@ void Planet::assignCrustParameters() {
     }
 
     // build vertex neighbors (adjacency) to detect plate boundaries
-    std::vector<std::vector<unsigned int>> neighbors(vertices.size());
+    std::vector<std::vector<unsigned int>> neighbors_local(vertices.size());
     for (const Triangle& t : triangles) {
         unsigned int a = t[0], b = t[1], c = t[2];
         if (a < vertices.size() && b < vertices.size()) {
-            neighbors[a].push_back(b);
-            neighbors[b].push_back(a);
+            neighbors_local[a].push_back(b);
+            neighbors_local[b].push_back(a);
         }
         if (b < vertices.size() && c < vertices.size()) {
-            neighbors[b].push_back(c);
-            neighbors[c].push_back(b);
+            neighbors_local[b].push_back(c);
+            neighbors_local[c].push_back(b);
         }
         if (c < vertices.size() && a < vertices.size()) {
-            neighbors[c].push_back(a);
-            neighbors[a].push_back(c);
+            neighbors_local[c].push_back(a);
+            neighbors_local[a].push_back(c);
         }
     }
-    for (auto& nb : neighbors) {
+    for (auto& nb : neighbors_local) {
         std::sort(nb.begin(), nb.end());
         nb.erase(std::unique(nb.begin(), nb.end()), nb.end());
     }
@@ -290,13 +295,13 @@ void Planet::assignCrustParameters() {
     for (size_t i = 0; i < vertices.size(); ++i) {
         const Vec3& p = vertices[i];
 
-        // base noise value
+        // base noise value [-1, 1]
         float n = noise.GetNoise(p[0], p[1], p[2]);
 
         bool isBoundary = false;
         int myPlate = (i < plate_of.size() ? plate_of[i] : -1);
         if (myPlate >= 0) {
-            for (unsigned int nb : neighbors[i]) {
+            for (unsigned int nb : neighbors_local[i]) {
                 if (nb < plate_of.size() && plate_of[nb] != myPlate) {
                     isBoundary = true;
                     break;
@@ -304,37 +309,50 @@ void Planet::assignCrustParameters() {
             }
         }
 
-        if (n < continent_threshold) {  // oceanic
+        if (n < continent_threshold) {
 
-            float elevation = -4000.0f;
-            float thickness = 7.0f + 2.0f * (n + 1.0f) * 0.5f + (isBoundary ? 1.0f : 0.0f);
+            
+            float normalizedNoise = (n + 1.0f) / (1.0f + continent_threshold); // [0, 1]
+            float elevation = min_elevation + normalizedNoise * (ocean_depth_range * 0.875f); // 87.5% de la profondeur max
+            
 
-            // age
+            elevation = std::max(min_elevation, std::min(elevation, -500.0f));
+
+
+            float thickness = 5.0f + 3.0f * normalizedNoise + (isBoundary ? 1.5f : 0.0f);
+
             float localNoise = noise.GetNoise(p[0] * 2.3f, p[1] * 1.7f, p[2] * 2.9f);
-            float age = 100.0f;//(0.5f * (localNoise + 1.0f)) * 200.0f;
-            //if (isBoundary) age *= 0.2f;
+            float age = (0.5f * (localNoise + 1.0f)) * 200.0f;
 
-            Vec3 ridge_dir = Vec3(0.0f, 0.0f, 0.0f);  // TODO : compute ridge direction properly
+            Vec3 ridge_dir = Vec3(0.0f, 0.0f, 0.0f);
 
             crust_data[i].reset(new OceanicCrust(thickness, elevation, age, ridge_dir));
-        } else {  // continental
+            
+        } else {
+            
+            float normalizedNoise = (n - continent_threshold) / (1.0f - continent_threshold); // [0, 1]
+            float elevation = normalizedNoise * continent_height_range;
+            
 
-            float elevation = 100.0f;//(n - continent_threshold) * 2500.0f;
-            float thickness = 30.0f + 10.0f * n + (isBoundary ? 2.0f : 0.0f);
+
+            
+            elevation = std::max(0.0f, std::min(elevation, max_elevation));
+
+
+            float thickness = 30.0f + 30.0f * normalizedNoise + (isBoundary ? 10.0f : 0.0f);
 
             float ageNoise = noise.GetNoise(p[0] * 1.2f + 10.0f, p[1] * 0.9f + 10.0f, p[2] * 1.7f + 10.0f);
-            float orogeny_age = 10.0f;// (0.5f * (ageNoise + 1.0f)) * 800.0f;
-            //if (!isBoundary) orogeny_age *= 1.2f;
-
-            // orogeny type chosen from noise sample
+            float orogeny_age = (0.5f * (ageNoise + 1.0f)) * 800.0f;
+            
             float typeSample = noise.GetNoise(p[0] * 2.0f + 5.0f, p[1] * 1.3f + 5.0f, p[2] * 2.7f + 5.0f);
             int typeIdx = static_cast<int>(std::floor((0.5f * (typeSample + 1.0f)) * 4.0f));
             typeIdx = std::max(0, std::min(3, typeIdx));
             OrogenyType orogeny_type = static_cast<OrogenyType>(typeIdx);
 
-            Vec3 fold_dir = Vec3(0.0f, 0.0f, 0.0f);  // TODO: compute proper tangent
+            Vec3 fold_dir = Vec3(0.0f, 0.0f, 0.0f);
 
-            if (noise.GetNoise(p[0] * 4.7f + 9.1f, p[1] * 3.3f + 8.2f, p[2] * 2.8f + 7.3f) < 0.0f) fold_dir *= -1.0f;
+            if (noise.GetNoise(p[0] * 4.7f + 9.1f, p[1] * 3.3f + 8.2f, p[2] * 2.8f + 7.3f) < 0.0f) 
+                fold_dir *= -1.0f;
 
             crust_data[i].reset(new ContinentalCrust(thickness, elevation, orogeny_age, orogeny_type, fold_dir));
         }
@@ -362,32 +380,42 @@ std::vector<Vec3> Planet::vertexColorsForPlates() const {
 
 
 std::vector<Vec3> Planet::vertexColorsForElevation() const {
-    std::vector<Vec3> out(vertices.size(), Vec3(0.0f, 0.0f, 0.0f)); // Initialisation sombre par défaut
+    std::vector<Vec3> out(vertices.size(), Vec3(0.0f, 0.0f, 0.0f));
 
-    // Trouver les altitudes minimale et maximale pour normaliser les couleurs
-    float minElevation = -8000.0f;
-    float maxElevation = 8000.0f;
-
-    for (size_t i = 0; i < vertices.size(); ++i) {
-        if (i < crust_data.size() && crust_data[i]) {
-            const Crust* crust = crust_data[i].get();
-            minElevation = std::min(minElevation, crust->relief_elevation);
-            maxElevation = std::max(maxElevation, crust->relief_elevation);
-        }
-    }
-
-    // Éviter les divisions par zéro si toutes les altitudes sont identiques
-    float elevationRange = maxElevation - minElevation;
+    // ✅ Utiliser les constantes de la classe pour la normalisation
+    float elevationRange = max_elevation - min_elevation;
     if (elevationRange < 1e-6f) elevationRange = 1.0f;
 
-    // Générer les couleurs en fonction de l'altitude
     for (size_t i = 0; i < vertices.size(); ++i) {
         if (i < crust_data.size() && crust_data[i]) {
             const Crust* crust = crust_data[i].get();
-            float normalizedElevation = (crust->relief_elevation - minElevation) / elevationRange;
-            out[i] = Vec3(normalizedElevation, normalizedElevation, normalizedElevation); // Gris en fonction de l'altitude
+            
+            // ✅ Normaliser entre [0, 1] en utilisant min_elevation et max_elevation
+            float normalizedElevation = (crust->relief_elevation - min_elevation) / elevationRange;
+            normalizedElevation = std::max(0.0f, std::min(1.0f, normalizedElevation));
+            
+            // Gradient de couleur plus intéressant
+            Vec3 color;
+            if (normalizedElevation < 0.5f) {
+                // Océan : bleu foncé -> bleu clair
+                float t = normalizedElevation * 2.0f;
+                color = Vec3(0.0f, 0.0f, 0.5f + 0.5f * t);
+            } else {
+                // Terre : vert -> marron -> blanc
+                float t = (normalizedElevation - 0.5f) * 2.0f;
+                if (t < 0.5f) {
+                    // Vert -> marron
+                    color = Vec3(0.2f + 0.3f * t, 0.6f - 0.3f * t, 0.1f);
+                } else {
+                    // Marron -> blanc (neige)
+                    float snow = (t - 0.5f) * 2.0f;
+                    color = Vec3(0.5f + 0.5f * snow, 0.3f + 0.7f * snow, 0.1f + 0.9f * snow);
+                }
+            }
+            
+            out[i] = color;
         } else {
-            out[i] = Vec3(0.0f, 0.0f, 0.0f); // Noir si pas de données de croûte
+            out[i] = Vec3(0.0f, 0.0f, 0.0f); // Noir si pas de données
         }
     }
 
@@ -396,55 +424,67 @@ std::vector<Vec3> Planet::vertexColorsForElevation() const {
 
 std::vector<Vec3> Planet::vertexColorsForCrustTypes() const {
     std::vector<Vec3> out(vertices.size(), Vec3(0.5f, 0.5f, 0.5f));
+    
+    auto clamp01 = [](float v) -> float { return std::max(0.0f, std::min(1.0f, v)); };
+    auto mix = [](const Vec3& a, const Vec3& b, float t) -> Vec3 { return a * (1.0f - t) + b * t; };
+    
     for (size_t i = 0; i < vertices.size(); ++i) {
         if (i >= crust_data.size() || !crust_data[i]) {
             out[i] = Vec3(0.6f, 0.6f, 0.6f);
-            std::cout << "No crust data at vertex " << i << "\n"<<std::endl;
             continue;
-            
         }
 
-        // Dynamic cast to identify crust type
         const OceanicCrust* oc = dynamic_cast<const OceanicCrust*>(crust_data[i].get());
         const ContinentalCrust* cc = dynamic_cast<const ContinentalCrust*>(crust_data[i].get());
 
-        auto clamp01 = [](float v) -> float { return std::max(0.0f, std::min(1.0f, v)); };
-        auto mix = [](const Vec3& a, const Vec3& b, float t) -> Vec3 { return a * (1.0f - t) + b * t; };
-
-        //std::cout << "Crust at vertex " << i << ": "<<std::endl;
-
         if (oc) {
-            // Oceanic : base blue, vary with elevation (depth -> darker) and age (older -> darker/desaturated)
+            // ✅ Oceanic : utiliser min_elevation pour normaliser
             float elev = oc->relief_elevation;
-            float t = clamp01((elev + 4000.0f) / 6000.0f);
-            Vec3 deepBlue(0.02f, 0.05f, 0.40f);
-            Vec3 shallowBlue(0.12f, 0.45f, 0.8f);
+            // Mapper [min_elevation, 0] vers [0, 1]
+            float t = clamp01((elev - min_elevation) / std::abs(min_elevation));
+            
+            Vec3 deepBlue(0.02f, 0.05f, 0.40f);    // Fosses océaniques profondes
+            Vec3 shallowBlue(0.12f, 0.45f, 0.8f);  // Plateaux océaniques
             Vec3 col = mix(deepBlue, shallowBlue, t);
 
+            // Modulation par l'âge
             float age = oc->age;
             float ageFactor = 1.0f - clamp01(age / 200.0f) * 0.45f;
             col *= ageFactor;
 
             out[i] = col;
+            
         } else if (cc) {
-            // Continental : vert -> marron -> blanc
-            float elev = cc->relief_elevation * 3.0f;  // multicateur arbitraire
-            // map elevation 0..4000
-            float t = clamp01(elev / 4000.0f);
-            Vec3 lowland(0.15f, 0.7f, 0.18f);
-            Vec3 mountain(0.45f, 0.30f, 0.10f);
-            Vec3 col = mix(lowland, mountain, t);
-
-            if (elev > 4000.0f) {
-                float snow = clamp01((elev - 2500.0f) / 1500.0f);
-                col = mix(col, Vec3(1.0f, 1.0f, 1.0f), snow);
+            // ✅ Continental : utiliser max_elevation pour normaliser
+            float elev = cc->relief_elevation;
+            // Mapper [0, max_elevation] vers [0, 1]
+            float t = clamp01(elev / max_elevation);
+            
+            Vec3 lowland(0.15f, 0.7f, 0.18f);      // Plaines vertes
+            Vec3 midland(0.45f, 0.30f, 0.10f);     // Collines marron
+            Vec3 highland(0.65f, 0.55f, 0.40f);    // Montagnes rocheuses
+            Vec3 snow(1.0f, 1.0f, 1.0f);           // Neige
+            
+            Vec3 col;
+            
+            if (t < 0.3f) {
+                // Basses terres
+                col = mix(lowland, midland, t / 0.3f);
+            } else if (t < 0.6f) {
+                // Moyennes hauteurs
+                col = mix(midland, highland, (t - 0.3f) / 0.3f);
+            } else {
+                // Hautes montagnes avec neige
+                float snowFactor = (t - 0.6f) / 0.4f;
+                col = mix(highland, snow, snowFactor);
             }
 
-            // small modulation by orogeny_age (older -> slightly darker)
-            float oa = cc->orogeny_age;  // in Myr
+            // Modulation par l'âge de l'orogénèse (plus vieux = plus érodé = plus sombre)
+            float oa = cc->orogeny_age;
             col *= (1.0f - clamp01(oa / 1200.0f) * 0.25f);
 
             out[i] = col;
+            
         } else {
             out[i] = Vec3(0.6f, 0.6f, 0.6f);
         }
