@@ -60,6 +60,7 @@ Movement movement_controller(planet);
 int nbSteps = 0;
 Erosion erosion_controller(planet);
 float timeStep = 1.0f;
+float elapsedSteps = 1.0f;
 
 std::vector< float > current_field; //normalized filed of each vertex
 
@@ -418,7 +419,7 @@ void key (unsigned char keyPressed, int x, int y) {
             erosion_controller.erosion();
             mesh = planet;
             updateDisplayedColors();
-            timeStep++;
+            elapsedSteps++;
             nbSteps++;
             printf("Moved plates: step %d\n", nbSteps);
         }else {
