@@ -43,16 +43,8 @@ class Mesh {
         bool isSphere = false;
 
 
-        //Compute face normals for the display
-        void computeTrianglesNormals();
-
-        void addNoise();
-        
-        void computeNormals();
-
         void setupSphere(float radius, unsigned int numPoints);
 
-        void removeTriangle(unsigned int idx);
 };
 
 

@@ -58,7 +58,7 @@ int spherepoints = 8192 * 4;
 //Input mesh loaded at the launch of the application
 Mesh mesh;
 
-Planet planet(1.0f,spherepoints);
+Planet planet(1.0f,1000);
 Movement movement_controller(planet);
 int nbSteps = 0;
 Erosion erosion_controller(planet);
@@ -568,6 +568,9 @@ int main (int argc, char ** argv) {
     if (argc > 2) {
         exit (EXIT_FAILURE);
     }
+
+    std::cout << "----------------------------------------" << std::endl;
+    std::cout << "Procedural Planet with Tectonic Plates Simulation" << std::endl;
     glutInit (&argc, argv);
     glutInitDisplayMode (GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
     glutInitWindowSize (SCREENWIDTH, SCREENHEIGHT);
