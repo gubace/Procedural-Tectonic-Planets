@@ -35,7 +35,7 @@ void crustGeneration::triggerEvent(Planet& planet) {
     float zGamma = maxElevation * std::exp(-(dGamma * dGamma) / (2.0f * width * width));
     
     
-    float baseDepth = planet.min_elevation;
+    float baseDepth = -5000.0f;
     float coefficient = 350.0f;
     float zOceanic = baseDepth;
     

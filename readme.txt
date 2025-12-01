@@ -29,3 +29,14 @@ At this stage, plate rifting and oceanic crust generation are computed.
 ## fix triangulation -> Delaunay
 
 ## GUI ?
+
+
+# Amplification
+
+Remesh to have a pretty mesh
+
+Resample with more points -> 4 8 ?
+
+Transfer the height on the new mesh.
+
+Use noise to amplify the terrain.

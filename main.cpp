@@ -48,7 +48,7 @@ enum DisplayMode{ WIRE=0, SOLID=1, LIGHTED_WIRE=2, LIGHTED=3 };
 //Parametres Planete
 // ------------------------------------
 
-int nbPlates = 3;
+int nbPlates = 1;
 int nbiter_resample = 30;
 int spherepoints = 8192 * 4;
 

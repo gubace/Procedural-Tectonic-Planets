@@ -12,23 +12,23 @@ bool PlateRifting::triggerRifting(Planet& planet) {
         return false;
     }
     
-    std::vector<unsigned int> riftablePlates;
-    for (size_t i = 0; i < planet.plates.size(); ++i) {
-        if (isPlateRiftable(planet.plates[i])) {
-            riftablePlates.push_back(i);
-        }
+    unsigned int selectedPlate;
+    size_t greatestPlateSize = 0;
+    
+    for(int i = 0; i < planet.plates.size(); ++i) {
+        if (planet.plates[i].vertices_indices.size() > greatestPlateSize) {
+            greatestPlateSize = planet.plates[i].vertices_indices.size();
+            selectedPlate = i;
+        } 
     }
     
-    if (riftablePlates.empty()) {
-        std::cout << "No plates large enough for rifting." << std::endl;
-        return false;
-    }
+
+    std::cout << "Selected plate " << selectedPlate << " for rifting." << std::endl;
     
 
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<size_t> dist(0, riftablePlates.size() - 1);
-    unsigned int selectedPlate = riftablePlates[dist(gen)];
+    
     
     std::cout << "Selected plate " << selectedPlate << " for rifting." << std::endl;
     
@@ -202,7 +202,7 @@ bool PlateRifting::riftPlate(Planet& planet, unsigned int plateIndex, unsigned i
     );
     
     
-    warpBoundaries(assignments, planet, 0.3f);
+    warpBoundaries(assignments, planet, 0.01f);
     
     
     std::vector<std::vector<unsigned int>> newPlatesVertices(numFragments);

@@ -71,7 +71,7 @@ void Planet::resample(Planet& srcPlanet) {
                 if (oc->is_rifting) {
                     crust_data[i] = std::make_unique<OceanicCrust>(
                         oc->thickness, 
-                        -7000.0f,
+                        -5000.0f,
                         oc->age, 
                         oc->ridge_dir,
                         false

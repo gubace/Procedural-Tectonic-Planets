@@ -81,21 +81,6 @@ void Planet::generatePlates(unsigned int n_plates) {
     for (unsigned int s : seeds)
         centroids.push_back(vertices[s]);
 
-    // === Perturbation des centroïdes ===
-    /*for (unsigned int k = 0; k < n_plates; ++k) {
-        Vec3 normalized_c = centroids[k];
-        normalized_c.normalize();
-        Vec3 c = normalized_c;
-        float n = noise.GetNoise(c[0] * 2.0f, c[1] * 2.0f, c[2] * 2.0f);
-
-        // Crée une légère rotation / translation bruitée sur la sphère
-        Vec3 offset = Vec3(
-            c[0] + 0.15f * n * c[1],
-            c[1] + 0.15f * n * c[2],
-            c[2] + 0.15f * n * c[0]);
-        offset.normalize();
-        centroids[k] = offset * radius;
-    }*/
 
     std::vector<int> assign(vertices.size(), -1);
 

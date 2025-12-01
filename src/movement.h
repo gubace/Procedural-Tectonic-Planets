@@ -14,8 +14,8 @@
 class Movement {
    public:
     Planet* planet; //pointeur pour pouvoir copier
-    float movementAttenuation = 0.002;
-    float convergenceThreshold = 0.00001;
+    float movementAttenuation = 0.005f;
+    float convergenceThreshold = 0.00001f;
 
     std::vector<std::unique_ptr<TectonicPhenomenon>> tectonicPhenomena;
     
