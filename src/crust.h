@@ -50,11 +50,13 @@ class OceanicCrust : public Crust {
    public:
     float age;       // ao
     Vec3 ridge_dir;  // r
+    bool is_rifting = false;
 
-    OceanicCrust(float thick, float elev, float age_, const Vec3& ridge)
+    OceanicCrust(float thick, float elev, float age_, const Vec3& ridge, bool rifting = false)
         : Crust(CrustType::Oceanic, thick, elev),
           age(age_),
-          ridge_dir(ridge) {}
+          ridge_dir(ridge),
+          is_rifting(rifting) {}
 
     void printInfo() const override {
         std::cout << "Oceanic Crust | thickness=" << thickness

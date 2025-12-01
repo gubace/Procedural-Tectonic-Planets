@@ -30,14 +30,14 @@ void crustGeneration::triggerEvent(Planet& planet) {
     float alpha = dGamma / (dGamma + dP + 1e-6f);
     
 
-    float maxElevation = planet.max_elevation;
+    float maxElevation = 0.0f;
     float width = 0.05f;
     float zGamma = maxElevation * std::exp(-(dGamma * dGamma) / (2.0f * width * width));
     
     
     float baseDepth = planet.min_elevation;
     float coefficient = 350.0f;
-    float zOceanic = baseDepth - coefficient * std::sqrt(dGamma);
+    float zOceanic = baseDepth;
     
     
     float zBar = 0.0f;
@@ -79,7 +79,8 @@ void crustGeneration::triggerEvent(Planet& planet) {
                 thickness,
                 newElevation,
                 age,
-                ridgeDir
+                ridgeDir,
+                true
             );
             
 

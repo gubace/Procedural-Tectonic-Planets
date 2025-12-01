@@ -18,11 +18,11 @@ At this stage, plate rifting and oceanic crust generation are computed.
 
 ## ContinentalCollision -> done ?
 
-## Assure plates are 1 bloc
+## Assure plates are 1 bloc -> done
 
 ## Fix ocean holes in continents
 
-## Plate Rifting like in the paper -> random event were a plate cut itself
+## Plate Rifting like in the paper -> random event were a plate cut itself -> done
 
 ## Start Amplification step.
 

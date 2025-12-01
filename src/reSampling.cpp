@@ -40,8 +40,7 @@ void Planet::resample(Planet& srcPlanet) {
         Vec3 currentVertex = vertices[i];
         unsigned int closestIndex = accel.nearest(currentVertex);
 
-        if((srcPlanet.vertices[closestIndex] - currentVertex).squareLength() > 0.0002f) {
-            // std::cout << "Creating rifting event at vertex " << i << " due to large distance to closest vertex.\n";
+        if((srcPlanet.vertices[closestIndex] - currentVertex).squareLength() > 0.0004f) {
             std::pair<uint32_t, uint32_t> nearestDifferentPlates = accel.nearestFromDifferentPlates(currentVertex, srcPlanet);
             
             // Calculer le point milieu sur la ridge
@@ -69,12 +68,23 @@ void Planet::resample(Planet& srcPlanet) {
             
             const OceanicCrust* oc = dynamic_cast<const OceanicCrust*>(srcCrust);
             if (oc) {
-                crust_data[i] = std::make_unique<OceanicCrust>(
-                    oc->thickness, 
-                    oc->relief_elevation, 
-                    oc->age, 
-                    oc->ridge_dir
-                );
+                if (oc->is_rifting) {
+                    crust_data[i] = std::make_unique<OceanicCrust>(
+                        oc->thickness, 
+                        -7000.0f,
+                        oc->age, 
+                        oc->ridge_dir,
+                        false
+                    );
+                }else{
+                    crust_data[i] = std::make_unique<OceanicCrust>(
+                        oc->thickness, 
+                        oc->relief_elevation, 
+                        oc->age, 
+                        oc->ridge_dir,
+                        oc->is_rifting
+                    );
+                }
             } else {
                 const ContinentalCrust* cc = dynamic_cast<const ContinentalCrust*>(srcCrust);
                 if (cc) {

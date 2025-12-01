@@ -44,11 +44,13 @@
 enum DisplayMode{ WIRE=0, SOLID=1, LIGHTED_WIRE=2, LIGHTED=3 };
 
 
-//Transformation made of a rotation and translation
-struct Transformation {
-    Mat3 rotation;
-    Vec3 translation;
-};
+// ------------------------------------
+//Parametres Planete
+// ------------------------------------
+
+int nbPlates = 3;
+int nbiter_resample = 30;
+int spherepoints = 8192 * 4;
 
 
 
@@ -56,7 +58,7 @@ struct Transformation {
 //Input mesh loaded at the launch of the application
 Mesh mesh;
 
-Planet planet(1.0f);
+Planet planet(1.0f,spherepoints);
 Movement movement_controller(planet);
 int nbSteps = 0;
 Erosion erosion_controller(planet);
@@ -90,6 +92,7 @@ static bool mouseMovePressed = false;
 static bool mouseZoomPressed = false;
 static int lastX=0, lastY=0, lastZoom=0;
 static bool fullScreen = false;
+
 
 
 
@@ -138,7 +141,7 @@ void init() {
     glEnable(GL_COLOR_MATERIAL);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
-    planet.generatePlates(8);
+    planet.generatePlates(nbPlates);
     planet.assignCrustParameters();
 
     
@@ -415,7 +418,7 @@ void key (unsigned char keyPressed, int x, int y) {
         break;
 
     case 'm': //Press m key to move the plates
-        if (nbSteps < 15) {
+        if (nbSteps < nbiter_resample) {
             movement_controller.movePlates(timeStep);
             erosion_controller.erosion();
             mesh = planet;
@@ -425,7 +428,7 @@ void key (unsigned char keyPressed, int x, int y) {
             printf("Moved plates: step %d\n", nbSteps);
         }else {
             nbSteps = 0;
-            Planet newPlanet(1.0f);
+            Planet newPlanet(1.0f,spherepoints);
             newPlanet.resample(planet);
             
             planet = std::move(newPlanet);
@@ -471,7 +474,7 @@ void key (unsigned char keyPressed, int x, int y) {
 
     case 'r'://resample
         {
-            Planet newPlanet(1.0f);
+            Planet newPlanet(1.0f,spherepoints);
             newPlanet.resample(planet);
 
             planet = std::move(newPlanet);

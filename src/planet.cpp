@@ -82,7 +82,7 @@ void Planet::generatePlates(unsigned int n_plates) {
         centroids.push_back(vertices[s]);
 
     // === Perturbation des centroïdes ===
-    for (unsigned int k = 0; k < n_plates; ++k) {
+    /*for (unsigned int k = 0; k < n_plates; ++k) {
         Vec3 normalized_c = centroids[k];
         normalized_c.normalize();
         Vec3 c = normalized_c;
@@ -95,12 +95,12 @@ void Planet::generatePlates(unsigned int n_plates) {
             c[2] + 0.15f * n * c[0]);
         offset.normalize();
         centroids[k] = offset * radius;
-    }
+    }*/
 
     std::vector<int> assign(vertices.size(), -1);
 
     // === Étape d’assignation (Voronoï sphérique) ===
-    const float jitterStrength = 0.06f;  // Force de la perturbation
+    const float jitterStrength = 0.02f;  // Force de la perturbation
 
     for (size_t v = 0; v < vertices.size(); ++v) {
         float bestDist = std::numeric_limits<float>::infinity();
