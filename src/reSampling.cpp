@@ -8,6 +8,9 @@
 #include "tectonicPhenomenon.h"
 #include "rifting.h"
 
+#include <chrono>
+
+
 unsigned int Planet::findclosestVertex(const Vec3& point, Planet& srcPlanet){
     unsigned int closestIndex = 0;
     float minDistSq = std::numeric_limits<float>::max();
@@ -26,6 +29,7 @@ unsigned int Planet::findclosestVertex(const Vec3& point, Planet& srcPlanet){
 
 void Planet::resample(Planet& srcPlanet) {
     
+    auto t_total_start = std::chrono::steady_clock::now();
 
     size_t N = vertices.size();
     crust_data.resize(N);
@@ -160,5 +164,9 @@ void Planet::resample(Planet& srcPlanet) {
 
     fillAllTerranes();
 
+
+    auto t_total_end = std::chrono::steady_clock::now();
+    std::chrono::duration<double, std::milli> total_ms = t_total_end - t_total_start;
+    std::cout << "reSampling total time: " << total_ms.count() << " ms" << std::endl;
 
 }

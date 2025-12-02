@@ -48,7 +48,7 @@ enum DisplayMode{ WIRE=0, SOLID=1, LIGHTED_WIRE=2, LIGHTED=3 };
 //Parametres Planete
 // ------------------------------------
 
-int nbPlates = 1;
+int nbPlates = 5;
 int nbiter_resample = 30;
 int spherepoints = 8192 * 4;
 
@@ -58,7 +58,7 @@ int spherepoints = 8192 * 4;
 //Input mesh loaded at the launch of the application
 Mesh mesh;
 
-Planet planet(1.0f,1000);
+Planet planet(1.0f,spherepoints);
 Movement movement_controller(planet);
 int nbSteps = 0;
 Erosion erosion_controller(planet);

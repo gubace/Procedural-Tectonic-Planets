@@ -345,8 +345,6 @@ void Planet::assignCrustParameters() {
 
     for (Plate& plate : plates) {
         plate.fillTerranes(*this);
-        std::cout << "Plate with " << plate.vertices_indices.size() << " vertices has " 
-                  << plate.terranes.size() << " terranes." << std::endl;
     }
 }
 
