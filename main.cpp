@@ -49,7 +49,7 @@ enum DisplayMode{ WIRE=0, SOLID=1, LIGHTED_WIRE=2, LIGHTED=3 };
 // ------------------------------------
 
 int nbPlates = 5;
-int nbiter_resample = 30;
+int nbiter_resample = 20;
 int spherepoints = 8192 * 4;
 
 

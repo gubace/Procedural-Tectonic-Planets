@@ -1,251 +1,138 @@
 #pragma once
-#include <vector>
-#include <cmath>
-#include <limits>
-#include <utility>
 
+#include <vector>
+#include <algorithm>
+#include <cmath>
+#include <utility>
+#include <limits>
+
+#include "kdtree.h"
 #include "Vec3.h"
 #include "planet.h"
 
-class SphericalGrid {
+using namespace Kdtree;
+
+class SphericalKDTree {
 public:
-    SphericalGrid(const std::vector<Vec3>& points, Planet& planet, unsigned int resolution = 64)
-        : m_points(points), m_resolution(resolution) {
-        m_cells.resize(resolution * resolution);
-        
-        for (uint32_t i = 0; i < points.size(); ++i) {
-            Vec3 p = points[i];
-
-            if(planet.crust_data[i]->is_under_subduction) continue;
-
-            p = p / p.length(); // normaliser
-            
-            // Coordonnées sphériques
-            float theta = std::atan2(p[1], p[0]); // [-π, π]
-            float phi = std::acos(p[2]); // [0, π]
-            
-            int u = (int)((theta + M_PI) / (2.0f * M_PI) * m_resolution) % m_resolution;
-            int v = (int)(phi / M_PI * m_resolution);
-            if (v >= (int)m_resolution) v = m_resolution - 1;
-            
-            m_cells[v * m_resolution + u].push_back(i);
+    SphericalKDTree(const std::vector<Vec3>& points, const Planet& /*planet*/) {
+        m_pointsNormalized.resize(points.size());
+        nodes.clear();
+        nodes.reserve(points.size());
+        for (size_t i = 0; i < points.size(); ++i) {
+            const Vec3 &p = points[i];
+            float len = p.length();
+            Vec3 pn = (len > 1e-12f) ? (p / len) : p;
+            m_pointsNormalized[i] = pn;
+            CoordPoint cp(3);
+            cp[0] = pn[0];
+            cp[1] = pn[1];
+            cp[2] = pn[2];
+            nodes.emplace_back(cp, nullptr, static_cast<int>(i));
         }
+        tree = new KdTree(&nodes, 2); // euclidean (squared)
     }
-    
+
+    ~SphericalKDTree() {
+        delete tree;
+    }
+
     uint32_t nearest(const Vec3& q) const {
-        Vec3 qn = q / q.length();
-        
-        float theta = std::atan2(qn[1], qn[0]);
-        float phi = std::acos(qn[2]);
-        
-        int u = (int)((theta + M_PI) / (2.0f * M_PI) * m_resolution) % m_resolution;
-        int v = (int)(phi / M_PI * m_resolution);
-        if (v >= (int)m_resolution) v = m_resolution - 1;
-        
-        uint32_t bestIdx = 0;
-        float bestD2 = std::numeric_limits<float>::infinity();
-        
-        // Chercher dans la cellule + 8 voisines
-        for (int dv = -1; dv <= 1; ++dv) {
-            for (int du = -1; du <= 1; ++du) {
-                int nu = (u + du + m_resolution) % m_resolution;
-                int nv = v + dv;
-                if (nv < 0 || nv >= (int)m_resolution) continue;
-                
-                for (uint32_t idx : m_cells[nv * m_resolution + nu]) {
-                    float d2 = (m_points[idx] - q).squareLength();
-                    if (d2 < bestD2) {
-                        bestD2 = d2;
-                        bestIdx = idx;
-                    }
-                }
-            }
-        }
-        return bestIdx;
+        Vec3 qn;
+        float qlen = q.length();
+        if (qlen > 1e-12f) qn = q / qlen;
+        else qn = q;
+        CoordPoint cp = toCoord(qn);
+        KdNodeVector res;
+        tree->k_nearest_neighbors(cp, 1, &res);
+        if (res.empty()) return 0;
+        return static_cast<uint32_t>(res[0].index);
     }
 
-    std::vector<unsigned int> neighbors(const Vec3& q) const {
-        Vec3 qn = q / q.length(); 
-
-        
-        float theta = std::atan2(qn[1], qn[0]);
-        float phi = std::acos(qn[2]);
-
-        
-        int u = (int)((theta + M_PI) / (2.0f * M_PI) * m_resolution) % m_resolution;
-        int v = (int)(phi / M_PI * m_resolution);
-        if (v >= (int)m_resolution) v = m_resolution - 1;
-
-        std::vector<uint32_t> result;
-
-        
-        for (int dv = -1; dv <= 1; ++dv) {
-            for (int du = -1; du <= 1; ++du) {
-                if (dv == 0 && du == 0) continue;
-
-                int nu = (u + du + m_resolution) % m_resolution;
-                int nv = v + dv;
-                if (nv < 0 || nv >= (int)m_resolution) continue;
-                
-                const auto& cell = m_cells[nv * m_resolution + nu];
-                result.insert(result.end(), cell.begin(), cell.end());
-            }
-        }
-
-        return result;
+    std::vector<uint32_t> kNearest(const Vec3& q, unsigned int k = 8) const {
+        Vec3 qn;
+        float qlen = q.length();
+        if (qlen > 1e-12f) qn = q / qlen;
+        else qn = q;
+        CoordPoint cp = toCoord(qn);
+        KdNodeVector res;
+        tree->k_nearest_neighbors(cp, k, &res);
+        std::vector<uint32_t> out;
+        out.reserve(res.size());
+        for (const auto &n : res) out.push_back(static_cast<uint32_t>(n.index));
+        return out;
     }
 
-
+    // find two nearest vertices that belong to different plates
     std::pair<uint32_t, uint32_t> nearestFromDifferentPlates(const Vec3& q, const Planet& planet) const {
-        Vec3 qn = q / q.length();
-        
-        float theta = std::atan2(qn[1], qn[0]);
-        float phi = std::acos(qn[2]);
-        
-        int u = (int)((theta + M_PI) / (2.0f * M_PI) * m_resolution) % m_resolution;
-        int v = (int)(phi / M_PI * m_resolution);
-        if (v >= (int)m_resolution) v = m_resolution - 1;
-        
-        // Collect all candidates from neighboring cells with their distances
-        std::vector<std::pair<float, uint32_t>> candidates;
-        
-        // Search in progressively larger neighborhoods until we find points from 2 different plates
-        for (int radius = 1; radius <= 3; ++radius) {
-            for (int dv = -radius; dv <= radius; ++dv) {
-                for (int du = -radius; du <= radius; ++du) {
-                    // Only check the outer ring of the current radius
-                    if (std::abs(dv) != radius && std::abs(du) != radius) continue;
-                    
-                    int nu = (u + du + m_resolution) % m_resolution;
-                    int nv = v + dv;
-                    if (nv < 0 || nv >= (int)m_resolution) continue;
-                    
-                    for (uint32_t idx : m_cells[nv * m_resolution + nu]) {
-                        float d2 = (m_points[idx] - q).squareLength();
-                        candidates.push_back({d2, idx});
-                    }
-                }
+        Vec3 qn;
+        float qlen = q.length();
+        if (qlen > 1e-12f) qn = q / qlen;
+        else qn = q;
+        CoordPoint cp = toCoord(qn);
+
+        size_t total = nodes.size();
+        size_t k = std::min<size_t>(8, total ? total : 1);
+        while (k <= total) {
+            KdNodeVector res;
+            tree->k_nearest_neighbors(cp, k, &res);
+            // collect only valid plate-annotated indices sorted by distance
+            std::vector<uint32_t> candidates;
+            candidates.reserve(res.size());
+            for (const auto &n : res) {
+                uint32_t idx = static_cast<uint32_t>(n.index);
+                if (idx >= planet.verticesToPlates.size()) continue;
+                unsigned int p = planet.verticesToPlates[idx];
+                if (p >= planet.plates.size()) continue;
+                candidates.push_back(idx);
             }
-            
-            // Sort candidates by distance
-            std::sort(candidates.begin(), candidates.end());
-            
-            // Find the two closest points from different plates
             if (candidates.size() >= 2) {
-                uint32_t firstIdx = candidates[0].second;
-                unsigned int firstPlate = planet.verticesToPlates[firstIdx];
-                
-                for (size_t i = 1; i < candidates.size(); ++i) {
-                    uint32_t secondIdx = candidates[i].second;
-                    unsigned int secondPlate = planet.verticesToPlates[secondIdx];
-                    
-                    if (secondPlate != firstPlate) {
-                        return {firstIdx, secondIdx};
+                // find two with different plates (candidates are in ascending distance order)
+                for (size_t i = 0; i + 1 < candidates.size(); ++i) {
+                    unsigned int pi = planet.verticesToPlates[candidates[i]];
+                    for (size_t j = i + 1; j < candidates.size(); ++j) {
+                        unsigned int pj = planet.verticesToPlates[candidates[j]];
+                        if (pi != pj) return {candidates[i], candidates[j]};
                     }
                 }
             }
+            if (k == total) break;
+            k = std::min<size_t>(k * 2, total);
         }
-        
-        // Fallback: if not found in nearby cells, do exhaustive search (should rarely happen)
-        std::vector<std::pair<float, uint32_t>> allPoints;
-        for (uint32_t i = 0; i < m_points.size(); ++i) {
-            float d2 = (m_points[i] - q).squareLength();
-            allPoints.push_back({d2, i});
+
+        // fallback exhaustive search among annotated vertices
+        std::vector<std::pair<double,uint32_t>> all;
+        all.reserve(total);
+        for (size_t i = 0; i < m_pointsNormalized.size(); ++i) {
+            if (i >= planet.verticesToPlates.size()) continue;
+            unsigned int p = planet.verticesToPlates[i];
+            if (p >= planet.plates.size()) continue;
+            Vec3 d = m_pointsNormalized[i] - qn;
+            double d2 = d.squareLength();
+            all.emplace_back(d2, static_cast<uint32_t>(i));
         }
-        
-        std::sort(allPoints.begin(), allPoints.end());
-        
-        if (allPoints.size() >= 2) {
-            uint32_t firstIdx = allPoints[0].second;
-            unsigned int firstPlate = planet.verticesToPlates[firstIdx];
-            
-            for (size_t i = 1; i < allPoints.size(); ++i) {
-                uint32_t secondIdx = allPoints[i].second;
-                unsigned int secondPlate = planet.verticesToPlates[secondIdx];
-                
-                if (secondPlate != firstPlate) {
-                    return {firstIdx, secondIdx};
+        if (all.size() >= 2) {
+            std::sort(all.begin(), all.end());
+            for (size_t i = 0; i + 1 < all.size(); ++i) {
+                unsigned int pi = planet.verticesToPlates[all[i].second];
+                for (size_t j = i + 1; j < all.size(); ++j) {
+                    unsigned int pj = planet.verticesToPlates[all[j].second];
+                    if (pi != pj) return {all[i].second, all[j].second};
                 }
             }
         }
-        
-        // Should never reach here if planet has at least 2 plates
         return {0, 1};
     }
 
-
-
-
-    std::vector<uint32_t> kNearest(const Vec3& q, unsigned int k = 8) const {
-        Vec3 qn = q / q.length();
-        
-        float theta = std::atan2(qn[1], qn[0]);
-        float phi = std::acos(qn[2]);
-        
-        int u = (int)((theta + M_PI) / (2.0f * M_PI) * m_resolution) % m_resolution;
-        int v = (int)(phi / M_PI * m_resolution);
-        if (v >= (int)m_resolution) v = m_resolution - 1;
-        
-        // Min-heap pour maintenir les k plus proches
-        // pair<distance², index>
-        std::vector<std::pair<float, uint32_t>> kClosest;
-        kClosest.reserve(k);
-        
-        auto updateKClosest = [&](float d2, uint32_t idx) {
-            if (kClosest.size() < k) {
-                kClosest.push_back({d2, idx});
-                std::push_heap(kClosest.begin(), kClosest.end());
-            } else if (d2 < kClosest.front().first) {
-                // Remplacer le plus éloigné
-                std::pop_heap(kClosest.begin(), kClosest.end());
-                kClosest.back() = {d2, idx};
-                std::push_heap(kClosest.begin(), kClosest.end());
-            }
-        };
-        
-        // Chercher dans un rayon croissant
-        for (int radius = 1; radius <= 5; ++radius) {
-            for (int dv = -radius; dv <= radius; ++dv) {
-                for (int du = -radius; du <= radius; ++du) {
-                    int nu = (u + du + m_resolution) % m_resolution;
-                    int nv = v + dv;
-                    if (nv < 0 || nv >= (int)m_resolution) continue;
-                    
-                    for (uint32_t idx : m_cells[nv * m_resolution + nu]) {
-                        float d2 = (m_points[idx] - q).squareLength();
-                        updateKClosest(d2, idx);
-                    }
-                }
-            }
-            
-            // Early exit si on a k candidats et qu'on est assez loin
-            if (kClosest.size() >= k) {
-                // Estimer si les cellules suivantes peuvent contenir des points plus proches
-                float maxDistInHeap = kClosest.front().first;
-                float cellSize = (2.0f * M_PI) / m_resolution;
-                float nextRadius = (radius + 1) * cellSize;
-                
-                // Si le prochain radius est certainement plus loin que notre max, on arrête
-                if (nextRadius * nextRadius > maxDistInHeap * 1.5f) {
-                    break;
-                }
-            }
-        }
-        
-        // Extraire et trier les résultats
-        std::sort_heap(kClosest.begin(), kClosest.end());
-        
-        std::vector<uint32_t> result;
-        result.reserve(k);
-        for (const auto& p : kClosest) {
-            result.push_back(p.second);
-        }
-        
-        return result;
+private:
+    CoordPoint toCoord(const Vec3& v) const {
+        CoordPoint cp(3);
+        cp[0] = v[0];
+        cp[1] = v[1];
+        cp[2] = v[2];
+        return cp;
     }
 
-private:
-    const std::vector<Vec3>& m_points;
-    unsigned int m_resolution;
-    std::vector<std::vector<uint32_t>> m_cells;
+    KdTree* tree = nullptr;
+    KdNodeVector nodes;
+    std::vector<Vec3> m_pointsNormalized;
 };

@@ -47,12 +47,13 @@ void crustGeneration::triggerEvent(Planet& planet) {
     
     
     float newElevation = (1.0f - alpha) * zGamma + alpha * zBar;
-    //float newElevation = -2000.0f;;
+
     
     float riftInfluenceRadius = 0.08f;
     float blendFactor = std::min(1.0f, dGamma / (riftInfluenceRadius * 0.5f));
     newElevation = (1.0f - blendFactor) * newElevation + blendFactor * zOceanic;
     
+    newElevation = std::min(newElevation, -10.0f);
     
     Vec3 pNorm = p;
     pNorm.normalize();

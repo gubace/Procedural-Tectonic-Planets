@@ -361,44 +361,24 @@ std::vector<Vec3> Planet::vertexColorsForPlates() const {
     return out;
 }
 
-
 std::vector<Vec3> Planet::vertexColorsForElevation() const {
     std::vector<Vec3> out(vertices.size(), Vec3(0.0f, 0.0f, 0.0f));
 
-    // ✅ Utiliser les constantes de la classe pour la normalisation
     float elevationRange = max_elevation - min_elevation;
     if (elevationRange < 1e-6f) elevationRange = 1.0f;
 
+    auto clamp01 = [](float v) -> float { return std::max(0.0f, std::min(1.0f, v)); };
+
     for (size_t i = 0; i < vertices.size(); ++i) {
         if (i < crust_data.size() && crust_data[i]) {
-            const Crust* crust = crust_data[i].get();
-            
-            // ✅ Normaliser entre [0, 1] en utilisant min_elevation et max_elevation
-            float normalizedElevation = (crust->relief_elevation - min_elevation) / elevationRange;
-            normalizedElevation = std::max(0.0f, std::min(1.0f, normalizedElevation));
-            
-            // Gradient de couleur plus intéressant
-            Vec3 color;
-            if (normalizedElevation < 0.5f) {
-                // Océan : bleu foncé -> bleu clair
-                float t = normalizedElevation * 2.0f;
-                color = Vec3(0.0f, 0.0f, 0.5f + 0.5f * t);
-            } else {
-                // Terre : vert -> marron -> blanc
-                float t = (normalizedElevation - 0.5f) * 2.0f;
-                if (t < 0.5f) {
-                    // Vert -> marron
-                    color = Vec3(0.2f + 0.3f * t, 0.6f - 0.3f * t, 0.1f);
-                } else {
-                    // Marron -> blanc (neige)
-                    float snow = (t - 0.5f) * 2.0f;
-                    color = Vec3(0.5f + 0.5f * snow, 0.3f + 0.7f * snow, 0.1f + 0.9f * snow);
-                }
-            }
-            
-            out[i] = color;
+            float t = (crust_data[i]->relief_elevation - min_elevation) / elevationRange;
+            t = clamp01(t);
+
+            // grayscale height map: 0 = black (min_elevation), 1 = white (max_elevation)
+            out[i] = Vec3(t, t, t);
         } else {
-            out[i] = Vec3(0.0f, 0.0f, 0.0f); // Noir si pas de données
+            // no data -> black
+            out[i] = Vec3(0.0f, 0.0f, 0.0f);
         }
     }
 
@@ -421,7 +401,6 @@ std::vector<Vec3> Planet::vertexColorsForCrustTypes() const {
         const ContinentalCrust* cc = dynamic_cast<const ContinentalCrust*>(crust_data[i].get());
 
         if (oc) {
-            // ✅ Oceanic : utiliser min_elevation pour normaliser
             float elev = oc->relief_elevation;
             // Mapper [min_elevation, 0] vers [0, 1]
             float t = clamp01((elev - min_elevation) / std::abs(min_elevation));
