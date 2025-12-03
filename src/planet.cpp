@@ -405,10 +405,10 @@ Vec3 Planet::getColorFromHeightAndCrustType(float elevation, bool isOceanic, flo
     } else {
         float t = clamp01(elevation / max_elevation);
             
-        Vec3 lowland(0.15f, 0.7f, 0.18f);      // Plaines vertes
-        Vec3 midland(0.45f, 0.30f, 0.10f);     // Collines marron
-        Vec3 highland(0.65f, 0.55f, 0.40f);    // Montagnes rocheuses
-        Vec3 snow(1.0f, 1.0f, 1.0f);           // Neige
+        Vec3 lowland(0.10f, 0.20f, 0.20f);      // Plaines vertes
+        Vec3 midland(0.25f, 0.35f, 0.35f);     // Collines marron
+        Vec3 highland(0.25f, 0.25f, 0.20f);    // Montagnes rocheuses
+        Vec3 snow(0.8f, 0.9f, 0.9f);           // Neige
         
         Vec3 col;
         
