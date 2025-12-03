@@ -14,9 +14,9 @@ class Amplification {
 
     Amplification(Planet & p) {
         noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
-        noise.SetFrequency(4.0f);
+        noise.SetFrequency(8.0f);
         noise.SetFractalType(FastNoiseLite::FractalType_FBm);
-        noise.SetFractalOctaves(3);
+        noise.SetFractalOctaves(5);
         noise.SetSeed(2);
     };
 
@@ -27,6 +27,7 @@ class Amplification {
             newPlanet.vertices[vertexIdx] = copyClosestVertex(planet, newPlanet, vertexIdx);
         }
 
+        newPlanet.recomputeNormals();
         planet = std::move(newPlanet);
     };
 
@@ -55,9 +56,9 @@ class Amplification {
     };
 
     Vec3 addNoise(Vec3 position) {
-        float noiseRaw = noise.GetNoise(position[0], position[1], position[2]);
-        float n0 = (noiseRaw + 1.0f) * 0.5f;
-        float n = 1.0f + n0 * (elevation_force / 2);
+        float noiseRaw = noise.GetNoise(position[0], position[1], position[2]);  // [-1, 1]
+
+        float n = 1.0f + noiseRaw * (elevation_force * 0.05f);
 
         return position * n;
     }
