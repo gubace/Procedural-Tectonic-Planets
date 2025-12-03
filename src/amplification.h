@@ -1,15 +1,46 @@
 #pragma once
 
+#include "Vec3.h"
 #include "crust.h"
 #include "planet.h"
 
 class Amplification {
    public:
-    Planet& planet;
+    const float elevation_force = 0.2;
 
-    Amplification(Planet & p) : planet(p) { };
+    Amplification(Planet & p) { };
 
-    void amplifyTerrain() {
+    void amplifyTerrain(Planet& planet) {
+        Planet newPlanet(1.0f, planet.vertices.size() * 4);
 
+        for (int vertexIdx = 0; vertexIdx < newPlanet.vertices.size(); vertexIdx++) {
+            newPlanet.vertices[vertexIdx] = copyClosestVertex(planet, newPlanet, vertexIdx);
+        }
+
+        planet = std::move(newPlanet);
+    };
+
+   private:
+    Vec3 copyClosestVertex(Planet& planet, Planet& newPlanet, unsigned int vertexIdx) {
+        Vec3 vertexPosition = newPlanet.vertices[vertexIdx];
+        unsigned int closestVertexIdx = 0;
+        float closestDistance = planet.radius;
+
+        for (int vertexIdx = 0; vertexIdx < planet.vertices.size(); vertexIdx++) {
+            Vec3 difference = vertexPosition - planet.vertices[vertexIdx];
+            float distance = difference.length();
+            if (distance > closestDistance) {
+                continue;
+            }
+
+            closestDistance = distance;
+            closestVertexIdx = vertexIdx;
+        }
+        float crust_elevation = planet.crust_data[closestVertexIdx]->relief_elevation;
+        float normalized_elevation = (crust_elevation - planet.min_elevation) / (planet.max_elevation - planet.min_elevation);
+
+        newPlanet.amplified_elevations.push_back(crust_elevation);
+        
+        return vertexPosition * (1 + elevation_force * normalized_elevation);
     };
 };

@@ -361,6 +361,7 @@ std::vector<Vec3> Planet::vertexColorsForPlates() const {
     return out;
 }
 
+
 std::vector<Vec3> Planet::vertexColorsForElevation() const {
     std::vector<Vec3> out(vertices.size(), Vec3(0.0f, 0.0f, 0.0f));
 
@@ -383,13 +384,72 @@ std::vector<Vec3> Planet::vertexColorsForElevation() const {
     }
 
     return out;
+};
+    
+
+Vec3 Planet::getColorFromHeightAndCrustType(float elevation, bool isOceanic, float age) const {
+    auto clamp01 = [](float v) -> float { return std::max(0.0f, std::min(1.0f, v)); };
+    auto mix = [](const Vec3& a, const Vec3& b, float t) -> Vec3 { return a * (1.0f - t) + b * t; };
+
+    if (isOceanic) {
+        float t = clamp01((elevation - min_elevation) / std::abs(min_elevation));
+        
+        Vec3 deepBlue(0.02f, 0.05f, 0.40f);
+        Vec3 shallowBlue(0.12f, 0.45f, 0.8f);
+        Vec3 col = mix(deepBlue, shallowBlue, t);
+
+        float ageFactor = 1.0f - clamp01(age / 200.0f) * 0.45f;
+        col *= ageFactor;
+
+        return col;
+    } else {
+        float t = clamp01(elevation / max_elevation);
+            
+        Vec3 lowland(0.15f, 0.7f, 0.18f);      // Plaines vertes
+        Vec3 midland(0.45f, 0.30f, 0.10f);     // Collines marron
+        Vec3 highland(0.65f, 0.55f, 0.40f);    // Montagnes rocheuses
+        Vec3 snow(1.0f, 1.0f, 1.0f);           // Neige
+        
+        Vec3 col;
+        
+        if (t < 0.3f) {
+            // Basses terres
+            col = mix(lowland, midland, t / 0.3f);
+        } else if (t < 0.6f) {
+            // Moyennes hauteurs
+            col = mix(midland, highland, (t - 0.3f) / 0.3f);
+        } else {
+            // Hautes montagnes avec neige
+            float snowFactor = (t - 0.6f) / 0.4f;
+            col = mix(highland, snow, snowFactor);
+        }
+
+        col *= (1.0f - clamp01(age / 1200.0f) * 0.25f);
+
+        return col;
+    }
+}
+
+std::vector<Vec3> Planet::vertexColorsForCrustTypesAmplified() const {
+    std::vector<Vec3> out(vertices.size(), Vec3(0.5f, 0.5f, 0.5f));
+    if (amplified_elevations.size() == 0) {
+        return out;
+    }
+    
+    for (size_t i = 0; i < vertices.size(); ++i) {
+        float height = amplified_elevations[i];
+
+        if (height < ocean_level) {
+            out[i] = getColorFromHeightAndCrustType(height, true, 0);
+        } else {
+            out[i] = getColorFromHeightAndCrustType(height, false, 0);
+        }
+    }
+    return out;
 }
 
 std::vector<Vec3> Planet::vertexColorsForCrustTypes() const {
     std::vector<Vec3> out(vertices.size(), Vec3(0.5f, 0.5f, 0.5f));
-    
-    auto clamp01 = [](float v) -> float { return std::max(0.0f, std::min(1.0f, v)); };
-    auto mix = [](const Vec3& a, const Vec3& b, float t) -> Vec3 { return a * (1.0f - t) + b * t; };
     
     for (size_t i = 0; i < vertices.size(); ++i) {
         if (i >= crust_data.size() || !crust_data[i]) {
@@ -401,52 +461,9 @@ std::vector<Vec3> Planet::vertexColorsForCrustTypes() const {
         const ContinentalCrust* cc = dynamic_cast<const ContinentalCrust*>(crust_data[i].get());
 
         if (oc) {
-            float elev = oc->relief_elevation;
-            // Mapper [min_elevation, 0] vers [0, 1]
-            float t = clamp01((elev - min_elevation) / std::abs(min_elevation));
-            
-            Vec3 deepBlue(0.02f, 0.05f, 0.40f);    // Fosses océaniques profondes
-            Vec3 shallowBlue(0.12f, 0.45f, 0.8f);  // Plateaux océaniques
-            Vec3 col = mix(deepBlue, shallowBlue, t);
-
-            // Modulation par l'âge
-            float age = oc->age;
-            float ageFactor = 1.0f - clamp01(age / 200.0f) * 0.45f;
-            col *= ageFactor;
-
-            out[i] = col;
-            
+            out[i] = getColorFromHeightAndCrustType(oc->relief_elevation, true, oc->age);
         } else if (cc) {
-            // ✅ Continental : utiliser max_elevation pour normaliser
-            float elev = cc->relief_elevation;
-            // Mapper [0, max_elevation] vers [0, 1]
-            float t = clamp01(elev / max_elevation);
-            
-            Vec3 lowland(0.15f, 0.7f, 0.18f);      // Plaines vertes
-            Vec3 midland(0.45f, 0.30f, 0.10f);     // Collines marron
-            Vec3 highland(0.65f, 0.55f, 0.40f);    // Montagnes rocheuses
-            Vec3 snow(1.0f, 1.0f, 1.0f);           // Neige
-            
-            Vec3 col;
-            
-            if (t < 0.3f) {
-                // Basses terres
-                col = mix(lowland, midland, t / 0.3f);
-            } else if (t < 0.6f) {
-                // Moyennes hauteurs
-                col = mix(midland, highland, (t - 0.3f) / 0.3f);
-            } else {
-                // Hautes montagnes avec neige
-                float snowFactor = (t - 0.6f) / 0.4f;
-                col = mix(highland, snow, snowFactor);
-            }
-
-            // Modulation par l'âge de l'orogénèse (plus vieux = plus érodé = plus sombre)
-            float oa = cc->orogeny_age;
-            col *= (1.0f - clamp01(oa / 1200.0f) * 0.25f);
-
-            out[i] = col;
-            
+            out[i] = getColorFromHeightAndCrustType(cc->relief_elevation, false, cc->orogeny_age);
         } else {
             out[i] = Vec3(0.6f, 0.6f, 0.6f);
         }

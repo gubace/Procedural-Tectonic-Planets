@@ -38,6 +38,7 @@
 #include "src/movement.h"
 #include "src/erosion.h"
 #include "src/rifting.h"
+#include "src/amplification.h"
 
 
 
@@ -49,10 +50,8 @@ enum DisplayMode{ WIRE=0, SOLID=1, LIGHTED_WIRE=2, LIGHTED=3 };
 // ------------------------------------
 
 int nbPlates = 5;
-int nbiter_resample = 20;
-int spherepoints = 8192 * 4;
-
-
+int nbiter_resample = 15;
+int spherepoints = 2048 * 4;
 
 
 //Input mesh loaded at the launch of the application
@@ -60,6 +59,7 @@ Mesh mesh;
 
 Planet planet(1.0f,spherepoints);
 Movement movement_controller(planet);
+Amplification amplificator(planet);
 int nbSteps = 0;
 Erosion erosion_controller(planet);
 float timeStep = 1.0f;
@@ -107,6 +107,8 @@ void updateDisplayedColors() {
     } else if (display_plates_mode == 2) {
         mesh.colors = planet.vertexColorsForElevation();
         //printf("Updated colors for elevation display.\n");
+    } else if (display_plates_mode == 3) {
+        mesh.colors = planet.vertexColorsForCrustTypesAmplified();
     }
     glutPostRedisplay();
 }
@@ -413,7 +415,7 @@ void key (unsigned char keyPressed, int x, int y) {
         break;
 
     case 'p': //Press p key to display plates
-        display_plates_mode = (display_plates_mode + 1) % 3;
+        display_plates_mode = (display_plates_mode + 1) % 4;
         updateDisplayedColors();
         break;
 
@@ -441,6 +443,13 @@ void key (unsigned char keyPressed, int x, int y) {
 
             printf("Resampled planet.\n");
         }
+
+        for (int i = 0; i < planet.vertices.size(); i++) {
+            float crust_elevation = planet.crust_data[i]->relief_elevation;
+            float normalized_elevation = (crust_elevation - planet.min_elevation) / (planet.max_elevation - planet.min_elevation);
+            mesh.vertices[i] = planet.vertices[i] * (1 + 0.2 * normalized_elevation);
+        }
+
         break;
 
     case 'i': //trigger plat rifting
@@ -487,6 +496,13 @@ void key (unsigned char keyPressed, int x, int y) {
             nbSteps = 0;
             printf("Resampled planet.\n");
         }
+        break;
+
+    case 'a': // Amplify
+        amplificator.amplifyTerrain(planet);
+        display_plates_mode = 3;
+        mesh = planet;
+        updateDisplayedColors();
         break;
 
     case '1': //Toggle loaded mesh display

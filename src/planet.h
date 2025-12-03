@@ -27,12 +27,14 @@ class Plate {
 class Planet : public Mesh {
    public:
     std::vector<Plate> plates;
+    std::vector<float> amplified_elevations;
     std::vector<unsigned int> verticesToPlates;
     std::vector<std::unique_ptr<Crust>> crust_data;
     std::vector<std::vector<unsigned int>> neighbors;
 
     float max_elevation = 8000.0f;
     float min_elevation = -8000.0f;
+    float ocean_level = 0.5f;
 
     float radius = 1.0f;
 
@@ -50,6 +52,8 @@ class Planet : public Mesh {
     std::vector<Vec3> vertexColorsForPlates() const;
     std::vector<Vec3> vertexColorsForCrustTypes() const;
     std::vector<Vec3> vertexColorsForElevation() const;
+    std::vector<Vec3> vertexColorsForCrustTypesAmplified() const;
+    Vec3 getColorFromHeightAndCrustType(float elevation, bool isOceanic, float age) const;
 
     void fillAllTerranes();
 
