@@ -2,6 +2,7 @@
 
 #include <algorithm> // std::min, std::max
 #include <cmath>     // std::acos, std::sqrt
+#include <GL/glew.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
@@ -190,4 +191,66 @@ static Vec3 hsv2rgb(float h, float s, float v) {
         }
     }
     return Vec3(r * 0.2, g * 0.6, b);
+}
+
+
+
+
+inline void createAtmosphereSphere(float radius, int segments,GLuint &atmosphereVAO, GLuint &atmosphereVBO, GLuint &atmosphereEBO, int &atmosphereIndexCount) {
+    std::vector<float> vertices;
+    std::vector<unsigned int> indices;
+    
+    for (int lat = 0; lat <= segments; ++lat) {
+        float theta = lat * M_PI / segments;
+        float sinTheta = sin(theta);
+        float cosTheta = cos(theta);
+        
+        for (int lon = 0; lon <= segments; ++lon) {
+            float phi = lon * 2.0f * M_PI / segments;
+            float sinPhi = sin(phi);
+            float cosPhi = cos(phi);
+            
+            float x = cosPhi * sinTheta;
+            float y = cosTheta;
+            float z = sinPhi * sinTheta;
+            
+            vertices.push_back(x * radius);
+            vertices.push_back(y * radius);
+            vertices.push_back(z * radius);
+        }
+    }
+    
+    for (int lat = 0; lat < segments; ++lat) {
+        for (int lon = 0; lon < segments; ++lon) {
+            int first = (lat * (segments + 1)) + lon;
+            int second = first + segments + 1;
+            
+            indices.push_back(first);
+            indices.push_back(second);
+            indices.push_back(first + 1);
+            
+            indices.push_back(second);
+            indices.push_back(second + 1);
+            indices.push_back(first + 1);
+        }
+    }
+    
+    atmosphereIndexCount = indices.size();
+    
+    glGenVertexArrays(1, &atmosphereVAO);
+    glGenBuffers(1, &atmosphereVBO);
+    glGenBuffers(1, &atmosphereEBO);
+    
+    glBindVertexArray(atmosphereVAO);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, atmosphereVBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+    
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, atmosphereEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+    
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    
+    glBindVertexArray(0);
 }

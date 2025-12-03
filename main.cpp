@@ -26,6 +26,7 @@
 #include <utility>
 
 #include <algorithm>
+#include <GL/glew.h>
 #include <GL/glut.h>
 #include <float.h>
 
@@ -39,6 +40,7 @@
 #include "src/erosion.h"
 #include "src/rifting.h"
 #include "src/amplification.h"
+#include "src/ShaderProgram.h"
 
 
 
@@ -77,6 +79,9 @@ DisplayMode displayMode;
 int weight_type;
 
 static bool display_phenomena = false;
+static bool display_atmosphere = false;
+
+static Vec3 sunDirection = Vec3(22.0f, 16.0f, 50.0f);
 
 
 // -------------------------------------------
@@ -94,7 +99,14 @@ static int lastX=0, lastY=0, lastZoom=0;
 static bool fullScreen = false;
 
 
-
+// ------------------------------------
+// variables globales shader
+// ------------------------------------
+static ShaderProgram* atmosphereShader = nullptr;
+static GLuint atmosphereVAO = 0;
+static GLuint atmosphereVBO = 0;
+static GLuint atmosphereEBO = 0;
+static int atmosphereIndexCount = 0;
 
 
 void updateDisplayedColors() {
@@ -117,36 +129,52 @@ void updateDisplayedColors() {
 // Application initialization
 // ------------------------------------
 void initLight () {
-    GLfloat light_position1[4] = {22.0f, 16.0f, 50.0f, 0.0f};
-    GLfloat direction1[3] = {-52.0f,-16.0f,-50.0f};
-    GLfloat color1[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-    GLfloat ambient[4] = {0.3f, 0.3f, 0.3f, 0.5f};
-
-    glLightfv (GL_LIGHT1, GL_POSITION, light_position1);
-    glLightfv (GL_LIGHT1, GL_SPOT_DIRECTION, direction1);
-    glLightfv (GL_LIGHT1, GL_DIFFUSE, color1);
-    glLightfv (GL_LIGHT1, GL_SPECULAR, color1);
-    glLightModelfv (GL_LIGHT_MODEL_AMBIENT, ambient);
-    glEnable (GL_LIGHT1);
-    glEnable (GL_LIGHTING);
+    // Normaliser la direction du soleil
+    Vec3 sunDir = sunDirection;
+    sunDir.normalize();
+    
+    // Position directionnelle (w=0 signifie lumière directionnelle à l'infini)
+    GLfloat light_position1[4] = {-sunDir[0], -sunDir[1], -sunDir[2], 0.0f};
+    GLfloat direction1[3] = {sunDir[0], sunDir[1], sunDir[2]};
+    
+    // Couleur du soleil (légèrement jaunâtre pour un effet réaliste)
+    GLfloat color1[4] = {1.0f, 0.98f, 0.9f, 1.0f};
+    GLfloat ambient[4] = {0.15f, 0.15f, 0.2f, 1.0f}; // Ambiance légèrement bleutée
+    
+    glLightfv(GL_LIGHT1, GL_POSITION, light_position1);
+    glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, direction1);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, color1);
+    glLightfv(GL_LIGHT1, GL_SPECULAR, color1);
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
+    glEnable(GL_LIGHT1);
+    glEnable(GL_LIGHTING);
 }
 
 void init() {
+
     camera.resize (SCREENWIDTH, SCREENHEIGHT);
     initLight ();
     glCullFace (GL_FRONT);
     glEnable(GL_CULL_FACE);
     glDepthFunc (GL_LESS);
     glEnable (GL_DEPTH_TEST);
-    glClearColor (0.2f, 0.2f, 0.3f, 1.0f);
-
+    glClearColor (0.0f, 0.0f, 0.0f, 1.0f);
     glEnable(GL_COLOR_MATERIAL);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+
+
+    glewExperimental = GL_TRUE;
+    GLenum err = glewInit();
+    if (err != GLEW_OK) {
+        std::cerr << "Failed to initialize GLEW: " << glewGetErrorString(err) << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    std::cout << "Using GLEW " << glewGetString(GLEW_VERSION) << std::endl;
+    
 
     planet.generatePlates(nbPlates);
     planet.assignCrustParameters();
 
-    
     mesh = planet;
     display_plates_mode = 0;
     display_normals = false;
@@ -156,6 +184,14 @@ void init() {
     display_directions = true;
     updateDisplayedColors();
 
+    // Créer le shader d'atmosphère
+    atmosphereShader = new ShaderProgram(
+        "../shaders/vertexShader.glsl",
+        "../shaders/fragmentShader.glsl"
+    );
+    
+    // Créer la sphère atmosphérique
+    createAtmosphereSphere(1.1f, 64, atmosphereVAO, atmosphereVBO, atmosphereEBO, atmosphereIndexCount);
 }
 
 
@@ -169,6 +205,56 @@ void drawVector( Vec3 const & i_from, Vec3 const & i_to ) {
     glVertex3f( i_from[0] , i_from[1] , i_from[2] );
     glVertex3f( i_to[0] , i_to[1] , i_to[2] );
     glEnd();
+}
+
+
+void drawAtmosphere() {    
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDepthMask(GL_FALSE);
+    glDisable(GL_CULL_FACE);
+    
+    atmosphereShader->use();
+    
+    // Matrices
+    float projection[16], view[16], model[16];
+    glGetFloatv(GL_PROJECTION_MATRIX, projection);
+    glGetFloatv(GL_MODELVIEW_MATRIX, view);
+    
+    // Model = identité (planète centrée en 0)
+    for (int i = 0; i < 16; i++) model[i] = (i % 5 == 0) ? 1.0f : 0.0f;
+    
+    atmosphereShader->setMat4("projection", projection);
+    atmosphereShader->setMat4("view", view);
+    atmosphereShader->setMat4("model", model);
+
+    float camX, camY, camZ;
+    camera.getPos(camX, camY, camZ);
+    Vec3 camPos = Vec3(camX, camY, camZ);
+    atmosphereShader->setVec3("cameraPosition", camPos[0], camPos[1], camPos[2]);
+
+    // Paramètres de l'atmosphère
+    atmosphereShader->setVec3("planetCenter", 0.0f, 0.0f, 0.0f);
+    atmosphereShader->setFloat("planetRadius", 1.0f);
+    atmosphereShader->setFloat("atmoRadius", 1.5f);
+    
+    // UTILISER la même direction du soleil que pour l'éclairage OpenGL
+    Vec3 lightDir = sunDirection;
+    lightDir.normalize();
+    atmosphereShader->setVec3("lightDir", lightDir[0], lightDir[1], lightDir[2]);
+    
+    // Dessiner la sphère
+    glBindVertexArray(atmosphereVAO);
+    glDrawElements(GL_TRIANGLES, atmosphereIndexCount, GL_UNSIGNED_INT, 0);
+    glBindVertexArray(0);
+    
+    // Désactiver le shader
+    glUseProgram(0);
+    
+    // Restaurer l'état OpenGL
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+    glEnable(GL_CULL_FACE);
 }
 
 void drawAxis( Vec3 const & i_origin, Vec3 const & i_direction ) {
@@ -189,6 +275,10 @@ void drawReferenceFrame( Vec3 const & origin, Vec3 const & i, Vec3 const & j, Ve
     glEnable(GL_LIGHTING);
 
 }
+
+
+
+
 
 
 typedef struct {
@@ -362,9 +452,19 @@ void draw () {
 
     if (display_phenomena) {
         drawTectonicPhenomenaMarkers(planet, movement_controller.tectonicPhenomena, 0.02f);
-    }    
+    }
+
+    if (display_atmosphere) {
+        drawAtmosphere();
+        glUseProgram(0);
+    }
+
+
+
 
     glEnable(GL_LIGHTING);
+
+
 
 
 }
@@ -376,8 +476,11 @@ void changeDisplayMode(){
         displayMode = SOLID;
     else if(displayMode == SOLID)
         displayMode = WIRE;
-    else
+    else{ 
+        std::cout << "Switching to LIGHTED mode." << std::endl;
         displayMode = LIGHTED;
+    
+    }
 }
 
 void display () {
@@ -467,6 +570,30 @@ void key (unsigned char keyPressed, int x, int y) {
         }
         break;
 
+
+    case 'l': // Rotate sun left
+        {
+            // Rotation autour de l'axe Y
+            float angle = 0.1f;
+            float newX = sunDirection[0] * cos(angle) - sunDirection[2] * sin(angle);
+            float newZ = sunDirection[0] * sin(angle) + sunDirection[2] * cos(angle);
+            sunDirection = Vec3(newX, sunDirection[1], newZ);
+            initLight(); // Réappliquer l'éclairage
+            printf("Sun direction: (%.2f, %.2f, %.2f)\n", sunDirection[0], sunDirection[1], sunDirection[2]);
+        }
+        break;
+        
+    case 'k': // Rotate sun right
+        {
+            float angle = -0.1f;
+            float newX = sunDirection[0] * cos(angle) - sunDirection[2] * sin(angle);
+            float newZ = sunDirection[0] * sin(angle) + sunDirection[2] * cos(angle);
+            sunDirection = Vec3(newX, sunDirection[1], newZ);
+            initLight();
+            printf("Sun direction: (%.2f, %.2f, %.2f)\n", sunDirection[0], sunDirection[1], sunDirection[2]);
+        }
+        break;
+
     case 'b': // toggle subduction markers and compute once
         display_phenomena = !display_phenomena;
         if (display_phenomena) {
@@ -474,6 +601,15 @@ void key (unsigned char keyPressed, int x, int y) {
             printf("Subduction markers ON (%zu candidates)\n", movement_controller.tectonicPhenomena.size());
         } else {
             printf("Subduction markers OFF\n");
+        }
+        break;
+
+    case 'h': // toggle atmosphere display
+        display_atmosphere = !display_atmosphere;
+        if (display_atmosphere) {
+            printf("Atmosphere display ON\n");
+        } else {
+            printf("Atmosphere display OFF\n");
         }
         break;
 

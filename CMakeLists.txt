@@ -15,8 +15,8 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
 endif()
 
-# Debug flags
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wextra")
+# Debug flags (enlever -lGLEW d'ici, ce n'est pas un flag de compilation)
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O3 -Wextra")
 
 # Source collection
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
@@ -26,10 +26,8 @@ file(GLOB_RECURSE PROJECT_SOURCES
 )
 
 # Geometric Tools (GTE) - header-only
-# Par défaut on s'attend à trouver les headers dans external/GeometricTools/GTE
 set(GTE_DIR ${CMAKE_SOURCE_DIR}/external/GeometricTools/GTE CACHE PATH "Path to GeometricTools GTE headers")
 
-# Vérification simple que le dossier existe (ne stoppe pas la configuration, juste un avertissement)
 if(EXISTS "${GTE_DIR}")
     message(STATUS "GTE headers found: ${GTE_DIR}")
 else()
@@ -39,7 +37,16 @@ endif()
 # Find OpenGL
 find_package(OpenGL REQUIRED)
 
-# Try to find GLUT (FindGLUT may not be available on all systems)
+# Find GLEW (IMPORTANT!)
+find_package(GLEW REQUIRED)
+if(GLEW_FOUND)
+    message(STATUS "Found GLEW: ${GLEW_LIBRARIES}")
+    message(STATUS "GLEW include: ${GLEW_INCLUDE_DIRS}")
+else()
+    message(FATAL_ERROR "GLEW not found. Install libglew-dev.")
+endif()
+
+# Try to find GLUT
 find_package(GLUT)
 if(NOT GLUT_FOUND)
     find_library(GLUT_LIB glut)
@@ -52,7 +59,7 @@ else()
     message(STATUS "Found GLUT via find_package")
 endif()
 
-# Find GLU (pour gluPerspective)
+# Find GLU
 find_library(GLU_LIB GLU)
 if (GLU_LIB)
     message(STATUS "Found GLU: ${GLU_LIB}")
@@ -63,10 +70,11 @@ endif()
 # Create executable target
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
 
-# Include dirs (only for the target)
+# Include dirs
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${SRC_DIR}
-    ${GTE_DIR}                # Geometric Tools (header-only)
+    ${GTE_DIR}
+    ${GLEW_INCLUDE_DIRS}  # IMPORTANT: ajouter les headers GLEW
 )
 
 # Link OpenGL
@@ -78,7 +86,14 @@ elseif(DEFINED OPENGL_LIBRARIES)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${OPENGL_LIBRARIES})
 endif()
 
-# Link GLUT (use either GLUT::GLUT / GLUT_LIBRARY or fallback GLUT_LIB)
+# Link GLEW (IMPORTANT: avant GLUT!)
+if(TARGET GLEW::GLEW)
+    target_link_libraries(${PROJECT_NAME} PRIVATE GLEW::GLEW)
+else()
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${GLEW_LIBRARIES})
+endif()
+
+# Link GLUT
 if(TARGET GLUT::GLUT)
     target_link_libraries(${PROJECT_NAME} PRIVATE GLUT::GLUT)
 elseif(DEFINED GLUT_LIBRARY)
@@ -90,11 +105,11 @@ endif()
 # link GLU
 target_link_libraries(${PROJECT_NAME} PRIVATE ${GLU_LIB})
 
-# math / threading (pthread only on UNIX-like)
+# math / threading
 target_link_libraries(${PROJECT_NAME} PRIVATE m)
 if(UNIX)
     target_link_libraries(${PROJECT_NAME} PRIVATE pthread)
 endif()
 
-# Installation (optional)
+# Installation
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
