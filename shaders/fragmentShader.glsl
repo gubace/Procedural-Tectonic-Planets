@@ -11,15 +11,15 @@ uniform float planetRadius; // = 1.0
 uniform float atmoRadius; // = 1.05 par exemple
 
 // Coefficients adaptés à votre échelle
-#define RAY_BETA vec3(1.1e-3, 2.6e-3, 4.5e-3)  // divisé par 5
-#define MIE_BETA vec3(4.2e-3)  // divisé par 5
+#define RAY_BETA vec3(1.1e-3 * 5, 2.6e-3 * 5, 4.5e-3 * 5) 
+#define MIE_BETA vec3(4.2e-3 * 5)
 #define ABSORPTION_BETA vec3(2.04e-3, 4.97e-3, 1.95e-4)
 #define G 0.76
 #define HEIGHT_RAY 0.08
 #define HEIGHT_MIE 0.012
 
-#define HEIGHT_ABSORPTION 0.03
-#define ABSORPTION_FALLOFF 0.004
+#define HEIGHT_ABSORPTION 0.05
+#define ABSORPTION_FALLOFF 0.002
 
 // ... copiez les fonctions calculate_scattering,
 vec3 calculate_scattering(
@@ -248,11 +248,11 @@ void main() {
         max_dist,
         vec3(0.1,0.1,0.1),
         normalize(lightDir),
-        vec3(40.0),
+        vec3(30.0),
         planetCenter,
         planetRadius,
         atmoRadius,
-        RAY_BETA * 15.0,
+        RAY_BETA * 10.0,
         MIE_BETA * 15.0,
         ABSORPTION_BETA,
         vec3(0.0),

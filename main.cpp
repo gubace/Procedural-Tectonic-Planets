@@ -571,7 +571,7 @@ void key (unsigned char keyPressed, int x, int y) {
         break;
 
 
-    case 'l': // Rotate sun left
+    case 'k': // Rotate sun left
         {
             // Rotation autour de l'axe Y
             float angle = 0.1f;
@@ -583,12 +583,29 @@ void key (unsigned char keyPressed, int x, int y) {
         }
         break;
         
-    case 'k': // Rotate sun right
+    case 'l': // Rotate sun right
         {
             float angle = -0.1f;
             float newX = sunDirection[0] * cos(angle) - sunDirection[2] * sin(angle);
             float newZ = sunDirection[0] * sin(angle) + sunDirection[2] * cos(angle);
             sunDirection = Vec3(newX, sunDirection[1], newZ);
+            initLight();
+            printf("Sun direction: (%.2f, %.2f, %.2f)\n", sunDirection[0], sunDirection[1], sunDirection[2]);
+        }
+        break;
+
+
+    case 'o': // Rotate sun up
+        {
+            sunDirection[1] += 2.0f;
+            initLight();
+            printf("Sun direction: (%.2f, %.2f, %.2f)\n", sunDirection[0], sunDirection[1], sunDirection[2]);
+        }
+        break;
+        
+    case 'u': // Rotate sun down
+        {
+            sunDirection[1] -= 2.0f;
             initLight();
             printf("Sun direction: (%.2f, %.2f, %.2f)\n", sunDirection[0], sunDirection[1], sunDirection[2]);
         }
