@@ -393,10 +393,7 @@ Vec3 Planet::getColorFromHeightAndCrustType(float elevation, bool isOceanic, flo
 
     if (isOceanic) {
         float t = clamp01((elevation - min_elevation) / std::abs(min_elevation));
-        
-        Vec3 deepBlue(0.02f, 0.05f, 0.40f);
-        Vec3 shallowBlue(0.12f, 0.45f, 0.8f);
-        Vec3 col = mix(deepBlue, shallowBlue, t);
+        Vec3 col = mix(palette.color_deep, palette.color_shallow, t);
 
         float ageFactor = 1.0f - clamp01(age / 200.0f) * 0.45f;
         col *= ageFactor;
@@ -404,24 +401,17 @@ Vec3 Planet::getColorFromHeightAndCrustType(float elevation, bool isOceanic, flo
         return col;
     } else {
         float t = clamp01(elevation / max_elevation);
-            
-        Vec3 lowland(0.10f, 0.20f, 0.20f);      // Plaines vertes
-        Vec3 midland(0.25f, 0.35f, 0.35f);     // Collines marron
-        Vec3 highland(0.25f, 0.25f, 0.20f);    // Montagnes rocheuses
-        Vec3 snow(0.8f, 0.9f, 0.9f);           // Neige
-        
         Vec3 col;
-        
         if (t < 0.3f) {
             // Basses terres
-            col = mix(lowland, midland, t / 0.3f);
+            col = mix(palette.color_lowland, palette.color_midland, t / 0.3f);
         } else if (t < 0.6f) {
             // Moyennes hauteurs
-            col = mix(midland, highland, (t - 0.3f) / 0.3f);
+            col = mix(palette.color_midland, palette.color_highland, (t - 0.3f) / 0.3f);
         } else {
             // Hautes montagnes avec neige
             float snowFactor = (t - 0.6f) / 0.4f;
-            col = mix(highland, snow, snowFactor);
+            col = mix(palette.color_highland, palette.color_snow, snowFactor);
         }
 
         col *= (1.0f - clamp01(age / 1200.0f) * 0.25f);

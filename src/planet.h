@@ -9,6 +9,7 @@
 #include "crust.h"
 #include "mesh.h"
 #include "tectonicPhenomenon.h"
+#include "palette.h"
 
 //---------------------------------------Planet Class--------------------------------------------
 
@@ -38,6 +39,8 @@ class Planet : public Mesh {
 
     float radius = 1.0f;
 
+    Palette palette;
+
     Planet(float r, int points) : radius(r) {
         setupSphere(radius, points);
     }
@@ -59,6 +62,9 @@ class Planet : public Mesh {
     float computeMinDistanceFromOrigin() const;
     float computeMaxDistanceFromOrigin() const;
     
+    void changePalette() {
+        palette = Palette::getNextPallete();
+    };
 
     void fillAllTerranes();
 

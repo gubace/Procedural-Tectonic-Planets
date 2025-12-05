@@ -41,6 +41,7 @@
 #include "src/rifting.h"
 #include "src/amplification.h"
 #include "src/ShaderProgram.h"
+#include "src/palette.h"
 
 
 
@@ -114,6 +115,7 @@ static int atmosphereIndexCount = 0;
 
 
 void updateDisplayedColors() {
+    planet.palette = Palette::getCurrentPalette();
     if (display_plates_mode == 0) {
         mesh.colors = planet.vertexColorsForPlates();
         //printf("Updated colors for plates display.\n");
@@ -176,6 +178,8 @@ void init() {
     std::cout << "Using GLEW " << glewGetString(GLEW_VERSION) << std::endl;
     
 
+    Palette::loadPalettes();
+    planet.palette = Palette::getNextPallete();
     planet.generatePlates(nbPlates);
     planet.assignCrustParameters();
 
@@ -523,6 +527,11 @@ void key (unsigned char keyPressed, int x, int y) {
 
     case 'p': //Press p key to display plates
         display_plates_mode = (display_plates_mode + 1) % 4;
+        updateDisplayedColors();
+        break;
+
+    case 'c': //Press c key to change colors
+        planet.changePalette();
         updateDisplayedColors();
         break;
 
