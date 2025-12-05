@@ -24,26 +24,13 @@ public:
         noise.SetFractalType(FastNoiseLite::FractalType_FBm);
         noise.SetFractalOctaves(5);
         noise.SetSeed(2);
+
         
-        tessellateShader = new ShaderProgram(
-            "/home/e20210000275/M2/Projet3D/shaders/amplify.vert",
-            "/home/e20210000275/M2/Projet3D/shaders/amplify.frag",
-            "/home/e20210000275/M2/Projet3D/shaders/tesselate.geom"
-        );
-        
-        glGenVertexArrays(1, &vao);
-        glGenBuffers(1, &vbo);
-        glGenBuffers(1, &ebo);
-        glGenBuffers(1, &transformFeedbackBuffer);
+
     };
     
-    ~Amplification() {
-        delete tessellateShader;
-        glDeleteVertexArrays(1, &vao);
-        glDeleteBuffers(1, &vbo);
-        glDeleteBuffers(1, &ebo);
-        glDeleteBuffers(1, &transformFeedbackBuffer);
-    }
+
+
 
     // Amplification CPU simple (subdivision manuelle)
     void amplifyTerrain(Planet& planet) {
@@ -89,14 +76,7 @@ public:
             Vec3 c01 = (c0 + c1) * 0.5f;
             Vec3 c12 = (c1 + c2) * 0.5f;
             Vec3 c20 = (c2 + c0) * 0.5f;
-            
-            // Appliquer le bruit
-            p0 = addNoise(p0);
-            p1 = addNoise(p1);
-            p2 = addNoise(p2);
-            p01 = addNoise(p01);
-            p12 = addNoise(p12);
-            p20 = addNoise(p20);
+        
             
             unsigned int baseIdx = newVertices.size();
             
@@ -167,61 +147,9 @@ public:
         std::cout << "Amplification complete!" << std::endl;
     };
 
-    // Pour le rendu avec tesselation GPU (optionnel, pas utilisé pour l'amplification)
-    void renderWithTessellation(Planet& planet, const float* projection, const float* view) {
-        setupBuffers(planet);
-        
-        tessellateShader->use();
-        tessellateShader->setMat4("projection", projection);
-        tessellateShader->setMat4("view", view);
-        tessellateShader->setFloat("planetRadius", planet.radius);
-        
-        glBindVertexArray(vao);
-        glDrawElements(GL_TRIANGLES, planet.triangles.size() * 3, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
-        
-        glUseProgram(0);
-    }
 
 private:
-    struct Vertex {
-        float pos[3];
-        float normal[3];
-        float color[3];
-    };
 
-    void setupBuffers(Planet& planet) {
-        std::vector<Vertex> vertices;
-        for (size_t i = 0; i < planet.vertices.size(); i++) {
-            Vertex v;
-            v.pos[0] = planet.vertices[i][0];
-            v.pos[1] = planet.vertices[i][1];
-            v.pos[2] = planet.vertices[i][2];
-            v.normal[0] = planet.normals[i][0];
-            v.normal[1] = planet.normals[i][1];
-            v.normal[2] = planet.normals[i][2];
-            v.color[0] = planet.colors[i][0];
-            v.color[1] = planet.colors[i][1];
-            v.color[2] = planet.colors[i][2];
-            vertices.push_back(v);
-        }
-        
-        glBindVertexArray(vao);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
-        
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, planet.triangles.size() * sizeof(Triangle), planet.triangles.data(), GL_STATIC_DRAW);
-        
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(3 * sizeof(float)));
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(6 * sizeof(float)));
-        glEnableVertexAttribArray(2);
-        
-        glBindVertexArray(0);
-    }
 
     Vec3 addNoise(Vec3 position) {
         float noiseRaw = noise.GetNoise(position[0], position[1], position[2]);
