@@ -54,7 +54,7 @@ enum DisplayMode{ WIRE=0, SOLID=1, LIGHTED_WIRE=2, LIGHTED=3 };
 
 int nbPlates = 25;
 int nbiter_resample = 15;
-int spherepoints = 2048 * 16;
+int spherepoints = 2048 * 2;
 
 
 //Input mesh loaded at the launch of the application
@@ -62,7 +62,7 @@ Mesh mesh;
 
 Planet planet(1.0f,spherepoints);
 Movement movement_controller(planet);
-Amplification amplificator(planet);
+Amplification* amplificator = nullptr;
 int nbSteps = 0;
 Erosion erosion_controller(planet);
 float timeStep = 1.0f;
@@ -176,7 +176,12 @@ void init() {
         exit(EXIT_FAILURE);
     }
     std::cout << "Using GLEW " << glewGetString(GLEW_VERSION) << std::endl;
-    
+    std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
+    std::cout << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+    std::cout << "Geometry Shaders supported: " << (GLEW_VERSION_3_2 ? "YES" : "NO") << std::endl; 
+
+    // Créer l'amplificateur APRÈS l'initialisation de GLEW
+    amplificator = new Amplification(planet);
 
     Palette::loadPalettes();
     planet.palette = Palette::getNextPallete();
@@ -194,8 +199,8 @@ void init() {
 
     // Créer le shader d'atmosphère
     atmosphereShader = new ShaderProgram(
-        "../shaders/atmosphere.vert",
-        "../shaders/atmosphere.frag"
+        "/home/e20210000275/M2/Projet3D/shaders/atmosphere.vert",
+        "/home/e20210000275/M2/Projet3D/shaders/atmosphere.frag"
     );
     
     // Créer la sphère atmosphérique
@@ -665,10 +670,9 @@ void key (unsigned char keyPressed, int x, int y) {
         break;
 
     case 'a': // Amplify
-        amplificator.amplifyTerrain(planet);
+        amplificator->amplifyTerrain(planet);
         display_plates_mode = 3;
         
-        // Calculer les rayons réels de la planète
         amplifiedPlanetRadius = planet.computeAverageDistanceFromOrigin();
         planetRadiusMin = planet.computeMinDistanceFromOrigin();
         planetRadiusMax = planet.computeMaxDistanceFromOrigin();
@@ -677,7 +681,7 @@ void key (unsigned char keyPressed, int x, int y) {
                 << " Avg: " << amplifiedPlanetRadius 
                 << " Max: " << planetRadiusMax << std::endl;
         
-        // NOUVEAU: Recréer la sphère atmosphérique avec le bon rayon
+
         if (atmosphereVAO != 0) {
             glDeleteVertexArrays(1, &atmosphereVAO);
             glDeleteBuffers(1, &atmosphereVBO);
@@ -799,6 +803,10 @@ int main (int argc, char ** argv) {
     current_field.clear();
 
     glutMainLoop ();
+
+    delete amplificator;
+    delete atmosphereShader;
+    
     return EXIT_SUCCESS;
 }
 

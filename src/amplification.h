@@ -3,75 +3,229 @@
 #include "Vec3.h"
 #include "crust.h"
 #include "planet.h"
-#include "algorithm"
 
+#include "ShaderProgram.h"
 #include "FastNoiseLite.h"
+#include <GL/glew.h>
+#include <algorithm>
+#include <vector>
 
 class Amplification {
-   public:
-    const float elevation_force = 0.04;
-    FastNoiseLite general_noise;
-    FastNoiseLite mountain_noise;
-
+public:
+    const float elevation_force = 0.1;
+    FastNoiseLite noise;
+    ShaderProgram* tessellateShader;
+    GLuint vao, vbo, ebo;
+    GLuint transformFeedbackBuffer;
+    
     Amplification(Planet & p) {
-        general_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
-        general_noise.SetFrequency(10.0f);
-        general_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
-        general_noise.SetFractalOctaves(1);
-        general_noise.SetSeed(2);
-
-        mountain_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
-        mountain_noise.SetFrequency(40.0f);
-        mountain_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
-        mountain_noise.SetFractalOctaves(1);
-        mountain_noise.SetSeed(3);
-    };
-
-    void amplifyTerrain(Planet& planet) {
-        Planet newPlanet(1.0f, planet.vertices.size() * 5);
-
-        for (int vertexIdx = 0; vertexIdx < newPlanet.vertices.size(); vertexIdx++) {
-            newPlanet.vertices[vertexIdx] = copyClosestVertex(planet, newPlanet, vertexIdx);
-        }
-
-        newPlanet.recomputeNormals();
-        planet = std::move(newPlanet);
-    };
-
-   private:
-    Vec3 copyClosestVertex(Planet& planet, Planet& newPlanet, unsigned int vertexIdx) {
-        Vec3 vertexPosition = newPlanet.vertices[vertexIdx];
-        unsigned int closestVertexIdx = 0;
-        float closestDistance = planet.radius;
-
-        for (int vertexIdx = 0; vertexIdx < planet.vertices.size(); vertexIdx++) {
-            Vec3 difference = vertexPosition - planet.vertices[vertexIdx];
-            float distance = difference.length();
-            if (distance > closestDistance) {
-                continue;
-            }
-
-            closestDistance = distance;
-            closestVertexIdx = vertexIdx;
-        }
-        float crust_elevation = planet.crust_data[closestVertexIdx]->relief_elevation;
-        float normalized_elevation = (crust_elevation - planet.min_elevation) / (planet.max_elevation - planet.min_elevation);
-
-        newPlanet.amplified_elevations.push_back(crust_elevation);
-        Vec3 elevated_position = vertexPosition * (1 + elevation_force * normalized_elevation);
+        noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
+        noise.SetFrequency(12.0f);
+        noise.SetFractalType(FastNoiseLite::FractalType_FBm);
+        noise.SetFractalOctaves(5);
+        noise.SetSeed(2);
         
-        if (crust_elevation > 3000) {
-            elevated_position = addNoise(elevated_position, mountain_noise);
+        tessellateShader = new ShaderProgram(
+            "/home/e20210000275/M2/Projet3D/shaders/amplify.vert",
+            "/home/e20210000275/M2/Projet3D/shaders/amplify.frag",
+            "/home/e20210000275/M2/Projet3D/shaders/tesselate.geom"
+        );
+        
+        glGenVertexArrays(1, &vao);
+        glGenBuffers(1, &vbo);
+        glGenBuffers(1, &ebo);
+        glGenBuffers(1, &transformFeedbackBuffer);
+    };
+    
+    ~Amplification() {
+        delete tessellateShader;
+        glDeleteVertexArrays(1, &vao);
+        glDeleteBuffers(1, &vbo);
+        glDeleteBuffers(1, &ebo);
+        glDeleteBuffers(1, &transformFeedbackBuffer);
+    }
+
+    // Amplification CPU simple (subdivision manuelle)
+    void amplifyTerrain(Planet& planet) {
+        std::cout << "Starting terrain amplification (CPU)..." << std::endl;
+        std::cout << "Original vertices: " << planet.vertices.size() << std::endl;
+        std::cout << "Original triangles: " << planet.triangles.size() << std::endl;
+        
+        std::vector<Vec3> newVertices;
+        std::vector<Vec3> newNormals;
+        std::vector<Vec3> newColors;
+        std::vector<Triangle> newTriangles;
+        
+        // Pour chaque triangle, créer 4 sous-triangles
+        for (const auto& tri : planet.triangles) {
+            Vec3 p0 = planet.vertices[tri.v[0]];
+            Vec3 p1 = planet.vertices[tri.v[1]];
+            Vec3 p2 = planet.vertices[tri.v[2]];
+            
+            Vec3 n0 = planet.normals[tri.v[0]];
+            Vec3 n1 = planet.normals[tri.v[1]];
+            Vec3 n2 = planet.normals[tri.v[2]];
+            
+            Vec3 c0 = planet.colors[tri.v[0]];
+            Vec3 c1 = planet.colors[tri.v[1]];
+            Vec3 c2 = planet.colors[tri.v[2]];
+            
+            // Calculer les points milieux sur la sphère
+            Vec3 p01 = ((p0 + p1) * planet.radius);
+            Vec3 p12 = ((p1 + p2) * planet.radius);
+            Vec3 p20 = ((p2 + p0) * planet.radius);
+            p01.normalize();
+            p12.normalize();
+            p20.normalize();
+            // Normales interpolées
+            Vec3 n01 = (n0 + n1);
+            Vec3 n12 = (n1 + n2);
+            Vec3 n20 = (n2 + n0);
+            n01.normalize();
+            n12.normalize();
+            n20.normalize();
+            
+            // Couleurs interpolées
+            Vec3 c01 = (c0 + c1) * 0.5f;
+            Vec3 c12 = (c1 + c2) * 0.5f;
+            Vec3 c20 = (c2 + c0) * 0.5f;
+            
+            // Appliquer le bruit
+            p0 = addNoise(p0);
+            p1 = addNoise(p1);
+            p2 = addNoise(p2);
+            p01 = addNoise(p01);
+            p12 = addNoise(p12);
+            p20 = addNoise(p20);
+            
+            unsigned int baseIdx = newVertices.size();
+            
+            // Ajouter les 6 vertices
+            newVertices.push_back(p0);
+            newVertices.push_back(p1);
+            newVertices.push_back(p2);
+            newVertices.push_back(p01);
+            newVertices.push_back(p12);
+            newVertices.push_back(p20);
+            
+            newNormals.push_back(n0);
+            newNormals.push_back(n1);
+            newNormals.push_back(n2);
+            newNormals.push_back(n01);
+            newNormals.push_back(n12);
+            newNormals.push_back(n20);
+            
+            newColors.push_back(c0);
+            newColors.push_back(c1);
+            newColors.push_back(c2);
+            newColors.push_back(c01);
+            newColors.push_back(c12);
+            newColors.push_back(c20);
+            
+            // Créer les 4 triangles
+            // Triangle coin 0
+            newTriangles.push_back(Triangle(baseIdx + 0, baseIdx + 3, baseIdx + 5));
+            // Triangle coin 1
+            newTriangles.push_back(Triangle(baseIdx + 1, baseIdx + 4, baseIdx + 3));
+            // Triangle coin 2
+            newTriangles.push_back(Triangle(baseIdx + 2, baseIdx + 5, baseIdx + 4));
+            // Triangle central
+            newTriangles.push_back(Triangle(baseIdx + 3, baseIdx + 4, baseIdx + 5));
         }
-        // return elevated_position;
-        return addNoise(elevated_position, general_noise);
+        
+        // Remplacer les anciennes données
+        planet.vertices = std::move(newVertices);
+        planet.normals = std::move(newNormals);
+        planet.colors = std::move(newColors);
+        planet.triangles = std::move(newTriangles);
+        
+        // Réinitialiser les données de croûte
+        planet.crust_data.clear();
+        for (size_t i = 0; i < planet.vertices.size(); i++) {
+            OceanicCrust* crust = new OceanicCrust(
+                7.0f,
+                planet.vertices[i].length() - planet.radius,
+                0.0f,
+                Vec3(0, 0, 0),
+                false
+            );
+            planet.crust_data.push_back(std::unique_ptr<Crust>(crust));
+        }
+        
+        // Réinitialiser verticesToPlates
+        planet.verticesToPlates.clear();
+        planet.verticesToPlates.resize(planet.vertices.size(), 0);
+        
+        std::cout << "After amplification vertices: " << planet.vertices.size() << std::endl;
+        std::cout << "After amplification triangles: " << planet.triangles.size() << std::endl;
+        
+        // Recalculer les normales et structures
+        planet.recomputeNormals();
+        planet.detectVerticesNeighbors();
+        planet.assignCrustParameters();
+        
+        std::cout << "Amplification complete!" << std::endl;
     };
 
-    Vec3 addNoise(Vec3 position, FastNoiseLite noise) {
-        float noiseRaw = noise.GetNoise(position[0], position[1], position[2]);  // [-1, 1]
+    // Pour le rendu avec tesselation GPU (optionnel, pas utilisé pour l'amplification)
+    void renderWithTessellation(Planet& planet, const float* projection, const float* view) {
+        setupBuffers(planet);
+        
+        tessellateShader->use();
+        tessellateShader->setMat4("projection", projection);
+        tessellateShader->setMat4("view", view);
+        tessellateShader->setFloat("planetRadius", planet.radius);
+        
+        glBindVertexArray(vao);
+        glDrawElements(GL_TRIANGLES, planet.triangles.size() * 3, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+        
+        glUseProgram(0);
+    }
 
+private:
+    struct Vertex {
+        float pos[3];
+        float normal[3];
+        float color[3];
+    };
+
+    void setupBuffers(Planet& planet) {
+        std::vector<Vertex> vertices;
+        for (size_t i = 0; i < planet.vertices.size(); i++) {
+            Vertex v;
+            v.pos[0] = planet.vertices[i][0];
+            v.pos[1] = planet.vertices[i][1];
+            v.pos[2] = planet.vertices[i][2];
+            v.normal[0] = planet.normals[i][0];
+            v.normal[1] = planet.normals[i][1];
+            v.normal[2] = planet.normals[i][2];
+            v.color[0] = planet.colors[i][0];
+            v.color[1] = planet.colors[i][1];
+            v.color[2] = planet.colors[i][2];
+            vertices.push_back(v);
+        }
+        
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+        
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, planet.triangles.size() * sizeof(Triangle), planet.triangles.data(), GL_STATIC_DRAW);
+        
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(3 * sizeof(float)));
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(6 * sizeof(float)));
+        glEnableVertexAttribArray(2);
+        
+        glBindVertexArray(0);
+    }
+
+    Vec3 addNoise(Vec3 position) {
+        float noiseRaw = noise.GetNoise(position[0], position[1], position[2]);
         float n = 1.0f + noiseRaw * (elevation_force * 0.05f);
-
         return position * n;
     }
 };

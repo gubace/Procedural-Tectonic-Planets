@@ -28,11 +28,11 @@ static inline uint64_t pack_face_key(unsigned int i, unsigned int j, unsigned in
 }
 
 void Mesh::recomputeNormals() {
-    // 1. Reset de normales
+
     for (unsigned int i = 0; i < vertices.size(); i++)
         normals[i] = Vec3(0.0, 0.0, 0.0);
 
-    // 2. Acumular normales por cara
+    
     for (unsigned int i = 0; i < triangles.size(); i++) {
 
         unsigned int i0 = triangles[i].v[0];
@@ -45,13 +45,11 @@ void Mesh::recomputeNormals() {
         Vec3 n = Vec3::cross(e01, e02);
         n.normalize();
 
-        // Sumar esta normal a los tres vértices
         normals[i0] += n;
         normals[i1] += n;
         normals[i2] += n;
     }
 
-    // 3. Normalizar todas las normales
     for (unsigned int i = 0; i < vertices.size(); i++)
         normals[i].normalize();
 }
