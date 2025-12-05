@@ -14,14 +14,14 @@ class Amplification {
 
     Amplification(Planet & p) {
         noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
-        noise.SetFrequency(8.0f);
+        noise.SetFrequency(12.0f);
         noise.SetFractalType(FastNoiseLite::FractalType_FBm);
         noise.SetFractalOctaves(5);
         noise.SetSeed(2);
     };
 
     void amplifyTerrain(Planet& planet) {
-        Planet newPlanet(1.0f, planet.vertices.size() * 4);
+        Planet newPlanet(1.0f, planet.vertices.size() * 5);
 
         for (int vertexIdx = 0; vertexIdx < newPlanet.vertices.size(); vertexIdx++) {
             newPlanet.vertices[vertexIdx] = copyClosestVertex(planet, newPlanet, vertexIdx);

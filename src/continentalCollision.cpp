@@ -9,9 +9,9 @@
 #include "planet.h"
 #include "crust.h"
 
-const float COLLISION_RADIUS = 0.2f;        // Rayon d'influence de la collision
+const float COLLISION_RADIUS = 0.3f;        // Rayon d'influence de la collision
 const float MOUNTAIN_HEIGHT = 5000.0f;      // Hauteur des montagnes créées (en mètres)
-const float MOUNTAIN_WIDTH = 0.04f;         // Largeur de la zone de montagne
+const float MOUNTAIN_WIDTH = 0.05f;         // Largeur de la zone de montagne
 const float SMOOTHNESS = 5.0f; 
 
 float smoothMountainProfile(float distance, float width, float smoothness){
@@ -140,24 +140,24 @@ void ContinentalCollision::triggerEvent(Planet& planet) {
         Vec3 p = planet.vertices[i];
         float distToJunction = (p - junctionCenter).length();
         
-        // Ne traiter que les vertices dans la zone de montagne élargie
+
         if (distToJunction > extendedMountainRadius) continue;
         
-        // ✅ Utiliser le profil smooth
+
         float mountainFactor = smoothMountainProfile(distToJunction, extendedMountainRadius, SMOOTHNESS);
         
         if (mountainFactor < 0.01f) continue; // Skip si contribution négligeable
         
-        // Hauteur décroissante avec la distance
+  
         float elevationIncrease = MOUNTAIN_HEIGHT * mountainFactor;
         
         if (i < planet.crust_data.size() && planet.crust_data[i]) {
-            planet.crust_data[i]->relief_elevation += elevationIncrease;
+
+            if(planet.crust_data[i]->relief_elevation < 8000.0f) planet.crust_data[i]->relief_elevation += elevationIncrease;
             
-            // Mettre à jour les paramètres de croûte continentale
+
             ContinentalCrust* cc = dynamic_cast<ContinentalCrust*>(planet.crust_data[i].get());
             if (cc) {
-                // Direction de plissement perpendiculaire à la ligne de collision
                 Vec3 n = p;
                 n.normalize();
                 Vec3 toJunction = junctionCenter - p;
@@ -180,9 +180,8 @@ void ContinentalCollision::triggerEvent(Planet& planet) {
         }
     }
     
-    // std::cout << "  Mountains created: " << mountainsCreated << " peaks" << std::endl;
+   
     
-    //Transférer les vertices à la plaque gagnante
     for (unsigned int vIdx : verticesToTransfer) {
         planet.verticesToPlates[vIdx] = winningPlateIdx;
     }

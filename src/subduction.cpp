@@ -9,7 +9,7 @@
 
 float r_s = 0.1f; // Distance that impacts uplift effect
 float max_velocity = 1.0f; // TODO: idk, Timothée knows -> In fact Timothée doesn't know either
-float subductionUplift = 500.0f;
+float subductionUplift = 200.0f;
 
 
 float f(float d) {
@@ -26,7 +26,7 @@ float g(float v) {
 }
 
 float h(float z) {
-    return z * z;
+    return z ;
 }
 
 float distanceToSubductionFront(Vec3 p, Vec3 subductionFront) {
@@ -76,7 +76,19 @@ void Subduction::triggerEvent(Planet& planet) {
         float v = relativeVelocity(plateUnder, plateOver);
         float z = elevationImpact(planet.crust_data[phenomenonVertexIndex]->relief_elevation, minZ, maxZ); // TODO: this should not be the elevation on the contact point. It should be the one of the plate that is under the current vertex
 
+        
+
         float newElevation = subductionUplift * f(d) * g(v) * h(z);
+
+        if(planet.crust_data[vertexIndex]->relief_elevation >= 6000.0f){
+            newElevation *= 0.2f; 
+        }else if(planet.crust_data[vertexIndex]->relief_elevation >= 4000.0f){
+            newElevation *= 0.5f; 
+        }
+        else if(planet.crust_data[vertexIndex]->relief_elevation >= 2000.0f){
+            newElevation *= 0.8f; 
+        }
+
         planet.crust_data[vertexIndex]->relief_elevation += newElevation;
         
         //std::cout << " - Vertex " << vertexIndex << " elevated by " << newElevation << " to " << planet.crust_data[vertexIndex]->relief_elevation << std::endl;

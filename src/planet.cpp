@@ -240,7 +240,7 @@ void Planet::assignCrustParameters() {
     noise.SetFractalGain(0.5f);
     noise.SetSeed((int)std::random_device{}());
 
-    const float continent_threshold = 0.15f;
+    const float continent_threshold = 0.05f;
 
     // ✅ Utiliser les constantes de la classe
     const float ocean_depth_range = std::abs(min_elevation);  // 8000.0f
@@ -476,4 +476,41 @@ void Planet::fillAllTerranes() {
     for (Plate& plate : plates) {
         plate.fillTerranes(*this);
     }
+}
+
+float Planet::computeAverageDistanceFromOrigin() const {
+    if (vertices.empty()) {
+        return 0.0f;
+    }
+    
+    float totalDistance = 0.0f;
+    
+    for (const Vec3& vertex : vertices) {
+        float distance = vertex.length();
+        totalDistance += distance;
+    }
+    
+    return totalDistance / static_cast<float>(vertices.size());
+}
+
+float Planet::computeMinDistanceFromOrigin() const {
+    if (vertices.empty()) return 0.0f;
+    
+    float minDist = std::numeric_limits<float>::max();
+    for (const Vec3& vertex : vertices) {
+        float dist = vertex.length();
+        if (dist < minDist) minDist = dist;
+    }
+    return minDist;
+}
+
+float Planet::computeMaxDistanceFromOrigin() const {
+    if (vertices.empty()) return 0.0f;
+    
+    float maxDist = 0.0f;
+    for (const Vec3& vertex : vertices) {
+        float dist = vertex.length();
+        if (dist > maxDist) maxDist = dist;
+    }
+    return maxDist;
 }

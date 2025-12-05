@@ -13,9 +13,9 @@ uniform float atmoRadius; // = 1.05 par exemple
 // Coefficients adaptés à votre échelle
 #define RAY_BETA vec3(1.1e-3 * 5, 2.6e-3 * 5, 4.5e-3 * 5) 
 #define MIE_BETA vec3(4.2e-3 * 5)
-#define ABSORPTION_BETA vec3(2.04e-3, 4.97e-3, 1.95e-4)
+#define ABSORPTION_BETA vec3(2.04e-3 * 5, 4.97e-3 * 5, 1.95e-4 * 5)
 #define G 0.76
-#define HEIGHT_RAY 0.08
+#define HEIGHT_RAY 0.12
 #define HEIGHT_MIE 0.012
 
 #define HEIGHT_ABSORPTION 0.05

@@ -51,9 +51,9 @@ enum DisplayMode{ WIRE=0, SOLID=1, LIGHTED_WIRE=2, LIGHTED=3 };
 //Parametres Planete
 // ------------------------------------
 
-int nbPlates = 5;
+int nbPlates = 25;
 int nbiter_resample = 15;
-int spherepoints = 2048 * 4;
+int spherepoints = 2048 * 32;
 
 
 //Input mesh loaded at the launch of the application
@@ -102,6 +102,10 @@ static bool fullScreen = false;
 // ------------------------------------
 // variables globales shader
 // ------------------------------------
+float amplifiedPlanetRadius = 1.0f;
+float planetRadiusMin = 1.0f;
+float planetRadiusMax = 1.0f;
+
 static ShaderProgram* atmosphereShader = nullptr;
 static GLuint atmosphereVAO = 0;
 static GLuint atmosphereVBO = 0;
@@ -235,8 +239,8 @@ void drawAtmosphere() {
 
     // Paramètres de l'atmosphère
     atmosphereShader->setVec3("planetCenter", 0.0f, 0.0f, 0.0f);
-    atmosphereShader->setFloat("planetRadius", 1.0f);
-    atmosphereShader->setFloat("atmoRadius", 1.5f);
+    atmosphereShader->setFloat("planetRadius", planetRadiusMin * 0.98f); 
+    atmosphereShader->setFloat("atmoRadius", planetRadiusMax * 1.08f);
     
     // UTILISER la même direction du soleil que pour l'éclairage OpenGL
     Vec3 lightDir = sunDirection;
@@ -547,11 +551,11 @@ void key (unsigned char keyPressed, int x, int y) {
             printf("Resampled planet.\n");
         }
 
-        for (int i = 0; i < planet.vertices.size(); i++) {
+        /*for (int i = 0; i < planet.vertices.size(); i++) {
             float crust_elevation = planet.crust_data[i]->relief_elevation;
             float normalized_elevation = (crust_elevation - planet.min_elevation) / (planet.max_elevation - planet.min_elevation);
             mesh.vertices[i] = planet.vertices[i] * (1 + 0.2 * normalized_elevation);
-        }
+        }*/
 
         break;
 
@@ -579,7 +583,7 @@ void key (unsigned char keyPressed, int x, int y) {
             float newZ = sunDirection[0] * sin(angle) + sunDirection[2] * cos(angle);
             sunDirection = Vec3(newX, sunDirection[1], newZ);
             initLight(); // Réappliquer l'éclairage
-            printf("Sun direction: (%.2f, %.2f, %.2f)\n", sunDirection[0], sunDirection[1], sunDirection[2]);
+            //printf("Sun direction: (%.2f, %.2f, %.2f)\n", sunDirection[0], sunDirection[1], sunDirection[2]);
         }
         break;
         
@@ -590,7 +594,7 @@ void key (unsigned char keyPressed, int x, int y) {
             float newZ = sunDirection[0] * sin(angle) + sunDirection[2] * cos(angle);
             sunDirection = Vec3(newX, sunDirection[1], newZ);
             initLight();
-            printf("Sun direction: (%.2f, %.2f, %.2f)\n", sunDirection[0], sunDirection[1], sunDirection[2]);
+            //printf("Sun direction: (%.2f, %.2f, %.2f)\n", sunDirection[0], sunDirection[1], sunDirection[2]);
         }
         break;
 
@@ -599,7 +603,7 @@ void key (unsigned char keyPressed, int x, int y) {
         {
             sunDirection[1] += 2.0f;
             initLight();
-            printf("Sun direction: (%.2f, %.2f, %.2f)\n", sunDirection[0], sunDirection[1], sunDirection[2]);
+            //printf("Sun direction: (%.2f, %.2f, %.2f)\n", sunDirection[0], sunDirection[1], sunDirection[2]);
         }
         break;
         
@@ -607,7 +611,7 @@ void key (unsigned char keyPressed, int x, int y) {
         {
             sunDirection[1] -= 2.0f;
             initLight();
-            printf("Sun direction: (%.2f, %.2f, %.2f)\n", sunDirection[0], sunDirection[1], sunDirection[2]);
+            //printf("Sun direction: (%.2f, %.2f, %.2f)\n", sunDirection[0], sunDirection[1], sunDirection[2]);
         }
         break;
 
@@ -621,14 +625,14 @@ void key (unsigned char keyPressed, int x, int y) {
         }
         break;
 
-    case 'h': // toggle atmosphere display
+    /*case 'h': // toggle atmosphere display
         display_atmosphere = !display_atmosphere;
         if (display_atmosphere) {
             printf("Atmosphere display ON\n");
         } else {
             printf("Atmosphere display OFF\n");
         }
-        break;
+        break;*/
 
     case 'n': //Press n key to display normals
         display_normals = !display_normals;
@@ -654,7 +658,20 @@ void key (unsigned char keyPressed, int x, int y) {
     case 'a': // Amplify
         amplificator.amplifyTerrain(planet);
         display_plates_mode = 3;
+        
+        // Calculer les rayons réels de la planète
+        amplifiedPlanetRadius = planet.computeAverageDistanceFromOrigin();
+        planetRadiusMin = planet.computeMinDistanceFromOrigin();
+        planetRadiusMax = planet.computeMaxDistanceFromOrigin();
+        
+        std::cout << "Planet radius - Min: " << planetRadiusMin 
+                << " Avg: " << amplifiedPlanetRadius 
+                << " Max: " << planetRadiusMax << std::endl;
+        
         mesh = planet;
+        displayMode = LIGHTED;
+        display_atmosphere = true;
+        
         updateDisplayedColors();
         break;
 

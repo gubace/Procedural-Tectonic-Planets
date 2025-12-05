@@ -54,6 +54,11 @@ class Planet : public Mesh {
     std::vector<Vec3> vertexColorsForElevation() const;
     std::vector<Vec3> vertexColorsForCrustTypesAmplified() const;
     Vec3 getColorFromHeightAndCrustType(float elevation, bool isOceanic, float age) const;
+    
+    float computeAverageDistanceFromOrigin() const;
+    float computeMinDistanceFromOrigin() const;
+    float computeMaxDistanceFromOrigin() const;
+    
 
     void fillAllTerranes();
 

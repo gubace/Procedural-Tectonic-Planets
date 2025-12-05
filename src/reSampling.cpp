@@ -3,7 +3,7 @@
 #include <utility>
 #include <memory>
 #include <chrono>
-
+#include <random>
 
 #include "planet.h"
 #include "crust.h"
@@ -203,6 +203,25 @@ void Planet::resample(Planet& srcPlanet) { // Resample crust and plate data from
     findFrontierVertices();
     fillClosestFrontierVertices();
     fillAllTerranes();
+
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> riftChance(1, 5);
+    
+    if (riftChance(gen) == 1) { // 1 chance sur 10
+        std::cout << "\nrifting" << std::endl;
+
+        PlateRifting rifter;
+        bool riftSuccess = rifter.triggerRifting(*this);
+
+        if (riftSuccess) {
+            detectVerticesNeighbors();
+            findFrontierVertices();
+            fillClosestFrontierVertices();
+            fillAllTerranes();
+        }
+    }
 
 
     auto t_total_end = std::chrono::steady_clock::now();

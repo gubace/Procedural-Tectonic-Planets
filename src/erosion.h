@@ -9,7 +9,7 @@ class Erosion {
    public:
     Planet& planet;
 
-    static constexpr float erosion_coefficient = 50.0;
+    static constexpr float erosion_coefficient = 30.0;
     static constexpr float dampening_coefficient = 0.05;
     static constexpr float sediment_coefficient = 0.05;
 
