@@ -53,7 +53,7 @@ enum DisplayMode{ WIRE=0, SOLID=1, LIGHTED_WIRE=2, LIGHTED=3 };
 
 int nbPlates = 25;
 int nbiter_resample = 15;
-int spherepoints = 2048 * 32;
+int spherepoints = 2048 * 16;
 
 
 //Input mesh loaded at the launch of the application
@@ -79,7 +79,7 @@ DisplayMode displayMode;
 int weight_type;
 
 static bool display_phenomena = false;
-static bool display_atmosphere = false;
+static bool display_atmosphere = true;
 
 static Vec3 sunDirection = Vec3(22.0f, 16.0f, 50.0f);
 
@@ -162,7 +162,7 @@ void init() {
     glEnable(GL_CULL_FACE);
     glDepthFunc (GL_LESS);
     glEnable (GL_DEPTH_TEST);
-    glClearColor (0.0f, 0.0f, 0.0f, 1.0f);
+    glClearColor (0.0f, 0.05f, 0.1f, 1.0f);
     glEnable(GL_COLOR_MATERIAL);
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
@@ -180,18 +180,18 @@ void init() {
     planet.assignCrustParameters();
 
     mesh = planet;
-    display_plates_mode = 0;
+    display_plates_mode = 1;
     display_normals = false;
     display_mesh = true;
     display_smooth_normals = true;
-    displayMode = SOLID;
-    display_directions = true;
+    displayMode = LIGHTED;
+    display_directions = false;
     updateDisplayedColors();
 
     // Créer le shader d'atmosphère
     atmosphereShader = new ShaderProgram(
-        "../shaders/vertexShader.glsl",
-        "../shaders/fragmentShader.glsl"
+        "../shaders/atmosphere.vert",
+        "../shaders/atmosphere.frag"
     );
     
     // Créer la sphère atmosphérique
@@ -237,10 +237,10 @@ void drawAtmosphere() {
     Vec3 camPos = Vec3(camX, camY, camZ);
     atmosphereShader->setVec3("cameraPosition", camPos[0], camPos[1], camPos[2]);
 
-    // Paramètres de l'atmosphère
+    // Paramètres de l'atmosphère - LÉGÈREMENT AJUSTÉS
     atmosphereShader->setVec3("planetCenter", 0.0f, 0.0f, 0.0f);
-    atmosphereShader->setFloat("planetRadius", planetRadiusMin * 0.98f); 
-    atmosphereShader->setFloat("atmoRadius", planetRadiusMax * 1.08f);
+    atmosphereShader->setFloat("planetRadius", 1.0f); 
+    atmosphereShader->setFloat("atmoRadius", planetRadiusMax * 1.12f); // AUGMENTÉ de 1.08 à 1.12
     
     // UTILISER la même direction du soleil que pour l'éclairage OpenGL
     Vec3 lightDir = sunDirection;
@@ -625,14 +625,14 @@ void key (unsigned char keyPressed, int x, int y) {
         }
         break;
 
-    /*case 'h': // toggle atmosphere display
+    case 'h': // toggle atmosphere display
         display_atmosphere = !display_atmosphere;
         if (display_atmosphere) {
             printf("Atmosphere display ON\n");
         } else {
             printf("Atmosphere display OFF\n");
         }
-        break;*/
+        break;
 
     case 'n': //Press n key to display normals
         display_normals = !display_normals;
@@ -667,6 +667,14 @@ void key (unsigned char keyPressed, int x, int y) {
         std::cout << "Planet radius - Min: " << planetRadiusMin 
                 << " Avg: " << amplifiedPlanetRadius 
                 << " Max: " << planetRadiusMax << std::endl;
+        
+        // NOUVEAU: Recréer la sphère atmosphérique avec le bon rayon
+        if (atmosphereVAO != 0) {
+            glDeleteVertexArrays(1, &atmosphereVAO);
+            glDeleteBuffers(1, &atmosphereVBO);
+            glDeleteBuffers(1, &atmosphereEBO);
+        }
+        createAtmosphereSphere(planetRadiusMax * 1.12f, 64, atmosphereVAO, atmosphereVBO, atmosphereEBO, atmosphereIndexCount);
         
         mesh = planet;
         displayMode = LIGHTED;

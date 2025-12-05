@@ -51,6 +51,14 @@ public:
         glUniform1f(glGetUniformLocation(programID, name), value);
     }
 
+    void setInt(const char* name, int value) {
+        glUniform1i(glGetUniformLocation(programID, name), value);
+    }
+
+void setVec3(const char* name, const Vec3& vec) {
+        glUniform3f(glGetUniformLocation(programID, name), vec[0], vec[1], vec[2]);
+    }
+
 private:
     std::string readFile(const char* path) {
         std::ifstream file(path);
