@@ -9,15 +9,22 @@
 
 class Amplification {
    public:
-    const float elevation_force = 0.1;
-    FastNoiseLite noise;
+    const float elevation_force = 0.04;
+    FastNoiseLite general_noise;
+    FastNoiseLite mountain_noise;
 
     Amplification(Planet & p) {
-        noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
-        noise.SetFrequency(12.0f);
-        noise.SetFractalType(FastNoiseLite::FractalType_FBm);
-        noise.SetFractalOctaves(5);
-        noise.SetSeed(2);
+        general_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
+        general_noise.SetFrequency(10.0f);
+        general_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
+        general_noise.SetFractalOctaves(1);
+        general_noise.SetSeed(2);
+
+        mountain_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
+        mountain_noise.SetFrequency(40.0f);
+        mountain_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
+        mountain_noise.SetFractalOctaves(1);
+        mountain_noise.SetSeed(3);
     };
 
     void amplifyTerrain(Planet& planet) {
@@ -52,10 +59,15 @@ class Amplification {
 
         newPlanet.amplified_elevations.push_back(crust_elevation);
         Vec3 elevated_position = vertexPosition * (1 + elevation_force * normalized_elevation);
-        return addNoise(elevated_position);
+        
+        if (crust_elevation > 3000) {
+            elevated_position = addNoise(elevated_position, mountain_noise);
+        }
+        // return elevated_position;
+        return addNoise(elevated_position, general_noise);
     };
 
-    Vec3 addNoise(Vec3 position) {
+    Vec3 addNoise(Vec3 position, FastNoiseLite noise) {
         float noiseRaw = noise.GetNoise(position[0], position[1], position[2]);  // [-1, 1]
 
         float n = 1.0f + noiseRaw * (elevation_force * 0.05f);
