@@ -10,7 +10,7 @@ class ShaderProgram {
 public:
     GLuint programID;
     
-    ShaderProgram(const char* vertexPath, const char* fragmentPath) {
+    ShaderProgram(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr) {
         std::string vertexCode = readFile(vertexPath);
         std::string fragmentCode = readFile(fragmentPath);
         
@@ -23,18 +23,46 @@ public:
             exit(EXIT_FAILURE);
         }
         
-        GLuint vertex = compileShader(vertexCode.c_str(), GL_VERTEX_SHADER);
-        GLuint fragment = compileShader(fragmentCode.c_str(), GL_FRAGMENT_SHADER);
+        GLuint vertex = compileShader(vertexCode.c_str(), GL_VERTEX_SHADER, "VERTEX");
+        GLuint fragment = compileShader(fragmentCode.c_str(), GL_FRAGMENT_SHADER, "FRAGMENT");
+        
+        GLuint geometry = 0;
+        if (geometryPath != nullptr) {
+            std::string geometryCode = readFile(geometryPath);
+            if (geometryCode.empty()) {
+                std::cerr << "ERROR: Geometry shader file is empty or not found: " << geometryPath << std::endl;
+                exit(EXIT_FAILURE);
+            }
+            
+            // Vérifier que les geometry shaders sont supportés
+            if (!GLEW_VERSION_3_2 && !GLEW_ARB_geometry_shader4) {
+                std::cerr << "ERROR: Geometry shaders are not supported on this system!" << std::endl;
+                exit(EXIT_FAILURE);
+            }
+            
+            geometry = compileShader(geometryCode.c_str(), GL_GEOMETRY_SHADER, "GEOMETRY");
+        }
         
         programID = glCreateProgram();
+        if (programID == 0) {
+            std::cerr << "ERROR: Failed to create shader program!" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+        
         glAttachShader(programID, vertex);
         glAttachShader(programID, fragment);
+        if (geometry != 0) {
+            glAttachShader(programID, geometry);
+        }
         glLinkProgram(programID);
         
         checkCompileErrors(programID, "PROGRAM");
         
         glDeleteShader(vertex);
         glDeleteShader(fragment);
+        if (geometry != 0) {
+            glDeleteShader(geometry);
+        }
     }
     
     void use() { glUseProgram(programID); }
@@ -55,7 +83,7 @@ public:
         glUniform1i(glGetUniformLocation(programID, name), value);
     }
 
-void setVec3(const char* name, const Vec3& vec) {
+    void setVec3(const char* name, const Vec3& vec) {
         glUniform3f(glGetUniformLocation(programID, name), vec[0], vec[1], vec[2]);
     }
 
@@ -73,11 +101,19 @@ private:
         return content;
     }
     
-    GLuint compileShader(const char* code, GLenum type) {
+    GLuint compileShader(const char* code, GLenum type, const std::string& typeStr) {
         GLuint shader = glCreateShader(type);
+        
+        if (shader == 0) {
+            std::cerr << "ERROR: Failed to create " << typeStr << " shader! glCreateShader returned 0" << std::endl;
+            std::cerr << "OpenGL Error: " << glGetError() << std::endl;
+            exit(EXIT_FAILURE);
+        }
+        
         glShaderSource(shader, 1, &code, NULL);
         glCompileShader(shader);
-        checkCompileErrors(shader, type == GL_VERTEX_SHADER ? "VERTEX" : "FRAGMENT");
+        
+        checkCompileErrors(shader, typeStr);
         return shader;
     }
     
@@ -89,12 +125,16 @@ private:
             if (!success) {
                 glGetShaderInfoLog(shader, 1024, NULL, infoLog);
                 std::cout << "ERROR::SHADER_COMPILATION::" << type << "\n" << infoLog << std::endl;
+            } else {
+                std::cout << "SUCCESS: " << type << " shader compiled successfully" << std::endl;
             }
         } else {
             glGetProgramiv(shader, GL_LINK_STATUS, &success);
             if (!success) {
                 glGetProgramInfoLog(shader, 1024, NULL, infoLog);
                 std::cout << "ERROR::PROGRAM_LINKING\n" << infoLog << std::endl;
+            } else {
+                std::cout << "SUCCESS: Program linked successfully" << std::endl;
             }
         }
     }
