@@ -19,7 +19,7 @@ public:
     
     Amplification(Planet & p) : accel(p.vertices, p) {
         general_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
-        general_noise.SetFrequency(50.0f);
+        general_noise.SetFrequency(10.0f);
         general_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
         general_noise.SetFractalOctaves(1);
         general_noise.SetSeed(2);
@@ -44,6 +44,7 @@ void amplifyTerrain(Planet& planet) {
     planet = std::move(newPlanet);
 
     planet.detectVerticesNeighbors();
+    planet.smooth();
     planet.smooth();
     planet.smooth();
     planet.smooth();
@@ -72,36 +73,21 @@ private:
             float normalized_elevation = (elevation - planet.min_elevation) / (planet.max_elevation - planet.min_elevation);
 
             Vec3 position = planet.vertices[vertexIdx];
+            position = addNoiseToVertex(position, general_noise, 0.01f);
 
-            // Ruido general
-            position = addNoiseToVertex(position, general_noise, 1.0f, elevation);
-
-            // Ruido de montaña, según elevación
-            if (normalized_elevation > 0.7f) {
-                position = addNoiseToVertex(position, mountain_noise, 0.03f, elevation);
-            } else {
-                position = addNoiseToVertex(position, mountain_noise, 0.02f, elevation);
+            if (normalized_elevation > 0.65f) {
+                position = addNoiseToVertex(position, mountain_noise, 0.03f);
+            } else if (normalized_elevation > 0.85f) {
+                position = addNoiseToVertex(position, mountain_noise, 0.06f);
             }
 
-            // Actualizar el vértice
             planet.vertices[vertexIdx] = position;
         }
     }
 
-    Vec3 addNoiseToVertex(Vec3 position, FastNoiseLite noise, float strength, float elevation) {
-        float min_h = 0.0f;
-        float max_h = 8000.0f;
-
-        // Clamp and smooth
-        float t = (elevation - min_h) / (max_h - min_h);
-        t = std::max(0.0f, std::min(1.0f, t));
-        float noiseFactor = t * t * (3.0f - 2.0f * t);
-
+    Vec3 addNoiseToVertex(Vec3 position, FastNoiseLite noise, float strength) {
         float noiseRaw = noise.GetNoise(position[0], position[1], position[2]);
-
-        float noiseValue = noiseRaw * (elevation_force * strength * noiseFactor);
-        noiseValue = std::max(-0.05f, std::min(0.05f, noiseValue));
-        float n = 1.0f + noiseValue;
+        float n = 1.0f + noiseRaw * elevation_force * strength;
 
         return position * n;
     }
