@@ -4,7 +4,7 @@ void Planet::smoothColors() {
     std::vector<Vec3> newColors(colors.size());
 
     const float strength = 0.5f;
-    const int iterations = 1;
+    const int iterations = 10;
 
     for (int it = 0; it < iterations; it++) {
 

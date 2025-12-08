@@ -54,7 +54,7 @@ enum DisplayMode{ WIRE=0, SOLID=1, LIGHTED_WIRE=2, LIGHTED=3 };
 
 int nbPlates = 25;
 int nbiter_resample = 15;
-int spherepoints = 2048 * 8;
+int spherepoints = 2048 * 24;
 
 
 //Input mesh loaded at the launch of the application
@@ -117,17 +117,19 @@ static int atmosphereIndexCount = 0;
 void updateDisplayedColors() {
     planet.palette = Palette::getCurrentPalette();
     if (display_plates_mode == 0) {
-        mesh.colors = planet.vertexColorsForPlates();
+        planet.colors = planet.vertexColorsForPlates();
         //printf("Updated colors for plates display.\n");
     } else if (display_plates_mode == 1) {
-        mesh.colors = planet.vertexColorsForCrustTypes();
+        planet.colors = planet.vertexColorsForCrustTypes();
         //printf("Updated colors for crust types display.\n");
     } else if (display_plates_mode == 2) {
-        mesh.colors = planet.vertexColorsForElevation();
+        planet.colors = planet.vertexColorsForElevation();
         //printf("Updated colors for elevation display.\n");
     } else if (display_plates_mode == 3) {
-        mesh.colors = planet.vertexColorsForCrustTypesAmplified();
+        planet.colors = planet.vertexColorsForCrustTypesAmplified();
+        planet.smoothColors();
     }
+    mesh.colors = planet.colors;
     glutPostRedisplay();
 }
 
@@ -655,8 +657,6 @@ void key (unsigned char keyPressed, int x, int y) {
     case 's': //Press s key to smooth
         planet.smoothColors();
         mesh = planet;
-        // planet.recomputeNormals();
-        // updateDisplayedColors();
         break;
 
     case 'r'://resample

@@ -19,15 +19,17 @@ public:
     
     Amplification(Planet & p) : accel(p.vertices, p) {
         general_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
-        general_noise.SetFrequency(10.0f);
+        general_noise.SetFrequency(50.0f);
         general_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
         general_noise.SetFractalOctaves(1);
         general_noise.SetSeed(2);
 
         mountain_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
-        mountain_noise.SetFrequency(40.0f);
+        mountain_noise.SetFrequency(10.0f);
         mountain_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
-        mountain_noise.SetFractalOctaves(1);
+        mountain_noise.SetFractalOctaves(3);
+        mountain_noise.SetFractalLacunarity(2.0f);
+        mountain_noise.SetFractalGain(0.5f);
         mountain_noise.SetSeed(3);
     };
     
@@ -39,14 +41,13 @@ void amplifyTerrain(Planet& planet) {
         newPlanet.vertices[vertexIdx] = copyClosestVertex(planet, newPlanet, vertexIdx);
     }
     newPlanet.detectVerticesNeighbors();
-    newPlanet.recomputeNormals();
     planet = std::move(newPlanet);
 
-    // Reprocesado
-    // elevateVertices(planet);
     planet.detectVerticesNeighbors();
     planet.smooth();
     planet.smooth();
+    planet.smooth();
+    addNoise(planet);
     planet.recomputeNormals();
 
     std::cout << "Amplification complete!" << std::endl;
@@ -62,29 +63,43 @@ private:
 
         newPlanet.amplified_elevations.push_back(crust_elevation);
         Vec3 elevated_position = vertexPosition * (1 + elevation_force * normalized_elevation);
-        
-        if (crust_elevation > 3000) {
-            elevated_position = addNoise(elevated_position, mountain_noise);
-        }
-        // return elevated_position;
-        // return addNoise(elevated_position, general_noise);
-
         return elevated_position;
     };
 
-    Vec3 elevateVertices(Planet& planet) {
+    void addNoise(Planet& planet) {
         for (unsigned int vertexIdx = 0; vertexIdx < planet.vertices.size(); vertexIdx++) {
-            float crust_elevation = planet.amplified_elevations[vertexIdx];
-            float normalized_elevation = (crust_elevation - planet.min_elevation) / (planet.max_elevation - planet.min_elevation);
-            Vec3 elevated_position = planet.vertices[vertexIdx] * (1 + elevation_force * normalized_elevation);
-            planet.vertices[vertexIdx] = elevated_position;
+            float elevation = planet.amplified_elevations[vertexIdx];
+            float normalized_elevation = (elevation - planet.min_elevation) / (planet.max_elevation - planet.min_elevation);
+
+            Vec3 position = planet.vertices[vertexIdx];
+
+            // Ruido general
+            position = addNoiseToVertex(position, general_noise, 1.0f, elevation);
+
+            // Ruido de montaña, según elevación
+            if (normalized_elevation > 0.7f) {
+                position = addNoiseToVertex(position, mountain_noise, 0.03f, elevation);
+            } else {
+                position = addNoiseToVertex(position, mountain_noise, 0.02f, elevation);
+            }
+
+            // Actualizar el vértice
+            planet.vertices[vertexIdx] = position;
         }
     }
 
-    Vec3 addNoise(Vec3 position, FastNoiseLite noise) {
+    Vec3 addNoiseToVertex(Vec3 position, FastNoiseLite noise, float strength, float elevation) {
+        auto clamp01 = [](float v) { return std::max(0.0f, std::min(1.0f, v)); };
+        auto smooth = [&](float x) { x = clamp01(x); return x*x*(3 - 2*x); };
+
+        float min_h = 0.0f;
+        float max_h = 8000.0f;
+
+        float noiseFactor = smooth((elevation - min_h) / (max_h - min_h));
+
         float noiseRaw = noise.GetNoise(position[0], position[1], position[2]);  // [-1, 1]
 
-        float n = 1.0f + noiseRaw * (elevation_force * 0.05f);
+        float n = 1.0f + std::clamp(noiseRaw * (elevation_force * strength * noiseFactor), -0.05f, 0.05f);
 
         return position * n;
     }
