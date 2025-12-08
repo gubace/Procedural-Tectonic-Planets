@@ -102,7 +102,7 @@ public:
        return mVals[0]*mVals[0] + mVals[1]*mVals[1] + mVals[2]*mVals[2];
     }
     float length() const { return sqrt( squareLength() ); }
-    void normalize() { float L = length(); mVals[0] /= L; mVals[1] /= L; mVals[2] /= L; }
+    Vec3 normalize() { float L = length(); mVals[0] /= L; mVals[1] /= L; mVals[2] /= L; return Vec3(mVals[0], mVals[1], mVals[2]); }
     static float dot( Vec3 const & a , Vec3 const & b ) {
        return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
     }

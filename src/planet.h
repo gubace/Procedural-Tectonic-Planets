@@ -35,7 +35,7 @@ class Planet : public Mesh {
 
     float max_elevation = 8000.0f;
     float min_elevation = -8000.0f;
-    float ocean_level = 0.5f;
+    float ocean_level = 0.6f;
 
     float radius = 1.0f;
 
@@ -70,4 +70,10 @@ class Planet : public Mesh {
 
     unsigned int findclosestVertex(const Vec3& point, Planet& srcPlanet);
     void resample(Planet& srcPlanet);
+    
+    void smooth();
+
+   private:
+    std::vector< Vec3 > vunicurvature;
+    void calc_uniform_mean_curvature();
 };

@@ -45,7 +45,6 @@ class Mesh {
 
         void recomputeNormals ();
         void setupSphere(float radius, unsigned int numPoints);
-
 };
 
 

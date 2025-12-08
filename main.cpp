@@ -54,7 +54,7 @@ enum DisplayMode{ WIRE=0, SOLID=1, LIGHTED_WIRE=2, LIGHTED=3 };
 
 int nbPlates = 25;
 int nbiter_resample = 15;
-int spherepoints = 2048 * 2;
+int spherepoints = 2048 * 8;
 
 
 //Input mesh loaded at the launch of the application
@@ -199,8 +199,8 @@ void init() {
 
     // Créer le shader d'atmosphère
     atmosphereShader = new ShaderProgram(
-        "/home/e20210000275/M2/Projet3D/shaders/atmosphere.vert",
-        "/home/e20210000275/M2/Projet3D/shaders/atmosphere.frag"
+        "../shaders/atmosphere.vert",
+        "../shaders/atmosphere.frag"
     );
     
     // Créer la sphère atmosphérique
@@ -652,6 +652,12 @@ void key (unsigned char keyPressed, int x, int y) {
         display_normals = !display_normals;
         break;
 
+    case 's': //Press s key to smooth
+        planet.smooth();
+        mesh = planet;
+        updateDisplayedColors();
+        break;
+
     case 'r'://resample
         {
             Planet newPlanet(1.0f,spherepoints);
@@ -698,11 +704,6 @@ void key (unsigned char keyPressed, int x, int y) {
 
     case '1': //Toggle loaded mesh display
         display_mesh = !display_mesh;
-        break;
-
-
-    case 's': //End programm
-        display_smooth_normals = !display_smooth_normals;
         break;
 
     case 'd':
