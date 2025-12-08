@@ -41,6 +41,7 @@
 #include "src/rifting.h"
 #include "src/amplification.h"
 #include "src/ShaderProgram.h"
+#include "src/Skybox.h"
 #include "src/palette.h"
 
 
@@ -108,6 +109,7 @@ float planetRadiusMin = 1.0f;
 float planetRadiusMax = 1.0f;
 
 static ShaderProgram* atmosphereShader = nullptr;
+static Skybox* starsSkybox = nullptr;
 static GLuint atmosphereVAO = 0;
 static GLuint atmosphereVBO = 0;
 static GLuint atmosphereEBO = 0;
@@ -203,6 +205,11 @@ void init() {
     atmosphereShader = new ShaderProgram(
         "../shaders/atmosphere.vert",
         "../shaders/atmosphere.frag"
+    );
+
+    starsSkybox = new Skybox(
+        "../shaders/stars.vert",
+        "../shaders/stars.frag"
     );
     
     // Créer la sphère atmosphérique
@@ -417,24 +424,48 @@ void drawNormals(Mesh const& i_mesh){
 }
 
 //Draw fonction
-void draw () {
+void draw() {
 
+    if (starsSkybox) {
+        // Sauvegarder l'état actuel
+        glPushAttrib(GL_ALL_ATTRIB_BITS);
+        
+        // Désactiver depth write et test temporairement
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_LIGHTING);
+        glDisable(GL_CULL_FACE);
+        
+        // Récupérer les matrices
+        float projection[16];
+        float view[16];
+        glGetFloatv(GL_PROJECTION_MATRIX, projection);
+        glGetFloatv(GL_MODELVIEW_MATRIX, view);
+        
+        // Debug: afficher les matrices une fois
+        static bool debugOnce = false;
+        if (!debugOnce) {
+            std::cout << "Projection[0]: " << projection[0] << std::endl;
+            std::cout << "View[0]: " << view[0] << std::endl;
+            debugOnce = true;
+        }
+        
+        starsSkybox->draw(view, projection);
+        
+        // Restaurer l'état
+        glPopAttrib();
+        glEnable(GL_DEPTH_TEST);
+    }
 
-
+    // Le reste du code existant...
     if(displayMode == LIGHTED || displayMode == LIGHTED_WIRE){
-
         glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
         glEnable(GL_LIGHTING);
-
-    }  else if(displayMode == WIRE){
-
+    } else if(displayMode == WIRE){
         glPolygonMode (GL_FRONT_AND_BACK, GL_LINE);
         glDisable (GL_LIGHTING);
-
-    }  else if(displayMode == SOLID ){
+    } else if(displayMode == SOLID ){
         glDisable (GL_LIGHTING);
         glPolygonMode (GL_FRONT_AND_BACK, GL_FILL);
-
     }
 
     glColor3f(0.8,1,0.8);
@@ -474,7 +505,7 @@ void draw () {
         glUseProgram(0);
     }
 
-
+    
 
 
     glEnable(GL_LIGHTING);
@@ -705,51 +736,41 @@ void key (unsigned char keyPressed, int x, int y) {
 
     case 'j': //relancer
     {
-        // Supprimer l'ancien amplificateur
+
         if (amplificator) {
             delete amplificator;
             amplificator = nullptr;
         }
-        
-        // Créer une nouvelle planète
+
         Planet newPlanet(1.0f, spherepoints);
-        
-        // Générer les plaques et assigner les paramètres de croûte
+    
         newPlanet.generatePlates(nbPlates);
-        newPlanet.assignCrustParameters();
-        
-        // Remplacer la planète
-        planet = std::move(newPlanet);
-        
-        // Recréer l'amplificateur avec la nouvelle planète
-        amplificator = new Amplification(planet);
-        
-        // Réinitialiser le contrôleur de mouvement
-        movement_controller = Movement(planet);
-        
-        // Réinitialiser les paramètres d'affichage
+        newPlanet.assignCrustParameters();  
+
+        planet = std::move(newPlanet);  
+
+        amplificator = new Amplification(planet);  
+
+        movement_controller = Movement(planet); 
+
         display_plates_mode = 1;
         displayMode = LIGHTED;
         display_atmosphere = true;
-        
-        // Réinitialiser les rayons de la planète
+
         amplifiedPlanetRadius = 1.0f;
         planetRadiusMin = 1.0f;
-        planetRadiusMax = 1.0f;
-        
-        // Recréer la sphère atmosphérique
+        planetRadiusMax = 1.0f; 
+
         if (atmosphereVAO != 0) {
             glDeleteVertexArrays(1, &atmosphereVAO);
             glDeleteBuffers(1, &atmosphereVBO);
             glDeleteBuffers(1, &atmosphereEBO);
         }
         createAtmosphereSphere(1.1f, 64, atmosphereVAO, atmosphereVBO, atmosphereEBO, atmosphereIndexCount);
-        
-        // Mettre à jour le mesh et les couleurs
+
         mesh = planet;
         updateDisplayedColors();
         
-        // Réinitialiser les compteurs
         nbSteps = 0;
         elapsedSteps = 1.0f;
         
@@ -862,6 +883,7 @@ int main (int argc, char ** argv) {
 
     delete amplificator;
     delete atmosphereShader;
+    delete starsSkybox;
     
     return EXIT_SUCCESS;
 }

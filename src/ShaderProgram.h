@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include "Vec3.h"
 
 class ShaderProgram {
 public:
