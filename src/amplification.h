@@ -12,7 +12,7 @@
 
 class Amplification {
 public:
-    const float elevation_force = 0.08;
+    const float elevation_force = 1.0f;
     FastNoiseLite general_noise;
     FastNoiseLite mountain_noise;
     std::unique_ptr<SphericalKDTree> accel;

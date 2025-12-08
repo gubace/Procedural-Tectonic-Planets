@@ -655,6 +655,7 @@ void key (unsigned char keyPressed, int x, int y) {
     case 's': //Press s key to smooth
         planet.smooth();
         mesh = planet;
+        planet.recomputeNormals();
         updateDisplayedColors();
         break;
 

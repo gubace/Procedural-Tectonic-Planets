@@ -4,7 +4,7 @@ void Planet::smooth()
 {
     std::vector<Vec3> newVertices(vertices.size());
 
-    const float lambda = 0.4f;    // smoothing strength (tangential)
+    const float lambda = 0.4f;    // smoothing strength
     const int iterations = 1;
 
     for (int it = 0; it < iterations; it++)
@@ -17,30 +17,47 @@ void Planet::smooth()
                 continue;
             }
 
-            // 1. Compute average of neighbors
+            // 1. Calculer le rayon actuel du vertex
+            float currentRadius = vertices[v].length();
+
+            // 2. Calculer la moyenne des rayons des voisins
+            float avgRadius = 0.0f;
+            for (unsigned int nv : neigh) {
+                avgRadius += vertices[nv].length();
+            }
+            avgRadius /= float(neigh.size());
+
+            // 3. Lisser le rayon
+            float smoothedRadius = currentRadius + lambda * (avgRadius - currentRadius);
+
+            // 4. Calculer la position moyenne normalisée des voisins
             Vec3 avg(0,0,0);
-            for (unsigned int nv : neigh)
-                avg += vertices[nv];
+            for (unsigned int nv : neigh) {
+                Vec3 normalizedNeigh = vertices[nv];
+                normalizedNeigh.normalize();
+                avg += normalizedNeigh;
+            }
             avg /= float(neigh.size());
 
-            // 2. Laplacian
-            Vec3 lap = avg - vertices[v];
-
-            // 3. Project Laplacian to tangent plane to preserve radial structure
+            // 5. Direction du vertex actuel
             Vec3 normal = vertices[v];
             normal.normalize();
+
+            // 6. Lissage tangentiel (Laplacien sur la sphère)
+            Vec3 lap = avg - normal;
             Vec3 tangentLap = lap - normal * Vec3::dot(lap, normal);
+            Vec3 smoothedDir = normal + lambda * tangentLap;
+            smoothedDir.normalize();
 
-            // 4. Move vertex only along tangent directions
-            Vec3 smoothed = vertices[v] + lambda * tangentLap;
-
-            // 5. Reproject to sphere with elevation preserved
-            smoothed.normalize();
-            smoothed *= radius + amplified_elevations[v];
-
-            newVertices[v] = smoothed;
+            // 7. Appliquer le rayon lissé
+            newVertices[v] = smoothedDir * smoothedRadius;
         }
 
         vertices = newVertices;
+    }
+
+    // 8. Recalculer les amplified_elevations à partir des nouvelles positions
+    for (size_t i = 0; i < vertices.size(); i++) {
+        amplified_elevations[i] = vertices[i].length() - radius;
     }
 }
