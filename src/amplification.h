@@ -89,17 +89,19 @@ private:
     }
 
     Vec3 addNoiseToVertex(Vec3 position, FastNoiseLite noise, float strength, float elevation) {
-        auto clamp01 = [](float v) { return std::max(0.0f, std::min(1.0f, v)); };
-        auto smooth = [&](float x) { x = clamp01(x); return x*x*(3 - 2*x); };
-
         float min_h = 0.0f;
         float max_h = 8000.0f;
 
-        float noiseFactor = smooth((elevation - min_h) / (max_h - min_h));
+        // Clamp and smooth
+        float t = (elevation - min_h) / (max_h - min_h);
+        t = std::max(0.0f, std::min(1.0f, t));
+        float noiseFactor = t * t * (3.0f - 2.0f * t);
 
-        float noiseRaw = noise.GetNoise(position[0], position[1], position[2]);  // [-1, 1]
+        float noiseRaw = noise.GetNoise(position[0], position[1], position[2]);
 
-        float n = 1.0f + std::clamp(noiseRaw * (elevation_force * strength * noiseFactor), -0.05f, 0.05f);
+        float noiseValue = noiseRaw * (elevation_force * strength * noiseFactor);
+        noiseValue = std::max(-0.05f, std::min(0.05f, noiseValue));
+        float n = 1.0f + noiseValue;
 
         return position * n;
     }
