@@ -15,9 +15,9 @@ public:
     const float elevation_force = 1.0f;
     FastNoiseLite general_noise;
     FastNoiseLite mountain_noise;
-    std::unique_ptr<SphericalKDTree> accel;
+    SphericalKDTree accel;
     
-    Amplification(Planet & p) : accel(std::make_unique<SphericalKDTree>(p.vertices, p)) {
+    Amplification(Planet & p) : accel(p.vertices, p) {
         general_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
         general_noise.SetFrequency(10.0f);
         general_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
@@ -54,7 +54,7 @@ void amplifyTerrain(Planet& planet) {
 private:
     Vec3 copyClosestVertex(Planet& planet, Planet& newPlanet, unsigned int vertexIdx) {
         Vec3 vertexPosition = newPlanet.vertices[vertexIdx];
-        unsigned int closestVertexIdx = accel->nearest(vertexPosition);
+        unsigned int closestVertexIdx = accel.nearest(vertexPosition);
 
         float crust_elevation = planet.crust_data[closestVertexIdx]->relief_elevation;
         float normalized_elevation = (crust_elevation - planet.min_elevation) / (planet.max_elevation - planet.min_elevation);
