@@ -12,7 +12,7 @@
 
 class Amplification {
 public:
-    const float elevation_force = 1.0f;
+    const float elevation_force = 0.15f;
     FastNoiseLite general_noise;
     FastNoiseLite mountain_noise;
     SphericalKDTree accel;
@@ -45,7 +45,8 @@ void amplifyTerrain(Planet& planet) {
     // Reprocesado
     // elevateVertices(planet);
     planet.detectVerticesNeighbors();
-    // planet.smooth();
+    planet.smooth();
+    planet.smooth();
     planet.recomputeNormals();
 
     std::cout << "Amplification complete!" << std::endl;

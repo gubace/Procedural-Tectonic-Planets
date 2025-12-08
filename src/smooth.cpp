@@ -1,11 +1,44 @@
 #include "planet.h"
 
-void Planet::smooth()
-{
+void Planet::smoothColors() {
+    std::vector<Vec3> newColors(colors.size());
+
+    const float strength = 0.5f;
+    const int iterations = 1;
+
+    for (int it = 0; it < iterations; it++) {
+
+        for (size_t v = 0; v < vertices.size(); v++) {
+
+            const auto& neigh = neighbors[v];
+            if (neigh.empty()) {
+                newColors[v] = colors[v];
+                continue;
+            }
+
+            Vec3 avg(0.0f, 0.0f, 0.0f);
+            for (unsigned int nv : neigh) {
+                avg += colors[nv];
+            }
+            avg /= float(neigh.size());
+
+            newColors[v] = colors[v] * (1.0f - strength) + avg * strength;
+        }
+
+        colors = newColors;
+    }
+}
+
+
+void Planet::smooth() {
+    doSmooth(0.3f);
+    doSmooth(-0.3f);
+}
+
+void Planet::doSmooth(float lambda) {
     std::vector<Vec3> newVertices(vertices.size());
 
-    const float lambda = 1.5f;    // smoothing strength
-    const int iterations = 1;
+    const int iterations = 10;
 
     for (int it = 0; it < iterations; it++)
     {

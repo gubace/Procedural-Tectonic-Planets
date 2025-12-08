@@ -390,9 +390,13 @@ std::vector<Vec3> Planet::vertexColorsForElevation() const {
 Vec3 Planet::getColorFromHeightAndCrustType(float elevation, bool isOceanic, float age) const {
     auto clamp01 = [](float v) -> float { return std::max(0.0f, std::min(1.0f, v)); };
     auto mix = [](const Vec3& a, const Vec3& b, float t) -> Vec3 { return a * (1.0f - t) + b * t; };
+    auto smooth = [&](float x) -> float { x = clamp01(x); return x * x * (3.0f - 2.0f * x); };
 
     if (isOceanic) {
         float t = clamp01((elevation - min_elevation) / std::abs(min_elevation));
+
+        t = smooth(t);
+
         Vec3 col = mix(palette.color_deep, palette.color_shallow, t);
 
         float ageFactor = 1.0f - clamp01(age / 200.0f) * 0.45f;
@@ -401,17 +405,20 @@ Vec3 Planet::getColorFromHeightAndCrustType(float elevation, bool isOceanic, flo
         return col;
     } else {
         float t = clamp01(elevation / max_elevation);
+
         Vec3 col;
+
         if (t < 0.3f) {
-            // Basses terres
-            col = mix(palette.color_lowland, palette.color_midland, t / 0.3f);
+            float tt = smooth(t / 0.3f);
+            col = mix(palette.color_lowland, palette.color_midland, tt);
+
         } else if (t < 0.6f) {
-            // Moyennes hauteurs
-            col = mix(palette.color_midland, palette.color_highland, (t - 0.3f) / 0.3f);
+            float tt = smooth((t - 0.3f) / 0.3f);
+            col = mix(palette.color_midland, palette.color_highland, tt);
+
         } else {
-            // Hautes montagnes avec neige
-            float snowFactor = (t - 0.6f) / 0.4f;
-            col = mix(palette.color_highland, palette.color_snow, snowFactor);
+            float tt = smooth((t - 0.6f) / 0.4f);
+            col = mix(palette.color_highland, palette.color_snow, tt);
         }
 
         col *= (1.0f - clamp01(age / 1200.0f) * 0.25f);
@@ -422,18 +429,22 @@ Vec3 Planet::getColorFromHeightAndCrustType(float elevation, bool isOceanic, flo
 
 std::vector<Vec3> Planet::vertexColorsForCrustTypesAmplified() const {
     std::vector<Vec3> out(vertices.size(), Vec3(0.5f, 0.5f, 0.5f));
-    if (amplified_elevations.size() == 0) {
+    if (amplified_elevations.empty()) {
         return out;
     }
-    
+
     for (size_t i = 0; i < vertices.size(); ++i) {
         float height = amplified_elevations[i];
 
-        if (height < ocean_level) {
-            out[i] = getColorFromHeightAndCrustType(height, true, 0);
-        } else {
-            out[i] = getColorFromHeightAndCrustType(height, false, 0);
-        }
+        float shoreWidth = 0.02f * max_elevation;
+        float shoreT = (height - ocean_level) / shoreWidth;
+        shoreT = std::max(0.0f, std::min(1.0f, shoreT));
+        shoreT = shoreT * shoreT * (3 - 2*shoreT);
+
+        Vec3 waterColor = getColorFromHeightAndCrustType(height, true, 0);
+        Vec3 landColor  = getColorFromHeightAndCrustType(height, false, 0);
+
+        out[i] = waterColor * (1.0f - shoreT) + landColor * shoreT;
     }
     return out;
 }
@@ -504,21 +515,3 @@ float Planet::computeMaxDistanceFromOrigin() const {
     }
     return maxDist;
 }
-
-void Planet::calc_uniform_mean_curvature() {
-    vunicurvature.clear();
-
-    for(int i = 0; i < vertices.size(); i++) {
-        std::vector<unsigned int> vertexNeighbors = neighbors[i];
-        Vec3 meanCurvature(0.0, 0.0, 0.0);
-        for (int v = 0; v < vertexNeighbors.size(); v++) {
-            int neighborIndex = vertexNeighbors[v];
-            meanCurvature += vertices[neighborIndex];
-        }
-        meanCurvature /= vertexNeighbors.size();
-        meanCurvature -= vertices[i];
-
-        vunicurvature.push_back(meanCurvature);
-    }
-}
-

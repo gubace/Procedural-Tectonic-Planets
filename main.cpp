@@ -653,10 +653,10 @@ void key (unsigned char keyPressed, int x, int y) {
         break;
 
     case 's': //Press s key to smooth
-        planet.smooth();
+        planet.smoothColors();
         mesh = planet;
-        planet.recomputeNormals();
-        updateDisplayedColors();
+        // planet.recomputeNormals();
+        // updateDisplayedColors();
         break;
 
     case 'r'://resample

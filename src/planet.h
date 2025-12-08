@@ -72,8 +72,8 @@ class Planet : public Mesh {
     void resample(Planet& srcPlanet);
     
     void smooth();
+    void smoothColors();
 
    private:
-    std::vector< Vec3 > vunicurvature;
-    void calc_uniform_mean_curvature();
+    void doSmooth(float lambda);
 };
