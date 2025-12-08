@@ -16,7 +16,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Debug flags (enlever -lGLEW d'ici, ce n'est pas un flag de compilation)
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O3 -Wextra")
 
 # Source collection
 set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
