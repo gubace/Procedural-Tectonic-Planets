@@ -4,7 +4,6 @@
 #include "crust.h"
 #include "planet.h"
 
-#include "ShaderProgram.h"
 #include "SphericalGrid.h"
 #include "FastNoiseLite.h"
 #include <GL/glew.h>
@@ -13,11 +12,12 @@
 
 class Amplification {
 public:
-    const float elevation_force = 0.5;
+    const float elevation_force = 0.08;
     FastNoiseLite general_noise;
     FastNoiseLite mountain_noise;
+    std::unique_ptr<SphericalKDTree> accel;
     
-    Amplification(Planet & p) {
+    Amplification(Planet & p) : accel(std::make_unique<SphericalKDTree>(p.vertices, p)) {
         general_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
         general_noise.SetFrequency(10.0f);
         general_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
@@ -32,12 +32,11 @@ public:
     };
     
 void amplifyTerrain(Planet& planet) {
-    SphericalKDTree accel(planet.vertices, planet);
 
     Planet newPlanet(1.0f, planet.vertices.size() * 5);
 
     for (int vertexIdx = 0; vertexIdx < newPlanet.vertices.size(); vertexIdx++) {
-        newPlanet.vertices[vertexIdx] = copyClosestVertex(planet, newPlanet, vertexIdx, accel);
+        newPlanet.vertices[vertexIdx] = copyClosestVertex(planet, newPlanet, vertexIdx);
     }
     newPlanet.detectVerticesNeighbors();
     newPlanet.recomputeNormals();
@@ -53,9 +52,9 @@ void amplifyTerrain(Planet& planet) {
 }
 
 private:
-    Vec3 copyClosestVertex(Planet& planet, Planet& newPlanet, unsigned int vertexIdx, SphericalKDTree accel) {
+    Vec3 copyClosestVertex(Planet& planet, Planet& newPlanet, unsigned int vertexIdx) {
         Vec3 vertexPosition = newPlanet.vertices[vertexIdx];
-        unsigned int closestVertexIdx = accel.nearest(vertexPosition);
+        unsigned int closestVertexIdx = accel->nearest(vertexPosition);
 
         float crust_elevation = planet.crust_data[closestVertexIdx]->relief_elevation;
         float normalized_elevation = (crust_elevation - planet.min_elevation) / (planet.max_elevation - planet.min_elevation);
