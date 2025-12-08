@@ -130,6 +130,7 @@ void updateDisplayedColors() {
     } else if (display_plates_mode == 3) {
         planet.colors = planet.vertexColorsForCrustTypesAmplified();
         planet.smoothColors();
+        planet.smoothColors();
     }
     mesh.colors = planet.colors;
     glutPostRedisplay();
