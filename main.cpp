@@ -703,6 +703,60 @@ void key (unsigned char keyPressed, int x, int y) {
         updateDisplayedColors();
         break;
 
+    case 'j': //relancer
+    {
+        // Supprimer l'ancien amplificateur
+        if (amplificator) {
+            delete amplificator;
+            amplificator = nullptr;
+        }
+        
+        // Créer une nouvelle planète
+        Planet newPlanet(1.0f, spherepoints);
+        
+        // Générer les plaques et assigner les paramètres de croûte
+        newPlanet.generatePlates(nbPlates);
+        newPlanet.assignCrustParameters();
+        
+        // Remplacer la planète
+        planet = std::move(newPlanet);
+        
+        // Recréer l'amplificateur avec la nouvelle planète
+        amplificator = new Amplification(planet);
+        
+        // Réinitialiser le contrôleur de mouvement
+        movement_controller = Movement(planet);
+        
+        // Réinitialiser les paramètres d'affichage
+        display_plates_mode = 1;
+        displayMode = LIGHTED;
+        display_atmosphere = true;
+        
+        // Réinitialiser les rayons de la planète
+        amplifiedPlanetRadius = 1.0f;
+        planetRadiusMin = 1.0f;
+        planetRadiusMax = 1.0f;
+        
+        // Recréer la sphère atmosphérique
+        if (atmosphereVAO != 0) {
+            glDeleteVertexArrays(1, &atmosphereVAO);
+            glDeleteBuffers(1, &atmosphereVBO);
+            glDeleteBuffers(1, &atmosphereEBO);
+        }
+        createAtmosphereSphere(1.1f, 64, atmosphereVAO, atmosphereVBO, atmosphereEBO, atmosphereIndexCount);
+        
+        // Mettre à jour le mesh et les couleurs
+        mesh = planet;
+        updateDisplayedColors();
+        
+        // Réinitialiser les compteurs
+        nbSteps = 0;
+        elapsedSteps = 1.0f;
+        
+        printf("Restarted simulation completely.\n");
+    }
+    break;
+
     case '1': //Toggle loaded mesh display
         display_mesh = !display_mesh;
         break;
