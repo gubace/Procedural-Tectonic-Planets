@@ -13,6 +13,7 @@
 class Amplification {
 public:
     const float elevation_force = 0.04f;
+    const int amplification_quality = 10;
     FastNoiseLite general_noise;
     FastNoiseLite ground_noise;
     FastNoiseLite mountain_noise;
@@ -20,23 +21,23 @@ public:
     
     Amplification(Planet & p) : accel(p.vertices, p) {
         general_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
-        general_noise.SetFrequency(20.0f);           // frecuencia más baja que montaña
+        general_noise.SetFrequency(4.0 * (float) amplification_quality);
         general_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
-        general_noise.SetFractalOctaves(2);          // pocas octavas, suave
-        general_noise.SetFractalLacunarity(2.0f);    // mismo estilo que montaña
-        general_noise.SetFractalGain(0.5f);          // coherente
+        general_noise.SetFractalOctaves(2);
+        general_noise.SetFractalLacunarity(2.0f);
+        general_noise.SetFractalGain(0.5f);
         general_noise.SetSeed(2);
 
         ground_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
-        ground_noise.SetFrequency(60.0f);            // un poco más detalle que general
+        ground_noise.SetFrequency(12.0f * (float) amplification_quality);
         ground_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
-        ground_noise.SetFractalOctaves(2);           // similar a general
+        ground_noise.SetFractalOctaves(2);
         ground_noise.SetFractalLacunarity(2.0f);
         ground_noise.SetFractalGain(0.5f);
-        ground_noise.SetSeed(4);                      // diferente semilla
+        ground_noise.SetSeed(4);
 
         mountain_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
-        mountain_noise.SetFrequency(200.0f);
+        mountain_noise.SetFrequency(40.0f * (float) amplification_quality);
         mountain_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
         mountain_noise.SetFractalOctaves(3);
         mountain_noise.SetFractalLacunarity(5.0f);
@@ -46,7 +47,7 @@ public:
     
 void amplifyTerrain(Planet& planet) {
 
-    Planet newPlanet(1.0f, planet.vertices.size() * 5);
+    Planet newPlanet(1.0f, planet.vertices.size() * amplification_quality);
 
     for (int vertexIdx = 0; vertexIdx < newPlanet.vertices.size(); vertexIdx++) {
         newPlanet.vertices[vertexIdx] = copyClosestVertex(planet, newPlanet, vertexIdx);
