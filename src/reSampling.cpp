@@ -3,6 +3,7 @@
 #include <utility>
 #include <memory>
 #include <chrono>
+#include <map>
 #include <random>
 
 #include "planet.h"
@@ -90,44 +91,42 @@ std::unique_ptr<Crust> copyCrust(Planet& srcPlanet, unsigned int closestIndex){ 
     return crust_data;
 }
 
-unsigned int computePlateIndex(SphericalKDTree &accel, Planet &srcPlanet, unsigned int closestIndex, Vec3 currentVertex){ // Compute the plate index for the current vertex based on nearest neighbors
+ // threshold is kneighbors
+unsigned int computePlateIndex(SphericalKDTree &accel, Planet &srcPlanet, unsigned int closestIndex, const Vec3 &currentVertex, int threshold = 3) {
+    unsigned int closestPlate = srcPlanet.verticesToPlates[closestIndex];
 
-    unsigned int plateIndex = srcPlanet.verticesToPlates[closestIndex];
     std::vector<unsigned int> neighbors = accel.kNearest(currentVertex, 8);
-        
+
     if (neighbors.empty()) {
-        plateIndex = srcPlanet.verticesToPlates[closestIndex];
-    } else {
-        std::map<unsigned int, int> plateVotes;
-        
-        for (unsigned int neighborIdx : neighbors) {
-            if (neighborIdx < srcPlanet.verticesToPlates.size()) {
-                unsigned int neighborPlate = srcPlanet.verticesToPlates[neighborIdx];
-                plateVotes[neighborPlate]++;
-            }
-        }
-        
-        unsigned int majorityPlate = srcPlanet.verticesToPlates[closestIndex];
-        int maxVotes = 0;
-        
-        for (const auto& vote : plateVotes) {
-            if (vote.second > maxVotes) {
-                maxVotes = vote.second;
-                majorityPlate = vote.first;
-            }
-        }
-        
-        unsigned int closestPlate = srcPlanet.verticesToPlates[closestIndex];
-        int sameAsClosest = plateVotes[closestPlate];
-        
-        if (sameAsClosest < 3) {
-            plateIndex = majorityPlate;
-        } else {
-            plateIndex = closestPlate;
+        return closestPlate; 
+    }
+
+    std::map<unsigned int, int> plateVotes;
+    for (unsigned int neighborIdx : neighbors) {
+        if (neighborIdx >= srcPlanet.verticesToPlates.size()) continue;
+        if (neighborIdx == closestIndex) continue; // evitar doble conteo
+
+        unsigned int neighborPlate = srcPlanet.verticesToPlates[neighborIdx];
+        plateVotes[neighborPlate]++;
+    }
+
+    plateVotes[closestPlate]++;
+
+    unsigned int majorityPlate = closestPlate;
+    int maxVotes = 0;
+    for (const auto &vote : plateVotes) {
+        if (vote.second > maxVotes) {
+            maxVotes = vote.second;
+            majorityPlate = vote.first;
         }
     }
 
-    return plateIndex;
+    int sameAsClosest = plateVotes[closestPlate];
+    if (sameAsClosest < threshold) {
+        return majorityPlate;
+    } else {
+        return closestPlate;
+    }
 }
 
 //================================ Planet Resampling ===================================
@@ -157,24 +156,11 @@ void Planet::resample(Planet& srcPlanet) { // Resample crust and plate data from
         Vec3 currentVertex = vertices[i];
         unsigned int closestIndex = accel.nearest(currentVertex);
 
-        if((srcPlanet.vertices[closestIndex] - currentVertex).squareLength() > expected_chord2) {
-
-            unsigned int clo = findclosestVertex(currentVertex, srcPlanet);
-
-            float dist2 = (srcPlanet.vertices[clo] - currentVertex).squareLength();
-            if (dist2 < expected_chord2){
-                printf("dist1 = %f, dist2 = %f\n",
-                    std::sqrt((srcPlanet.vertices[closestIndex] - currentVertex).squareLength()),
-                    std::sqrt((srcPlanet.vertices[clo] - currentVertex).squareLength())
-                );
-                continue;
-            }
-
+        if((srcPlanet.vertices[closestIndex] - currentVertex).squareLength() > expected_chord2) { // Vertices far from each other = generate new ocean crust
+            float dist2 = (srcPlanet.vertices[closestIndex] - currentVertex).squareLength();
             computeCrustGenerationEvent(*this, srcPlanet, accel, i, closestIndex);
-        }
-        
-        else if (closestIndex < srcPlanet.crust_data.size() && srcPlanet.crust_data[closestIndex]) {
-            crust_data[i] = copyCrust(srcPlanet,closestIndex);
+        } else if (closestIndex < srcPlanet.crust_data.size() && srcPlanet.crust_data[closestIndex]) { // Vertices overlapping
+            crust_data[i] = copyCrust(srcPlanet, closestIndex);
         }
 
         unsigned int plateIndex = computePlateIndex(accel, srcPlanet, closestIndex, currentVertex);
@@ -209,7 +195,7 @@ void Planet::resample(Planet& srcPlanet) { // Resample crust and plate data from
     std::mt19937 gen(rd());
     std::uniform_int_distribution<int> riftChance(1, 5);
     
-    if (riftChance(gen) == 1) { // 1 chance sur 10
+    if (riftChance(gen) == 2) { // N chances sur 10
         std::cout << "\nrifting" << std::endl;
 
         PlateRifting rifter;

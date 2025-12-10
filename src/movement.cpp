@@ -175,7 +175,7 @@ std::vector<std::unique_ptr<TectonicPhenomenon>> Movement::detectPhenomena() {
                     
                     // Vérifier si collision déjà détectée pour cette paire de plaques
                     CollisionKey collKey{(unsigned int)pa, (unsigned int)pb};
-                    if (collisionsSeen.find(collKey) == collisionsSeen.end()) {
+                    // if (collisionsSeen.find(collKey) == collisionsSeen.end()) {
                         collisionsSeen.insert(collKey);
                         
                         float collisionMagnitude = conv;
@@ -187,7 +187,7 @@ std::vector<std::unique_ptr<TectonicPhenomenon>> Movement::detectPhenomena() {
                         
                         // std::cout << "Collision detected between plates " << pa 
                         //           << " and " << pb << " at vertex " << v << std::endl;
-                    }
+                    // }
                 }
 
                 if (isCollision) continue;
@@ -250,5 +250,14 @@ void Movement::movePlate(Plate& plate, float deltaTime) {
 void Movement::triggerEvents() {
     for (const auto& phenomenon : tectonicPhenomena) {
         phenomenon->triggerEvent(*planet);
+    }
+}
+
+void Movement::triggerTerranesMigration() {
+    for (const auto& phenomenon : tectonicPhenomena) {
+        if (phenomenon->getType() == TectonicPhenomenon::Type::ContinentalCollision) {
+            ContinentalCollision* collisionPhenomenon = dynamic_cast<ContinentalCollision*>(phenomenon.get());
+            collisionPhenomenon->triggerTerranesMigration(*planet);
+        }
     }
 }

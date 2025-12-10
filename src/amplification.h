@@ -12,8 +12,8 @@
 
 class Amplification {
 public:
-    const float elevation_force = 0.04f;
-    const int amplification_quality = 10;
+    const float elevation_force = 0.02f;
+    const int amplification_quality = 4;
     FastNoiseLite general_noise;
     FastNoiseLite ground_noise;
     FastNoiseLite mountain_noise;
@@ -21,7 +21,7 @@ public:
     
     Amplification(Planet & p) : accel(p.vertices, p) {
         general_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
-        general_noise.SetFrequency(4.0 * (float) amplification_quality);
+        general_noise.SetFrequency(10.0 * (float) amplification_quality);
         general_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
         general_noise.SetFractalOctaves(2);
         general_noise.SetFractalLacunarity(2.0f);
@@ -29,7 +29,7 @@ public:
         general_noise.SetSeed(2);
 
         ground_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
-        ground_noise.SetFrequency(12.0f * (float) amplification_quality);
+        ground_noise.SetFrequency(30.0f * (float) amplification_quality);
         ground_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
         ground_noise.SetFractalOctaves(2);
         ground_noise.SetFractalLacunarity(2.0f);
@@ -37,7 +37,7 @@ public:
         ground_noise.SetSeed(4);
 
         mountain_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
-        mountain_noise.SetFrequency(40.0f * (float) amplification_quality);
+        mountain_noise.SetFrequency(50.0f * (float) amplification_quality);
         mountain_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
         mountain_noise.SetFractalOctaves(3);
         mountain_noise.SetFractalLacunarity(5.0f);
@@ -45,8 +45,8 @@ public:
         mountain_noise.SetSeed(3);
     };
     
-void amplifyTerrain(Planet& planet) {
 
+void amplifyTerrain(Planet& planet) {
     Planet newPlanet(1.0f, planet.vertices.size() * amplification_quality);
 
     for (int vertexIdx = 0; vertexIdx < newPlanet.vertices.size(); vertexIdx++) {
@@ -84,13 +84,16 @@ private:
             float normalized_elevation = (elevation - planet.min_elevation) / (planet.max_elevation - planet.min_elevation);
 
             Vec3 position = planet.vertices[vertexIdx];
-            position = addNoiseToVertex(position, general_noise, 0.02f);
+            position = addNoiseToVertex(position, general_noise, 0.04f);
 
             if (normalized_elevation > 0.9f) {
                 position = addNoiseToVertex(position, mountain_noise, 0.1f);
             } else if (normalized_elevation > 0.7f) {
                 position = addNoiseToVertex(position, ground_noise, 0.05f);
-            }  
+            }
+
+            if (position.length() > planet.max_real_elevation) planet.max_real_elevation = position.length();
+            if (position.length() < planet.min_real_elevation) planet.min_real_elevation = position.length();
 
             planet.vertices[vertexIdx] = position;
         }

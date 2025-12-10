@@ -449,6 +449,26 @@ std::vector<Vec3> Planet::vertexColorsForCrustTypesAmplified() const {
     return out;
 }
 
+std::vector<Vec3> Planet::vertexColorsForCrustTypesNormalized() const {
+    std::vector<Vec3> out(vertices.size(), Vec3(0.5f, 0.5f, 0.5f));
+
+    float minZ = min_real_elevation;
+    float maxZ = max_real_elevation;
+    float rangeZ = maxZ - minZ;
+    if (rangeZ <= 0.0f) rangeZ = 1.0f;
+
+    for (size_t i = 0; i < vertices.size(); ++i) {
+        float height = vertices[i].length();
+
+        float normalizedHeight = (height - minZ) / rangeZ;
+        normalizedHeight = std::max(0.0f, std::min(1.0f, normalizedHeight));
+
+        out[i] = palette.getColorFromValue(normalizedHeight);
+    }
+
+    return out;
+}
+
 std::vector<Vec3> Planet::vertexColorsForCrustTypes() const {
     std::vector<Vec3> out(vertices.size(), Vec3(0.5f, 0.5f, 0.5f));
     
@@ -514,4 +534,12 @@ float Planet::computeMaxDistanceFromOrigin() const {
         if (dist > maxDist) maxDist = dist;
     }
     return maxDist;
+} 
+
+float Planet::relativeVelocity(Plate & plateA, Plate & plateB) {
+    float v = std::abs(plateA.plate_velocity - plateB.plate_velocity);
+    if (v < 0.0f) v = 0.0f;
+    // clamp to max_velocity to keep g() in [0,1]
+    if (v > max_velocity) v = max_velocity;
+    return v;
 }

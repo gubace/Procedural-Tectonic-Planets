@@ -35,7 +35,12 @@ class Planet : public Mesh {
 
     float max_elevation = 8000.0f;
     float min_elevation = -8000.0f;
-    float ocean_level = 0.6f;
+
+    float max_real_elevation = 1.0f;
+    float min_real_elevation = 1.0f;
+
+    float ocean_level = 0.4f;
+    float max_velocity = 2.0f; // TODO: idk, Timothée knows -> In fact Timothée doesn't know either
 
     float radius = 1.0f;
 
@@ -56,6 +61,7 @@ class Planet : public Mesh {
     std::vector<Vec3> vertexColorsForCrustTypes() const;
     std::vector<Vec3> vertexColorsForElevation() const;
     std::vector<Vec3> vertexColorsForCrustTypesAmplified() const;
+    std::vector<Vec3> vertexColorsForCrustTypesNormalized() const;
     Vec3 getColorFromHeightAndCrustType(float elevation, bool isOceanic, float age) const;
     
     float computeAverageDistanceFromOrigin() const;
@@ -73,6 +79,7 @@ class Planet : public Mesh {
     
     void smooth();
     void smoothColors();
+    float relativeVelocity(Plate & plateA, Plate & plateB);
 
    private:
     void doSmooth(float lambda);

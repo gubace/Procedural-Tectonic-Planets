@@ -53,7 +53,7 @@ enum DisplayMode{ WIRE=0, SOLID=1, LIGHTED_WIRE=2, LIGHTED=3 };
 //Parametres Planete
 // ------------------------------------
 
-int nbPlates = 25;
+int nbPlates = 20;
 int nbiter_resample = 15;
 int spherepoints = 2048 * 24;
 
@@ -61,7 +61,7 @@ int spherepoints = 2048 * 24;
 //Input mesh loaded at the launch of the application
 Mesh mesh;
 
-Planet planet(1.0f,spherepoints);
+Planet planet(1.0f, spherepoints);
 Movement movement_controller(planet);
 Amplification* amplificator = nullptr;
 int nbSteps = 0;
@@ -128,9 +128,10 @@ void updateDisplayedColors() {
         planet.colors = planet.vertexColorsForElevation();
         //printf("Updated colors for elevation display.\n");
     } else if (display_plates_mode == 3) {
-        planet.colors = planet.vertexColorsForCrustTypesAmplified();
-        planet.smoothColors();
-        planet.smoothColors();
+        //planet.colors = planet.vertexColorsForCrustTypesAmplified();
+        planet.colors = planet.vertexColorsForCrustTypesNormalized();
+        //planet.smoothColors();
+        //planet.smoothColors();
     }
     mesh.colors = planet.colors;
     glutPostRedisplay();
@@ -584,6 +585,7 @@ void key (unsigned char keyPressed, int x, int y) {
             nbSteps++;
             printf("Moved plates: step %d\n", nbSteps);
         }else {
+            movement_controller.triggerTerranesMigration();
             nbSteps = 0;
             Planet newPlanet(1.0f,spherepoints);
             newPlanet.resample(planet);
@@ -693,6 +695,7 @@ void key (unsigned char keyPressed, int x, int y) {
 
     case 'r'://resample
         {
+            movement_controller.triggerTerranesMigration();
             Planet newPlanet(1.0f,spherepoints);
             newPlanet.resample(planet);
 

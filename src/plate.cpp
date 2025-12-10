@@ -62,7 +62,7 @@ void Plate::fillTerranes(const Planet& planet) {
         }
         
 
-        if (terrane.size() >= 10) {
+        if (terrane.size() >= 20) {
 
             Vec3 centroid(0.0f, 0.0f, 0.0f);
 

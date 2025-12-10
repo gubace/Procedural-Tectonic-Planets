@@ -22,6 +22,7 @@ class Movement {
     Movement(Planet& p) : planet(&p) {}
 
     void movePlates(float deltaTime);
+    void triggerTerranesMigration();
 
    private:
     void movePlate(Plate& plate, float deltaTime);

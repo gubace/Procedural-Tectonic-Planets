@@ -20,8 +20,6 @@ At this stage, plate rifting and oceanic crust generation are computed.
 
 ## Assure plates are 1 bloc -> done
 
-## Fix ocean holes in continents
-
 ## Plate Rifting like in the paper -> random event were a plate cut itself -> done
 
 ## Start Amplification step.
@@ -30,9 +28,6 @@ At this stage, plate rifting and oceanic crust generation are computed.
 
 ## GUI ?
 
-
-# Amplification
-
 Remesh to have a pretty mesh
 
 Resample with more points -> 4 8 ?
@@ -40,3 +35,10 @@ Resample with more points -> 4 8 ?
 Transfer the height on the new mesh.
 
 Use noise to amplify the terrain.
+
+
+# TODO:
+
+Check if there are plates that are completely separated but are considered as the same one
+
+Resampling makes holes when remeshing subductions

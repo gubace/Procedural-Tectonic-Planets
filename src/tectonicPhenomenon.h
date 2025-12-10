@@ -35,6 +35,39 @@ class TectonicPhenomenon {
     unsigned int plate_a;
     unsigned int plate_b;
     unsigned int vertex_index;
+
+    float r_s = 0.1f; // Distance that impacts uplift effect
+    float max_velocity = 2.0f; // TODO: idk, Timothée knows -> In fact Timothée doesn't know either
+
+    float f(float d) {
+        if (d <= 0.0f) return 1.0f;
+        if (d >= r_s) return 0.0f;
+
+        float x = d / r_s;
+
+        return 1.0f - 3.0f * x * x + 2.0f * x * x * x; // TODO: maybe this is not accurate, need to see the function shape
+    }
+
+    float g(float v) {
+        return v/max_velocity;
+    }
+
+    float h(float z) {
+        return z ;
+    }
+
+    float elevationImpact(float z, float minZ, float maxZ) {
+        if (maxZ <= minZ) return 0.0f;
+        float normalizedZ = (z - minZ) / (maxZ - minZ);
+        if (normalizedZ < 0.0f) normalizedZ = 0.0f;
+        if (normalizedZ > 1.0f) normalizedZ = 1.0f;
+        return normalizedZ;
+    }
+
+    float distanceToInteractionFront(Vec3 p, Vec3 subductionFront) {
+        Vec3 distance = p - subductionFront;
+        return distance.length();
+    }
 };
 
 class Subduction : public TectonicPhenomenon {
@@ -85,6 +118,7 @@ class ContinentalCollision : public TectonicPhenomenon {
     float getMagnitude() const { return magnitude; }
 
     void triggerEvent(Planet& planet) override;
+    void triggerTerranesMigration(Planet& planet);
     std::string getDescription() const override {
         return "Continental Collision: " + description + " (Magnitude: " + std::to_string(magnitude) + ")";
     }
