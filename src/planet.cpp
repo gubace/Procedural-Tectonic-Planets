@@ -452,10 +452,24 @@ std::vector<Vec3> Planet::vertexColorsForCrustTypesAmplified() const {
 std::vector<Vec3> Planet::vertexColorsForCrustTypesNormalized() const {
     std::vector<Vec3> out(vertices.size(), Vec3(0.5f, 0.5f, 0.5f));
 
+    float minZ = min_real_elevation;
+    float maxZ = max_real_elevation;
+    float real_ocean_level = minZ + (maxZ - minZ) * ocean_level;
+
+    std::cout << "real_ocean_level" << real_ocean_level << std::endl;
+    std::cout << "maxZ" << maxZ << std::endl;
+    std::cout << "minZ" << minZ << std::endl;
+
+    float maxDelta = std::max(real_ocean_level - minZ, maxZ - real_ocean_level);
+    if (maxDelta <= 0.0f) maxDelta = 1.0f;
+
+    float low  = real_ocean_level - maxDelta;
+    float high = real_ocean_level + maxDelta;
+
     for (size_t i = 0; i < vertices.size(); ++i) {
         float height = vertices[i].length();
 
-        float normalized = normalized_elevations[i];
+        float normalized = (height - low) / (high - low);
 
         if (normalized < 0.0f) normalized = 0.0f;
         if (normalized > 1.0f) normalized = 1.0f;

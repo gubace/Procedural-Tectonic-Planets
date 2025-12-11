@@ -72,6 +72,7 @@ private:
 
         float crust_elevation = planet.crust_data[closestVertexIdx]->relief_elevation;
         float normalized_elevation = (crust_elevation - planet.min_elevation) / (planet.max_elevation - planet.min_elevation);
+        newPlanet.amplified_elevations.push_back(crust_elevation);
 
         Vec3 elevated_position = vertexPosition * (1 + elevation_force * normalized_elevation);
         return elevated_position;
@@ -90,9 +91,13 @@ private:
             } else if (normalized_elevation > 0.7f) {
                 position = addNoiseToVertex(position, ground_noise, 0.05f);
             }
-
             position = addNoiseToVertex(position, general_noise, 0.04f);
-            planet.normalized_elevations.push_back(position.length());
+
+            if (position.length() > planet.max_real_elevation) planet.max_real_elevation = position.length();
+            if (position.length() < planet.min_real_elevation) planet.min_real_elevation = position.length();
+
+            
+
             planet.vertices[vertexIdx] = position;
         }
     }
