@@ -37,10 +37,10 @@ public:
         ground_noise.SetSeed(4);
 
         mountain_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
-        mountain_noise.SetFrequency(50.0f * (float) amplification_quality);
+        mountain_noise.SetFrequency(80.0f * (float) amplification_quality);
         mountain_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
-        mountain_noise.SetFractalOctaves(3);
-        mountain_noise.SetFractalLacunarity(5.0f);
+        mountain_noise.SetFractalOctaves(2);
+        mountain_noise.SetFractalLacunarity(2.0f);
         mountain_noise.SetFractalGain(0.2f);
         mountain_noise.SetSeed(3);
     };
@@ -73,7 +73,6 @@ private:
         float crust_elevation = planet.crust_data[closestVertexIdx]->relief_elevation;
         float normalized_elevation = (crust_elevation - planet.min_elevation) / (planet.max_elevation - planet.min_elevation);
 
-        newPlanet.amplified_elevations.push_back(crust_elevation);
         Vec3 elevated_position = vertexPosition * (1 + elevation_force * normalized_elevation);
         return elevated_position;
     };
@@ -93,10 +92,7 @@ private:
             }
 
             position = addNoiseToVertex(position, general_noise, 0.04f);
-
-            if (position.length() > planet.max_real_elevation) planet.max_real_elevation = position.length();
-            if (position.length() < planet.min_real_elevation) planet.min_real_elevation = position.length();
-
+            planet.normalized_elevations.push_back(position.length());
             planet.vertices[vertexIdx] = position;
         }
     }

@@ -29,6 +29,7 @@ class Planet : public Mesh {
    public:
     std::vector<Plate> plates;
     std::vector<float> amplified_elevations;
+    std::vector<float> normalized_elevations;
     std::vector<unsigned int> verticesToPlates;
     std::vector<std::unique_ptr<Crust>> crust_data;
     std::vector<std::vector<unsigned int>> neighbors;
@@ -37,7 +38,7 @@ class Planet : public Mesh {
     float min_elevation = -8000.0f;
 
     float max_real_elevation = 1.0f;
-    float min_real_elevation = 1.0f;
+    float min_real_elevation = 2.0f;
 
     float ocean_level = 0.4f;
     float max_velocity = 2.0f; // TODO: idk, Timothée knows -> In fact Timothée doesn't know either

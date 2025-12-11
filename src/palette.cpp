@@ -19,7 +19,7 @@ void Palette::loadPalettes() {
     Palette mars;
     mars.color_deep     = Vec3(0.10f, 0.05f, 0.03f);   // sombras muy oscuras
     mars.color_shallow  = Vec3(0.40f, 0.20f, 0.12f);   // transiciones suaves
-    mars.color_shore  = Vec3(0.70f, 0.70f, 0.50f);
+    mars.color_shore  = Vec3(0.45f, 0.18f, 0.10f);
     mars.color_lowland  = Vec3(0.45f, 0.18f, 0.10f);   // rojizo oscuro (valles)
     mars.color_midland  = Vec3(0.60f, 0.28f, 0.15f);   // óxido naranja
     mars.color_highland = Vec3(0.75f, 0.40f, 0.22f);   // polvo marciano brillante
@@ -29,7 +29,7 @@ void Palette::loadPalettes() {
     Palette zibzoob;
     zibzoob.color_deep     = Vec3(0.05f, 0.0f, 0.2f);   // sombras azuladas oscuras
     zibzoob.color_shallow  = Vec3(0.5f, 1.0f, 0.5f);    // verde limón suave
-    zibzoob.color_shore  = Vec3(0.70f, 0.70f, 0.50f);
+    zibzoob.color_shore  = Vec3(0.0f, 1.0f, 0.2f);
     zibzoob.color_lowland  = Vec3(0.0f, 1.0f, 0.2f);    // verde neón brillante
     zibzoob.color_midland  = Vec3(0.8f, 0.0f, 0.9f);    // púrpura eléctrico
     zibzoob.color_highland = Vec3(0.2f, 0.6f, 1.0f);    // azul cobalto brillante
@@ -40,7 +40,7 @@ void Palette::loadPalettes() {
     Palette blingblang;
     blingblang.color_deep     = Vec3(0.1f, 0.0f, 0.1f);   // sombras profundas moradas
     blingblang.color_shallow  = Vec3(1.0f, 0.8f, 0.5f);   // reflejos dorados
-    blingblang.color_shore  = Vec3(0.70f, 0.70f, 0.50f);
+    blingblang.color_shore  = Vec3(1.0f, 0.3f, 0.0f);
     blingblang.color_lowland  = Vec3(1.0f, 0.3f, 0.0f);   // rojo fuego
     blingblang.color_midland  = Vec3(1.0f, 0.6f, 0.2f);   // naranja brillante
     blingblang.color_highland = Vec3(0.8f, 0.0f, 0.8f);   // púrpura intenso
@@ -50,7 +50,7 @@ void Palette::loadPalettes() {
 
     Palette zoobzib;
     zoobzib.color_deep     = Vec3(0.0f, 0.0f, 0.3f);   // sombras azul oscuro
-    zoobzib.color_shallow  = Vec3(0.0f, 1.0f, 0.5f);   // verde lima eléctrico
+    zoobzib.color_shallow  = Vec3(0.0f, 1.0f, 1.0f);   // verde lima eléctrico
     zoobzib.color_lowland  = Vec3(0.0f, 1.0f, 1.0f);   // cian neón
     zoobzib.color_midland  = Vec3(1.0f, 0.0f, 1.0f);   // magenta eléctrico
     zoobzib.color_highland = Vec3(1.0f, 1.0f, 0.0f);   // amarillo fluorescente
