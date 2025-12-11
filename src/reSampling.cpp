@@ -51,11 +51,56 @@ void computeCrustGenerationEvent(Planet& targetPlanet, Planet& srcPlanet,Spheric
         crustGenerationEvent.triggerEvent(targetPlanet);
 }
 
-std::unique_ptr<Crust> copyCrust(Planet& srcPlanet, unsigned int closestIndex){ // Copy crust data from srcPlanet at closestIndex
+std::unique_ptr<Crust> copyCrust(Planet& srcPlanet, unsigned int closestIndex, 
+                                  SphericalKDTree& accel, const Vec3& currentVertex) { 
     std::unique_ptr<Crust> crust_data;
 
     const Crust* srcCrust = srcPlanet.crust_data[closestIndex].get();
     
+    // Vérifier si on est dans une zone de subduction océanique-continentale
+    std::vector<unsigned int> neighbors = accel.kNearest(currentVertex, 2);
+    
+    bool hasOceanic = false;
+    bool hasContinental = false;
+    unsigned int continentalIndex = closestIndex;
+    
+
+    for (unsigned int neighborIdx : neighbors) {
+        if (neighborIdx >= srcPlanet.crust_data.size() || !srcPlanet.crust_data[neighborIdx]) {
+            continue;
+        }
+        
+        const Crust* neighborCrust = srcPlanet.crust_data[neighborIdx].get();
+        
+        if (dynamic_cast<const OceanicCrust*>(neighborCrust)) {
+            hasOceanic = true;
+        } else if (dynamic_cast<const ContinentalCrust*>(neighborCrust)) {
+            hasContinental = true;
+            continentalIndex = neighborIdx;
+        }
+    }
+    
+    // Si on est dans une zone mixte océanique-continentale, privilégier la continentale
+    if (hasOceanic && hasContinental) {
+
+        bool isDifferentPlates = false;
+        unsigned int closestPlate = srcPlanet.verticesToPlates[closestIndex];
+        
+        for (unsigned int neighborIdx : neighbors) {
+            if (srcPlanet.verticesToPlates[neighborIdx] != closestPlate) {
+                isDifferentPlates = true;
+                break;
+            }
+        }
+        
+
+        if (isDifferentPlates) {
+            srcCrust = srcPlanet.crust_data[continentalIndex].get();
+            closestIndex = continentalIndex;
+        }
+    }
+    
+    //copy crust
     const OceanicCrust* oc = dynamic_cast<const OceanicCrust*>(srcCrust);
     if (oc) {
         if (oc->is_rifting) {
@@ -66,7 +111,7 @@ std::unique_ptr<Crust> copyCrust(Planet& srcPlanet, unsigned int closestIndex){ 
                 oc->ridge_dir,
                 false
             );
-        }else{
+        } else {
             crust_data = std::make_unique<OceanicCrust>(
                 oc->thickness, 
                 oc->relief_elevation, 
@@ -156,11 +201,11 @@ void Planet::resample(Planet& srcPlanet) { // Resample crust and plate data from
         Vec3 currentVertex = vertices[i];
         unsigned int closestIndex = accel.nearest(currentVertex);
 
-        if((srcPlanet.vertices[closestIndex] - currentVertex).squareLength() > expected_chord2) { // Vertices far from each other = generate new ocean crust
+        if((srcPlanet.vertices[closestIndex] - currentVertex).squareLength() > expected_chord2) {
             float dist2 = (srcPlanet.vertices[closestIndex] - currentVertex).squareLength();
             computeCrustGenerationEvent(*this, srcPlanet, accel, i, closestIndex);
-        } else if (closestIndex < srcPlanet.crust_data.size() && srcPlanet.crust_data[closestIndex]) { // Vertices overlapping
-            crust_data[i] = copyCrust(srcPlanet, closestIndex);
+        } else if (closestIndex < srcPlanet.crust_data.size() && srcPlanet.crust_data[closestIndex]) {
+            crust_data[i] = copyCrust(srcPlanet, closestIndex, accel, currentVertex);
         }
 
         unsigned int plateIndex = computePlateIndex(accel, srcPlanet, closestIndex, currentVertex);

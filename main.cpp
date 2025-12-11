@@ -911,13 +911,7 @@ int main (int argc, char ** argv) {
     glutMouseFunc (mouse);
     key ('?', 0, 0);
 
-    //Mesh loaded with precomputed normals
 
-
-
-
-    // A faire : normaliser les champs pour avoir une valeur flotante entre 0. et 1. dans current_field
-    //***********************************************//
 
     current_field.clear();
 
