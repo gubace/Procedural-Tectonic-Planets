@@ -53,7 +53,7 @@ enum DisplayMode{ WIRE=0, SOLID=1, LIGHTED_WIRE=2, LIGHTED=3 };
 //Parametres Planete
 // ------------------------------------
 
-int nbPlates = 20;
+int nbPlates = 15;
 int nbiter_resample = 15;
 int spherepoints = 2048 * 24;
 
@@ -628,7 +628,7 @@ void key (unsigned char keyPressed, int x, int y) {
     case 'k': // Rotate sun left
         {
             // Rotation autour de l'axe Y
-            float angle = 0.1f;
+            float angle = 0.05f;
             float newX = sunDirection[0] * cos(angle) - sunDirection[2] * sin(angle);
             float newZ = sunDirection[0] * sin(angle) + sunDirection[2] * cos(angle);
             sunDirection = Vec3(newX, sunDirection[1], newZ);
@@ -639,7 +639,7 @@ void key (unsigned char keyPressed, int x, int y) {
         
     case 'l': // Rotate sun right
         {
-            float angle = -0.1f;
+            float angle = -0.05f;
             float newX = sunDirection[0] * cos(angle) - sunDirection[2] * sin(angle);
             float newZ = sunDirection[0] * sin(angle) + sunDirection[2] * cos(angle);
             sunDirection = Vec3(newX, sunDirection[1], newZ);

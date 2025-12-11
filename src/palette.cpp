@@ -9,7 +9,7 @@ void Palette::loadPalettes() {
     Palette earth;
     earth.color_deep     = Vec3(0.02f, 0.15f, 0.40f);
     earth.color_shallow  = Vec3(0.12f, 0.45f, 0.80f);
-    earth.color_lowland  = Vec3(0.50f, 0.50f, 0.20f);
+    earth.color_lowland  = Vec3(0.20f, 0.40f, 0.30f);
     earth.color_midland  = Vec3(0.10f, 0.30f, 0.20f);
     earth.color_highland = Vec3(0.15f, 0.25f, 0.20f);
     earth.color_snow     = Vec3(0.8f, 0.9f, 0.9f);

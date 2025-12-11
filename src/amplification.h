@@ -12,7 +12,7 @@
 
 class Amplification {
 public:
-    const float elevation_force = 0.02f;
+    const float elevation_force = 0.05f;
     const int amplification_quality = 4;
     FastNoiseLite general_noise;
     FastNoiseLite ground_noise;
@@ -21,7 +21,7 @@ public:
     
     Amplification(Planet & p) : accel(p.vertices, p) {
         general_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
-        general_noise.SetFrequency(10.0 * (float) amplification_quality);
+        general_noise.SetFrequency(2.0 * (float) amplification_quality);
         general_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
         general_noise.SetFractalOctaves(2);
         general_noise.SetFractalLacunarity(2.0f);
@@ -57,8 +57,7 @@ void amplifyTerrain(Planet& planet) {
 
     planet.detectVerticesNeighbors();
     planet.smooth();
-    planet.smooth();
-    planet.smooth();
+
     addNoise(planet);
     planet.recomputeNormals();
 
@@ -84,13 +83,15 @@ private:
             float normalized_elevation = (elevation - planet.min_elevation) / (planet.max_elevation - planet.min_elevation);
 
             Vec3 position = planet.vertices[vertexIdx];
-            position = addNoiseToVertex(position, general_noise, 0.04f);
+            
 
             if (normalized_elevation > 0.9f) {
                 position = addNoiseToVertex(position, mountain_noise, 0.1f);
             } else if (normalized_elevation > 0.7f) {
                 position = addNoiseToVertex(position, ground_noise, 0.05f);
             }
+
+            position = addNoiseToVertex(position, general_noise, 0.04f);
 
             if (position.length() > planet.max_real_elevation) planet.max_real_elevation = position.length();
             if (position.length() < planet.min_real_elevation) planet.min_real_elevation = position.length();
@@ -99,7 +100,7 @@ private:
         }
     }
 
-    Vec3 addNoiseToVertex(Vec3 position, FastNoiseLite noise, float strength) {
+    Vec3 addNoiseToVertex(Vec3 position, FastNoiseLite noise, float strength, bool isOceanic = false) {
         float noiseRaw = noise.GetNoise(position[0], position[1], position[2]);
         float n = 1.0f + noiseRaw * elevation_force * strength;
 

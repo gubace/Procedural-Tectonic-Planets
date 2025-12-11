@@ -7,7 +7,7 @@
 #include "tectonicPhenomenon.h"
 #include "planet.h"
 
-float subductionUplift = 2000.0f;
+float subductionUplift = 1000.0f;
 
 void Subduction::triggerEvent(Planet& planet) {
 
