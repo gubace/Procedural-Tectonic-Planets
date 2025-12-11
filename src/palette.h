@@ -16,11 +16,11 @@ public:
     Vec3 color_snow;
 
     static constexpr float color_deep_treshold = 0.3;
-    static constexpr float color_shallow_treshold = 0.50;
-    static constexpr float color_shore_treshold = 0.509;
-    static constexpr float color_lowland_treshold = 0.51; 
+    static constexpr float color_shallow_treshold = 0.48;
+    static constexpr float color_shore_treshold = 0.49;
+    static constexpr float color_lowland_treshold = 0.60; 
     static constexpr float color_midland_treshold = 0.65;
-    static constexpr float color_highland_treshold = 0.8;
+    static constexpr float color_highland_treshold = 0.80;
 
     static Vec3 mix(const Vec3& a, const Vec3& b, float t) {
         return a * (1.0f - t) + b * t;
