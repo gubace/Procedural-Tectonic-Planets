@@ -57,6 +57,8 @@ int nbPlates = 10;
 int nbiter_resample = 15;
 int spherepoints = 2048 * 24;
 
+bool amplified = false;
+
 
 //Input mesh loaded at the launch of the application
 Mesh mesh;
@@ -568,6 +570,11 @@ void key (unsigned char keyPressed, int x, int y) {
         break;
 
     case 'm': //Press m key to move the plates
+        if(amplified){
+            std::cout << "Vous ne pouvez plus bouger les plaques une fois l'amplification activée." << std::endl;
+            break;
+        }
+
         if (nbSteps < nbiter_resample) {
             movement_controller.movePlates(timeStep);
             erosion_controller.erosion();
@@ -603,6 +610,10 @@ void key (unsigned char keyPressed, int x, int y) {
 
     case 'i': //trigger plat rifting
         {
+            if(amplified){
+                std::cout << "Vous ne pouvez plus déclencher de rifting une fois l'amplification activée." << std::endl;
+                break;
+            }
             bool riftingOccurred = PlateRifting::triggerRifting(planet);
             if (riftingOccurred) {
                 std::cout << "Rifting successful! Updating structures..." << std::endl;
@@ -658,6 +669,10 @@ void key (unsigned char keyPressed, int x, int y) {
         break;
 
     case 'b': // toggle subduction markers and compute once
+        if(amplified){
+            std::cout << "Vous ne pouvez plus afficher les marqueurs de subduction une fois l'amplification activée." << std::endl;
+            break;
+        }
         display_phenomena = !display_phenomena;
         if (display_phenomena) {
             printf("Detected %zu plate interaction points\n", movement_controller.tectonicPhenomena.size());
@@ -699,6 +714,10 @@ void key (unsigned char keyPressed, int x, int y) {
 
     case 'r'://resample
         {
+            if(amplified){
+                std::cout << "Vous ne pouvez plus reéchantillonner une fois l'amplification activée." << std::endl;
+                break;
+            }
             movement_controller.triggerTerranesMigration();
             Planet newPlanet(1.0f,spherepoints);
             newPlanet.resample(planet);
@@ -716,6 +735,11 @@ void key (unsigned char keyPressed, int x, int y) {
         break;
 
     case 'a': // Amplify
+        if(amplified){
+                std::cout << "Vous ne pouvez plus amplifier une fois l'amplification activée." << std::endl;
+                break;
+            }
+        amplified = true;
         amplificator->amplifyTerrain(planet);
         display_plates_mode = 3;
         
@@ -734,12 +758,17 @@ void key (unsigned char keyPressed, int x, int y) {
             glDeleteBuffers(1, &atmosphereEBO);
         }
         createAtmosphereSphere(planetRadiusMax * 1.12f, 64, atmosphereVAO, atmosphereVBO, atmosphereEBO, atmosphereIndexCount);
+
+        planet.ocean_level = 0.5f;
         
         mesh = planet;
         displayMode = LIGHTED;
         display_atmosphere = true;
         
         updateDisplayedColors();
+        printf("Amplification completed.\n");
+        std::cout << "vous pouvez utiliser les touches 'e' et 't' pour ajuster le niveau de l'océan." << std::endl;
+        
         break;
 
     case 'j': //relancer
@@ -748,6 +777,7 @@ void key (unsigned char keyPressed, int x, int y) {
         if (amplificator) {
             delete amplificator;
             amplificator = nullptr;
+            amplified = false;
         }
 
         Planet newPlanet(1.0f, spherepoints);
