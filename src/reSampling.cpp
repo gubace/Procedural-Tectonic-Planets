@@ -11,6 +11,7 @@
 #include "SphericalGrid.h"
 #include "tectonicPhenomenon.h"
 #include "rifting.h"
+#include "UnionFind.h"
 
 
 
@@ -174,9 +175,137 @@ unsigned int computePlateIndex(SphericalKDTree &accel, Planet &srcPlanet, unsign
     }
 }
 
+
+// ================================ Clean plates ===================================
+
+unsigned int findSurroundingMajorityPlate(
+    Planet& planet,
+    const std::vector<unsigned int>& islandVertices,
+    unsigned int currentPlateId)
+{
+    std::map<unsigned int, int> plateVotes;
+    
+    for (unsigned int vertexIdx : islandVertices) {
+        for (unsigned int neighborIdx : planet.neighbors[vertexIdx]) {
+            unsigned int neighborPlate = planet.verticesToPlates[neighborIdx];
+            
+            // Ne compter que les voisins d'autres plaques
+            if (neighborPlate != currentPlateId) {
+                plateVotes[neighborPlate]++;
+            }
+        }
+    }
+    
+    if (plateVotes.empty()) {
+        return currentPlateId;
+    }
+    
+    
+    unsigned int majorityPlate = currentPlateId;
+    int maxVotes = 0;
+    
+    for (const auto& [plateId, votes] : plateVotes) {
+        if (votes > maxVotes) {
+            maxVotes = votes;
+            majorityPlate = plateId;
+        }
+    }
+    
+    return majorityPlate;
+}
+
+void cleanPlatesFast(Planet& planet, size_t minIslandSize) {
+    auto t_start = std::chrono::steady_clock::now();
+    
+    //std::cout << "Fast plate cleaning (islands < " << minIslandSize << " vertices)..." << std::endl;
+    
+    size_t N = planet.vertices.size();
+    UnionFind uf(N);
+    
+    // Étape 1: Unir les vertices connectés de la même plaque
+    for (unsigned int i = 0; i < N; ++i) {
+        unsigned int myPlate = planet.verticesToPlates[i];
+        
+        for (unsigned int neighborIdx : planet.neighbors[i]) {
+            if (planet.verticesToPlates[neighborIdx] == myPlate) {
+                uf.unite(i, neighborIdx);
+            }
+        }
+    }
+    
+    // Étape 2: Compter la taille de chaque composante
+    std::map<unsigned int, std::vector<unsigned int>> componentVertices;
+    
+    for (unsigned int i = 0; i < N; ++i) {
+        unsigned int root = uf.find(i);
+        componentVertices[root].push_back(i);
+    }
+    
+    // Étape 3: Pour chaque plaque, identifier la composante principale
+    std::map<unsigned int, unsigned int> plateMainComponent;
+    std::map<unsigned int, size_t> plateMainComponentSize;
+    
+    for (const auto& [root, vertices] : componentVertices) {
+        if (vertices.empty()) continue;
+        
+        unsigned int plateId = planet.verticesToPlates[vertices[0]];
+        size_t componentSize = vertices.size();
+        
+        if (plateMainComponentSize.find(plateId) == plateMainComponentSize.end() ||
+            componentSize > plateMainComponentSize[plateId]) {
+            plateMainComponent[plateId] = root;
+            plateMainComponentSize[plateId] = componentSize;
+        }
+    }
+    
+    
+    unsigned int totalCleaned = 0;
+    
+    for (const auto& [root, vertices] : componentVertices) {
+        if (vertices.empty()) continue;
+        
+        unsigned int plateId = planet.verticesToPlates[vertices[0]];
+        size_t componentSize = vertices.size();
+        
+        
+        if (root == plateMainComponent[plateId] || componentSize >= minIslandSize) {
+            continue;
+        }
+        
+        
+        unsigned int newPlateId = findSurroundingMajorityPlate(planet, vertices, plateId);
+        
+        
+        for (unsigned int vertexIdx : vertices) {
+            planet.verticesToPlates[vertexIdx] = newPlateId;
+        }
+        
+        totalCleaned += componentSize;
+    }
+    
+    
+    for (Plate& plate : planet.plates) {
+        plate.vertices_indices.clear();
+    }
+    
+    for (unsigned int i = 0; i < N; ++i) {
+        unsigned int plateId = planet.verticesToPlates[i];
+        if (plateId < planet.plates.size()) {
+            planet.plates[plateId].vertices_indices.push_back(i);
+        }
+    }
+    
+    auto t_end = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t_end - t_start).count();
+    
+    std::cout << "Fast plate cleaning: " << totalCleaned << " vertices reassigned in " 
+              << duration << "ms" << std::endl;
+}
+
+
 //================================ Planet Resampling ===================================
 
-void Planet::resample(Planet& srcPlanet) { // Resample crust and plate data from srcPlanet to this planet
+void Planet::resample(Planet& srcPlanet) {
     
     auto t_total_start = std::chrono::steady_clock::now();
 
@@ -191,7 +320,7 @@ void Planet::resample(Planet& srcPlanet) { // Resample crust and plate data from
     printf("SphericalKDTree built with %zu vertices\n", srcVerticesCopy.size());
 
     float expected_area = 4.0f * M_PI / float(srcPlanet.vertices.size());
-    float expected_spacing = std::sqrt(expected_area); // approx chord length
+    float expected_spacing = std::sqrt(expected_area);
     float expected_chord2 = expected_spacing * expected_spacing;
 
     std::cout << "Expected spacing: " << expected_spacing << ", expected chord^2: " << expected_chord2 << std::endl;
@@ -231,6 +360,10 @@ void Planet::resample(Planet& srcPlanet) { // Resample crust and plate data from
     }
 
     detectVerticesNeighbors();
+    
+    
+    cleanPlatesFast(*this, N/100);
+    
     findFrontierVertices();
     fillClosestFrontierVertices();
     fillAllTerranes();
@@ -240,7 +373,7 @@ void Planet::resample(Planet& srcPlanet) { // Resample crust and plate data from
     std::mt19937 gen(rd());
     std::uniform_int_distribution<int> riftChance(1, 5);
     
-    if (riftChance(gen) == 2) { // N chances sur 10
+    if (riftChance(gen) == 2) {
         std::cout << "\nrifting" << std::endl;
 
         PlateRifting rifter;
@@ -248,6 +381,10 @@ void Planet::resample(Planet& srcPlanet) { // Resample crust and plate data from
 
         if (riftSuccess) {
             detectVerticesNeighbors();
+            
+            // ===== OPTIONNEL: Nettoyer après le rifting aussi =====
+            cleanPlatesFast(*this, 20);
+            
             findFrontierVertices();
             fillClosestFrontierVertices();
             fillAllTerranes();

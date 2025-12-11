@@ -13,7 +13,7 @@
 class Amplification {
 public:
     const float elevation_force = 0.03f;
-    const int amplification_quality = 2;
+    const int amplification_quality = 5;
     FastNoiseLite general_noise;
     FastNoiseLite ground_noise;
     FastNoiseLite mountain_noise;
@@ -38,7 +38,7 @@ public:
 
         mountain_noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2);
         mountain_noise.SetFrequency(80.0f * (float) amplification_quality);
-        mountain_noise.SetFractalType(FastNoiseLite::FractalType_FBm);
+        mountain_noise.SetFractalType(FastNoiseLite::FractalType_Ridged);
         mountain_noise.SetFractalOctaves(2);
         mountain_noise.SetFractalLacunarity(2.0f);
         mountain_noise.SetFractalGain(0.2f);
@@ -91,7 +91,7 @@ private:
             } else if (normalized_elevation > 0.7f) {
                 position = addNoiseToVertex(position, ground_noise, 0.05f);
             }
-            position = addNoiseToVertex(position, general_noise, 0.04f);
+            position = addNoiseToVertex(position, general_noise, 0.015f);
 
             if (position.length() > planet.max_real_elevation) planet.max_real_elevation = position.length();
             if (position.length() < planet.min_real_elevation) planet.min_real_elevation = position.length();
