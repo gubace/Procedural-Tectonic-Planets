@@ -129,9 +129,9 @@ void updateDisplayedColors() {
         //printf("Updated colors for elevation display.\n");
     } else if (display_plates_mode == 3) {
         planet.colors = planet.vertexColorsForCrustTypesNormalized();
-        //planet.colors = planet.vertexColorsForCrustTypesAmplified();
-        //planet.smoothColors();
-        //planet.smoothColors();
+        // planet.colors = planet.vertexColorsForCrustTypesAmplified();
+        // planet.smoothColors();
+        // planet.smoothColors();
     }
     mesh.colors = planet.colors;
     glutPostRedisplay();
@@ -685,6 +685,18 @@ void key (unsigned char keyPressed, int x, int y) {
         mesh = planet;
         break;
 
+    case 'e': // Press e key to increase ocean level (after amplification)
+        planet.increaseWaterLevel();
+        mesh = planet;
+        updateDisplayedColors();
+        break;
+
+    case 't': // Press d key to decrease ocean level (after amplification)
+        planet.decreaseWaterLevel();
+        mesh = planet;
+        updateDisplayedColors();
+        break;
+
     case 'r'://resample
         {
             movement_controller.triggerTerranesMigration();
@@ -801,6 +813,8 @@ void key (unsigned char keyPressed, int x, int y) {
         std::cout << "  a - Amplify terrain (generate detailed relief)" << std::endl;
         std::cout << "  s - Smooth colors" << std::endl;
         std::cout << "  j - Restart simulation (new planet)" << std::endl;
+        std::cout << "  t - Decrease ocean level (after amplification)" << std::endl;
+        std::cout << "  e - Increase ocean level (after amplification)" << std::endl;
         
         std::cout << "\nLIGHTING CONTROLS:" << std::endl;
         std::cout << "  k - Rotate sun left" << std::endl;

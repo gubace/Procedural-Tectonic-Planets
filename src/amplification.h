@@ -12,8 +12,8 @@
 
 class Amplification {
 public:
-    const float elevation_force = 0.05f;
-    const int amplification_quality = 4;
+    const float elevation_force = 0.03f;
+    const int amplification_quality = 2;
     FastNoiseLite general_noise;
     FastNoiseLite ground_noise;
     FastNoiseLite mountain_noise;
@@ -96,7 +96,7 @@ private:
             if (position.length() > planet.max_real_elevation) planet.max_real_elevation = position.length();
             if (position.length() < planet.min_real_elevation) planet.min_real_elevation = position.length();
 
-            
+
 
             planet.vertices[vertexIdx] = position;
         }

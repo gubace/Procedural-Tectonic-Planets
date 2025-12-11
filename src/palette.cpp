@@ -7,7 +7,7 @@ int Palette::currentPalette = -1;
 
 void Palette::loadPalettes() {
     Palette earth;
-    earth.color_deep     = Vec3(0.02f, 0.15f, 0.40f);
+    earth.color_deep     = Vec3(0.04f, 0.05f, 0.20f);
     earth.color_shallow  = Vec3(0.12f, 0.45f, 0.80f);
     earth.color_shore  = Vec3(0.70f, 0.70f, 0.50f);
     earth.color_lowland  = Vec3(0.20f, 0.40f, 0.30f);
@@ -52,6 +52,7 @@ void Palette::loadPalettes() {
     zoobzib.color_deep     = Vec3(0.0f, 0.0f, 0.3f);   // sombras azul oscuro
     zoobzib.color_shallow  = Vec3(0.0f, 1.0f, 1.0f);   // verde lima eléctrico
     zoobzib.color_lowland  = Vec3(0.0f, 1.0f, 1.0f);   // cian neón
+    zoobzib.color_shore  = Vec3(1.0f, 0.3f, 0.0f);
     zoobzib.color_midland  = Vec3(1.0f, 0.0f, 1.0f);   // magenta eléctrico
     zoobzib.color_highland = Vec3(1.0f, 1.0f, 0.0f);   // amarillo fluorescente
     zoobzib.color_snow     = Vec3(0.6f, 0.2f, 1.0f);   // violeta brillante

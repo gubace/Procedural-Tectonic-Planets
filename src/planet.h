@@ -80,6 +80,8 @@ class Planet : public Mesh {
     
     void smooth();
     void smoothColors();
+    void increaseWaterLevel();
+    void decreaseWaterLevel();
     float relativeVelocity(Plate & plateA, Plate & plateB);
 
    private:

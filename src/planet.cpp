@@ -456,10 +456,6 @@ std::vector<Vec3> Planet::vertexColorsForCrustTypesNormalized() const {
     float maxZ = max_real_elevation;
     float real_ocean_level = minZ + (maxZ - minZ) * ocean_level;
 
-    std::cout << "real_ocean_level" << real_ocean_level << std::endl;
-    std::cout << "maxZ" << maxZ << std::endl;
-    std::cout << "minZ" << minZ << std::endl;
-
     float maxDelta = std::max(real_ocean_level - minZ, maxZ - real_ocean_level);
     if (maxDelta <= 0.0f) maxDelta = 1.0f;
 
@@ -469,15 +465,26 @@ std::vector<Vec3> Planet::vertexColorsForCrustTypesNormalized() const {
     for (size_t i = 0; i < vertices.size(); ++i) {
         float height = vertices[i].length();
 
+        // Normalización centrada en real_ocean_level
         float normalized = (height - low) / (high - low);
-
-        if (normalized < 0.0f) normalized = 0.0f;
-        if (normalized > 1.0f) normalized = 1.0f;
 
         out[i] = palette.getColorFromValue(normalized);
     }
-
     return out;
+}
+
+void Planet::increaseWaterLevel() {
+    ocean_level += 0.001;
+    if (ocean_level >= 1.0) ocean_level = 0.0;
+
+    std::cout << "Ocean level: " << ocean_level * 100 << "%" << std::endl;
+}
+
+void Planet::decreaseWaterLevel() {
+    ocean_level -= 0.001;
+    if (ocean_level <= 0.0) ocean_level = 1.0;
+
+    std::cout << "Ocean level: " << ocean_level * 100 << "%" << std::endl;
 }
 
 std::vector<Vec3> Planet::vertexColorsForCrustTypes() const {
