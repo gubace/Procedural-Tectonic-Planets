@@ -98,7 +98,7 @@ private:
         std::stringstream buffer;
         buffer << file.rdbuf();
         std::string content = buffer.str();
-        std::cout << "Loaded shader (" << path << "): " << content.length() << " bytes" << std::endl;
+        //std::cout << "Loaded shader (" << path << "): " << content.length() << " bytes" << std::endl;
         return content;
     }
     
@@ -127,7 +127,7 @@ private:
                 glGetShaderInfoLog(shader, 1024, NULL, infoLog);
                 std::cout << "ERROR::SHADER_COMPILATION::" << type << "\n" << infoLog << std::endl;
             } else {
-                std::cout << "SUCCESS: " << type << " shader compiled successfully" << std::endl;
+                //std::cout << "SUCCESS: " << type << " shader compiled successfully" << std::endl;
             }
         } else {
             glGetProgramiv(shader, GL_LINK_STATUS, &success);
@@ -135,7 +135,7 @@ private:
                 glGetProgramInfoLog(shader, 1024, NULL, infoLog);
                 std::cout << "ERROR::PROGRAM_LINKING\n" << infoLog << std::endl;
             } else {
-                std::cout << "SUCCESS: Program linked successfully" << std::endl;
+                //std::cout << "SUCCESS: Program linked successfully" << std::endl;
             }
         }
     }

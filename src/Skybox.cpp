@@ -78,8 +78,8 @@ void Skybox::draw(const float* view, const float* projection) {
     static bool debugOnce = false;
     if (!debugOnce) {
         //std::cout << "Shader Program ID: " << programID << std::endl;
-        std::cout << "Current Program: " << currentProgram << std::endl;
-        std::cout << "VAO: " << VAO << std::endl;
+        //std::cout << "Current Program: " << currentProgram << std::endl;
+        //std::cout << "VAO: " << VAO << std::endl;
         debugOnce = true;
     }
     

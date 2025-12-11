@@ -181,10 +181,10 @@ void init() {
         std::cerr << "Failed to initialize GLEW: " << glewGetErrorString(err) << std::endl;
         exit(EXIT_FAILURE);
     }
-    std::cout << "Using GLEW " << glewGetString(GLEW_VERSION) << std::endl;
+    /*std::cout << "Using GLEW " << glewGetString(GLEW_VERSION) << std::endl;
     std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
     std::cout << "GLSL Version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
-    std::cout << "Geometry Shaders supported: " << (GLEW_VERSION_3_2 ? "YES" : "NO") << std::endl; 
+    std::cout << "Geometry Shaders supported: " << (GLEW_VERSION_3_2 ? "YES" : "NO") << std::endl; */
 
     // Créer l'amplificateur APRÈS l'initialisation de GLEW
     amplificator = new Amplification(planet);
@@ -443,14 +443,6 @@ void draw() {
         glGetFloatv(GL_PROJECTION_MATRIX, projection);
         glGetFloatv(GL_MODELVIEW_MATRIX, view);
         
-        // Debug: afficher les matrices une fois
-        static bool debugOnce = false;
-        if (!debugOnce) {
-            std::cout << "Projection[0]: " << projection[0] << std::endl;
-            std::cout << "View[0]: " << view[0] << std::endl;
-            debugOnce = true;
-        }
-        
         starsSkybox->draw(view, projection);
         
         // Restaurer l'état
@@ -525,7 +517,7 @@ void changeDisplayMode(){
     else if(displayMode == SOLID)
         displayMode = WIRE;
     else{ 
-        std::cout << "Switching to LIGHTED mode." << std::endl;
+        //std::cout << "Switching to LIGHTED mode." << std::endl;
         displayMode = LIGHTED;
     
     }
@@ -675,7 +667,7 @@ void key (unsigned char keyPressed, int x, int y) {
         }
         break;
 
-    case 'h': // toggle atmosphere display
+    case 'y': // toggle atmosphere display
         display_atmosphere = !display_atmosphere;
         if (display_atmosphere) {
             printf("Atmosphere display ON\n");
@@ -782,13 +774,56 @@ void key (unsigned char keyPressed, int x, int y) {
     }
     break;
 
-    case '1': //Toggle loaded mesh display
-        display_mesh = !display_mesh;
-        break;
 
     case 'd':
         display_directions = !display_directions;
         break;
+
+    case 'h': // Help - Display all keyboard shortcuts
+        std::cout << "\n========================================" << std::endl;
+        std::cout << "         KEYBOARD SHORTCUTS HELP        " << std::endl;
+        std::cout << "========================================\n" << std::endl;
+        
+        std::cout << "DISPLAY MODES:" << std::endl;
+        std::cout << "  w - Change display mode (Lighted/Wire/Solid)" << std::endl;
+        std::cout << "  p - Cycle plate display (Plates/Crust/Elevation/Amplified)" << std::endl;
+        std::cout << "  c - Change color palette" << std::endl;
+        std::cout << "  n - Toggle normals display" << std::endl;
+        std::cout << "  d - Toggle plate direction arrows" << std::endl;
+        std::cout << "  b - Toggle tectonic phenomena markers" << std::endl;
+        std::cout << "  y - Toggle atmosphere display" << std::endl;
+        std::cout << "  f - Toggle fullscreen" << std::endl;
+        
+        std::cout << "\nSIMULATION CONTROLS:" << std::endl;
+        std::cout << "  m - Move plates (tectonic simulation step)" << std::endl;
+        std::cout << "  r - Resample planet" << std::endl;
+        std::cout << "  i - Trigger plate rifting" << std::endl;
+        std::cout << "  a - Amplify terrain (generate detailed relief)" << std::endl;
+        std::cout << "  s - Smooth colors" << std::endl;
+        std::cout << "  j - Restart simulation (new planet)" << std::endl;
+        
+        std::cout << "\nLIGHTING CONTROLS:" << std::endl;
+        std::cout << "  k - Rotate sun left" << std::endl;
+        std::cout << "  l - Rotate sun right" << std::endl;
+        std::cout << "  o - Rotate sun up" << std::endl;
+        std::cout << "  u - Rotate sun down" << std::endl;
+        
+        std::cout << "\nMOUSE CONTROLS:" << std::endl;
+        std::cout << "  Left click + drag  - Rotate camera" << std::endl;
+        std::cout << "  Right click + drag - Pan camera" << std::endl;
+        std::cout << "  Middle click + drag - Zoom camera" << std::endl;
+        
+        std::cout << "\nINFO:" << std::endl;
+        std::cout << "  h - Display this help message" << std::endl;
+        
+        std::cout << "\n========================================" << std::endl;
+        std::cout << "Current settings:" << std::endl;
+        std::cout << "  Number of plates: " << nbPlates << std::endl;
+        std::cout << "  Sphere points: " << spherepoints << std::endl;
+        std::cout << "  Steps before resample: " << nbiter_resample << std::endl;
+        std::cout << "  Current step: " << nbSteps << "/" << nbiter_resample << std::endl;
+        std::cout << "========================================\n" << std::endl;
+    break;
 
 
     default:
@@ -859,10 +894,13 @@ int main (int argc, char ** argv) {
 
     std::cout << "----------------------------------------" << std::endl;
     std::cout << "Procedural Planet with Tectonic Plates Simulation" << std::endl;
+    std::cout << "\nINFO:" << std::endl;
+    std::cout << "  h - Display this help message" << std::endl;
     glutInit (&argc, argv);
     glutInitDisplayMode (GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
     glutInitWindowSize (SCREENWIDTH, SCREENHEIGHT);
     window = glutCreateWindow ("Procedural Planet with Tectonic Plates Simulation");
+    
 
     init ();
     glutIdleFunc (idle);
