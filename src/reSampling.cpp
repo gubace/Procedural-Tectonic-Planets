@@ -244,14 +244,14 @@ void Planet::resample(Planet& srcPlanet) { // Resample crust and plate data from
         std::cout << "\nrifting" << std::endl;
 
         PlateRifting rifter;
-        bool riftSuccess = rifter.triggerRifting(*this);
+        /*bool riftSuccess = rifter.triggerRifting(*this);
 
         if (riftSuccess) {
             detectVerticesNeighbors();
             findFrontierVertices();
             fillClosestFrontierVertices();
             fillAllTerranes();
-        }
+        }*/
     }
 
 

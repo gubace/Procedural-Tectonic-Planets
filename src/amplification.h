@@ -57,6 +57,7 @@ void amplifyTerrain(Planet& planet) {
 
     planet.detectVerticesNeighbors();
     planet.smooth();
+    planet.smooth();
 
     addNoise(planet);
     planet.recomputeNormals();
