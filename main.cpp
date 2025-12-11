@@ -128,8 +128,8 @@ void updateDisplayedColors() {
         planet.colors = planet.vertexColorsForElevation();
         //printf("Updated colors for elevation display.\n");
     } else if (display_plates_mode == 3) {
-        //planet.colors = planet.vertexColorsForCrustTypesAmplified();
         planet.colors = planet.vertexColorsForCrustTypesNormalized();
+        //planet.colors = planet.vertexColorsForCrustTypesAmplified();
         //planet.smoothColors();
         //planet.smoothColors();
     }

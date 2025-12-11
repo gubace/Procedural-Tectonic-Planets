@@ -9,6 +9,7 @@ void Palette::loadPalettes() {
     Palette earth;
     earth.color_deep     = Vec3(0.02f, 0.15f, 0.40f);
     earth.color_shallow  = Vec3(0.12f, 0.45f, 0.80f);
+    earth.color_shore  = Vec3(0.70f, 0.70f, 0.50f);
     earth.color_lowland  = Vec3(0.20f, 0.40f, 0.30f);
     earth.color_midland  = Vec3(0.10f, 0.30f, 0.20f);
     earth.color_highland = Vec3(0.15f, 0.25f, 0.20f);
@@ -18,40 +19,43 @@ void Palette::loadPalettes() {
     Palette mars;
     mars.color_deep     = Vec3(0.10f, 0.05f, 0.03f);   // sombras muy oscuras
     mars.color_shallow  = Vec3(0.40f, 0.20f, 0.12f);   // transiciones suaves
+    mars.color_shore  = Vec3(0.70f, 0.70f, 0.50f);
     mars.color_lowland  = Vec3(0.45f, 0.18f, 0.10f);   // rojizo oscuro (valles)
     mars.color_midland  = Vec3(0.60f, 0.28f, 0.15f);   // óxido naranja
     mars.color_highland = Vec3(0.75f, 0.40f, 0.22f);   // polvo marciano brillante
     mars.color_snow     = Vec3(0.90f, 0.85f, 0.80f);   // hielo de CO₂ / casquete polar
     palettes.push_back(mars);
 
-    Palette alien;
-    alien.color_deep     = Vec3(0.05f, 0.0f, 0.2f);   // sombras azuladas oscuras
-    alien.color_shallow  = Vec3(0.5f, 1.0f, 0.5f);    // verde limón suave
-    alien.color_lowland  = Vec3(0.0f, 1.0f, 0.2f);    // verde neón brillante
-    alien.color_midland  = Vec3(0.8f, 0.0f, 0.9f);    // púrpura eléctrico
-    alien.color_highland = Vec3(0.2f, 0.6f, 1.0f);    // azul cobalto brillante
-    alien.color_snow     = Vec3(1.0f, 0.4f, 0.8f);    // rosa fluorescente
-    palettes.push_back(alien);
+    Palette zibzoob;
+    zibzoob.color_deep     = Vec3(0.05f, 0.0f, 0.2f);   // sombras azuladas oscuras
+    zibzoob.color_shallow  = Vec3(0.5f, 1.0f, 0.5f);    // verde limón suave
+    zibzoob.color_shore  = Vec3(0.70f, 0.70f, 0.50f);
+    zibzoob.color_lowland  = Vec3(0.0f, 1.0f, 0.2f);    // verde neón brillante
+    zibzoob.color_midland  = Vec3(0.8f, 0.0f, 0.9f);    // púrpura eléctrico
+    zibzoob.color_highland = Vec3(0.2f, 0.6f, 1.0f);    // azul cobalto brillante
+    zibzoob.color_snow     = Vec3(1.0f, 0.4f, 0.8f);    // rosa fluorescente
+    palettes.push_back(zibzoob);
 
 
-    Palette alien1;
-    alien1.color_deep     = Vec3(0.1f, 0.0f, 0.1f);   // sombras profundas moradas
-    alien1.color_shallow  = Vec3(1.0f, 0.8f, 0.5f);   // reflejos dorados
-    alien1.color_lowland  = Vec3(1.0f, 0.3f, 0.0f);   // rojo fuego
-    alien1.color_midland  = Vec3(1.0f, 0.6f, 0.2f);   // naranja brillante
-    alien1.color_highland = Vec3(0.8f, 0.0f, 0.8f);   // púrpura intenso
-    alien1.color_snow     = Vec3(0.9f, 1.0f, 0.9f);   // blanco verdoso cristalino
-    palettes.push_back(alien1);
+    Palette blingblang;
+    blingblang.color_deep     = Vec3(0.1f, 0.0f, 0.1f);   // sombras profundas moradas
+    blingblang.color_shallow  = Vec3(1.0f, 0.8f, 0.5f);   // reflejos dorados
+    blingblang.color_shore  = Vec3(0.70f, 0.70f, 0.50f);
+    blingblang.color_lowland  = Vec3(1.0f, 0.3f, 0.0f);   // rojo fuego
+    blingblang.color_midland  = Vec3(1.0f, 0.6f, 0.2f);   // naranja brillante
+    blingblang.color_highland = Vec3(0.8f, 0.0f, 0.8f);   // púrpura intenso
+    blingblang.color_snow     = Vec3(0.9f, 1.0f, 0.9f);   // blanco verdoso cristalino
+    palettes.push_back(blingblang);
 
 
-    Palette alien2;
-    alien2.color_deep     = Vec3(0.0f, 0.0f, 0.3f);   // sombras azul oscuro
-    alien2.color_shallow  = Vec3(0.0f, 1.0f, 0.5f);   // verde lima eléctrico
-    alien2.color_lowland  = Vec3(0.0f, 1.0f, 1.0f);   // cian neón
-    alien2.color_midland  = Vec3(1.0f, 0.0f, 1.0f);   // magenta eléctrico
-    alien2.color_highland = Vec3(1.0f, 1.0f, 0.0f);   // amarillo fluorescente
-    alien2.color_snow     = Vec3(0.6f, 0.2f, 1.0f);   // violeta brillante
-    palettes.push_back(alien2);
+    Palette zoobzib;
+    zoobzib.color_deep     = Vec3(0.0f, 0.0f, 0.3f);   // sombras azul oscuro
+    zoobzib.color_shallow  = Vec3(0.0f, 1.0f, 0.5f);   // verde lima eléctrico
+    zoobzib.color_lowland  = Vec3(0.0f, 1.0f, 1.0f);   // cian neón
+    zoobzib.color_midland  = Vec3(1.0f, 0.0f, 1.0f);   // magenta eléctrico
+    zoobzib.color_highland = Vec3(1.0f, 1.0f, 0.0f);   // amarillo fluorescente
+    zoobzib.color_snow     = Vec3(0.6f, 0.2f, 1.0f);   // violeta brillante
+    palettes.push_back(zoobzib);
 }
 
 Palette Palette::getNextPallete() {
@@ -70,9 +74,12 @@ Vec3 Palette::getColorFromValue(float t) const {
         col = mix(color_deep, color_shallow, tt);
     } else if (t < color_shallow_treshold) {
         float tt = smooth((t - color_deep_treshold) / (color_shallow_treshold - color_deep_treshold));
-        col = mix(color_shallow, color_lowland, tt);
+        col = color_shallow;
+    } else if (t < color_shore_treshold) {
+        float tt = smooth((t - color_shallow_treshold) / (color_shore_treshold - color_shallow_treshold));
+        col = mix(color_shore, color_lowland, tt);
     } else if (t < color_lowland_treshold) {
-        float tt = smooth((t - color_shallow_treshold) / (color_lowland_treshold - color_shallow_treshold));
+        float tt = smooth((t - color_shore_treshold) / (color_lowland_treshold - color_shore_treshold));
         col = mix(color_lowland, color_midland, tt);
     } else if (t < color_midland_treshold) {
         float tt = smooth((t - color_lowland_treshold) / (color_midland_treshold - color_lowland_treshold));
@@ -81,8 +88,7 @@ Vec3 Palette::getColorFromValue(float t) const {
         float tt = smooth((t - color_midland_treshold) / (color_highland_treshold - color_midland_treshold));
         col = mix(color_highland, color_snow, tt);
     } else {
-        float tt = smooth((t - color_highland_treshold) / (1.0f - color_highland_treshold));
-        col = mix(color_snow, color_deep, tt);
+        col = color_snow;
     }
 
     return col;

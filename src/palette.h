@@ -9,14 +9,16 @@ public:
 
     Vec3 color_deep;
     Vec3 color_shallow;
+    Vec3 color_shore;
     Vec3 color_lowland;
     Vec3 color_midland;
     Vec3 color_highland;
     Vec3 color_snow;
 
     static constexpr float color_deep_treshold = 0.3;
-    static constexpr float color_shallow_treshold = 0.48;
-    static constexpr float color_lowland_treshold = 0.55; 
+    static constexpr float color_shallow_treshold = 0.50;
+    static constexpr float color_shore_treshold = 0.509;
+    static constexpr float color_lowland_treshold = 0.51; 
     static constexpr float color_midland_treshold = 0.65;
     static constexpr float color_highland_treshold = 0.8;
 
