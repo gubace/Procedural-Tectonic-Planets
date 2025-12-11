@@ -7,7 +7,7 @@ int Palette::currentPalette = -1;
 
 void Palette::loadPalettes() {
     Palette earth;
-    earth.color_deep     = Vec3(0.04f, 0.05f, 0.20f);
+    earth.color_deep     = Vec3(0.04f, 0.15f, 0.40f);
     earth.color_shallow  = Vec3(0.12f, 0.45f, 0.80f);
     earth.color_shore  = Vec3(0.70f, 0.70f, 0.50f);
     earth.color_lowland  = Vec3(0.20f, 0.40f, 0.30f);
@@ -70,12 +70,9 @@ Palette Palette::getCurrentPalette() {
 
 Vec3 Palette::getColorFromValue(float t) const {
     Vec3 col;
-    if (t < color_deep_treshold) {
-        float tt = smooth(t / color_deep_treshold);
+    if (t < color_shallow_treshold) {
+        float tt = (t - color_deep_treshold) / (color_shallow_treshold - color_deep_treshold);
         col = mix(color_deep, color_shallow, tt);
-    } else if (t < color_shallow_treshold) {
-        float tt = smooth((t - color_deep_treshold) / (color_shallow_treshold - color_deep_treshold));
-        col = color_shallow;
     } else if (t < color_shore_treshold) {
         float tt = smooth((t - color_shallow_treshold) / (color_shore_treshold - color_shallow_treshold));
         col = mix(color_shore, color_lowland, tt);
