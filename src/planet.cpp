@@ -85,7 +85,7 @@ void Planet::generatePlates(unsigned int n_plates) {
     std::vector<int> assign(vertices.size(), -1);
 
     // === Étape d’assignation (Voronoï sphérique) ===
-    const float jitterStrength = 0.02f;  // Force de la perturbation
+    const float jitterStrength = 0.08f;  // Force de la perturbation
 
     for (size_t v = 0; v < vertices.size(); ++v) {
         float bestDist = std::numeric_limits<float>::infinity();

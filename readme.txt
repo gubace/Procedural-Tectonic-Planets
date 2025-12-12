@@ -2,43 +2,28 @@ https://hal.science/hal-02136820/file/2019-Procedural-Tectonic-Planets.pdf
 
 https://www.youtube.com/watch?v=GJQVl6Xld0w
 
-## Next steps:
+# Projet c++ Cmake OpenGL
 
-### Each iteration:
+Pour lancer le projet :
 
-Move the plates and modify the parameters according to the type of interaction between them. At this stage, only subduction and collision need to be taken into account.
+mkdir build && cd build && cmake..
 
-### Every X iterations:
+make -j
 
-Here, remeshing is performed to keep the plates well-formed. A new sphere is created and the plates are reconstructed. For the new sphere, the most relevant points of the plates are taken after subduction and collision have been applied.
-At this stage, plate rifting and oceanic crust generation are computed.
+./Projet3D
 
+Ensuite la sumulation se controle avec les touches du clavier.
 
-#done
+'h' pour help 
 
-## ContinentalCollision -> done ?
+ou cf la documentation pour la liste des touches.
 
-## Assure plates are 1 bloc -> done
+Dans main.cpp tout en haut les variables globales:
+int nbPlates = 10;
+int nbiter_resample = 15;
+int spherepoints = 2048 * 24;
 
-## Plate Rifting like in the paper -> random event were a plate cut itself -> done
+Controlent le nombre de plaques techtoniques.
+Le nombre d'iterations avant le remeshing.
+Le nombre de samplePoins sur la planete.
 
-## Start Amplification step.
-
-## fix triangulation -> Delaunay
-
-## GUI ?
-
-Remesh to have a pretty mesh
-
-Resample with more points -> 4 8 ?
-
-Transfer the height on the new mesh.
-
-Use noise to amplify the terrain.
-
-
-# TODO:
-
-Check if there are plates that are completely separated but are considered as the same one
-
-Resampling makes holes when remeshing subductions
