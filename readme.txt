@@ -27,3 +27,7 @@ Controlent le nombre de plaques techtoniques.
 Le nombre d'iterations avant le remeshing.
 Le nombre de samplePoins sur la planete.
 
+
+lien filesender pour la video Demo, Attention celui ci expire le 11/01/2026 nous contacter en cas de besoin.
+https://filesender.renater.fr/?s=download&token=a33bfb9f-dced-403f-ac2f-de6793336a17
+
