@@ -26,6 +26,26 @@ void Palette::loadPalettes() {
     mars.color_snow     = Vec3(0.90f, 0.85f, 0.80f);   // hielo de CO₂ / casquete polar
     palettes.push_back(mars);
 
+    Palette venus;
+    venus.color_deep     = Vec3(0.20f, 0.16f, 0.10f);   // tonos oscuros amarillentos
+    venus.color_shallow  = Vec3(0.35f, 0.28f, 0.15f);
+    venus.color_shore    = Vec3(0.55f, 0.45f, 0.25f);
+    venus.color_lowland  = Vec3(0.70f, 0.55f, 0.30f);
+    venus.color_midland  = Vec3(0.80f, 0.65f, 0.35f);
+    venus.color_highland = Vec3(0.90f, 0.75f, 0.45f);
+    venus.color_snow     = Vec3(1.00f, 0.90f, 0.60f);   // bruma amarillenta brillante
+    palettes.push_back(venus);
+
+    Palette bioluminescent_world;
+    bioluminescent_world.color_deep     = Vec3(0.00f, 0.02f, 0.05f); // casi negro azulado
+    bioluminescent_world.color_shallow  = Vec3(0.00f, 0.10f, 0.20f);
+    bioluminescent_world.color_shore    = Vec3(0.00f, 0.25f, 0.35f);
+    bioluminescent_world.color_lowland  = Vec3(0.00f, 0.40f, 0.25f); 
+    bioluminescent_world.color_midland  = Vec3(0.10f, 0.60f, 0.30f); 
+    bioluminescent_world.color_highland = Vec3(0.30f, 0.80f, 0.50f);
+    bioluminescent_world.color_snow     = Vec3(0.60f, 1.00f, 0.80f); // brillo verde-menta
+    palettes.push_back(bioluminescent_world);
+
     Palette zibzoob;
     zibzoob.color_deep     = Vec3(0.05f, 0.0f, 0.2f);   // sombras azuladas oscuras
     zibzoob.color_shallow  = Vec3(0.5f, 1.0f, 0.5f);    // verde limón suave
@@ -57,6 +77,36 @@ void Palette::loadPalettes() {
     zoobzib.color_highland = Vec3(1.0f, 1.0f, 0.0f);   // amarillo fluorescente
     zoobzib.color_snow     = Vec3(0.6f, 0.2f, 1.0f);   // violeta brillante
     palettes.push_back(zoobzib);
+
+    Palette ice_world;
+    ice_world.color_deep     = Vec3(0.02f, 0.10f, 0.20f); // azul profundo
+    ice_world.color_shallow  = Vec3(0.10f, 0.30f, 0.50f);
+    ice_world.color_shore    = Vec3(0.50f, 0.70f, 0.85f);
+    ice_world.color_lowland  = Vec3(0.70f, 0.85f, 0.95f);
+    ice_world.color_midland  = Vec3(0.80f, 0.90f, 1.00f);
+    ice_world.color_highland = Vec3(0.90f, 0.95f, 1.00f);
+    ice_world.color_snow     = Vec3(1.00f, 1.00f, 1.00f); // blanco puro
+    palettes.push_back(ice_world);
+
+    Palette aurora_world;
+    aurora_world.color_deep     = Vec3(0.00f, 0.00f, 0.05f); // noche profunda
+    aurora_world.color_shallow  = Vec3(0.05f, 0.05f, 0.15f);
+    aurora_world.color_shore    = Vec3(0.10f, 0.20f, 0.35f);
+    aurora_world.color_lowland  = Vec3(0.25f, 0.45f, 0.55f);
+    aurora_world.color_midland  = Vec3(0.45f, 0.75f, 0.70f);
+    aurora_world.color_highland = Vec3(0.65f, 0.95f, 0.85f);
+    aurora_world.color_snow     = Vec3(0.80f, 1.00f, 0.95f); // luz de aurora
+    palettes.push_back(aurora_world);
+
+    Palette colorful_world;
+    colorful_world.color_deep     = Vec3(0.20f, 0.00f, 0.20f); // púrpura oscuro saturado
+    colorful_world.color_shallow  = Vec3(0.40f, 0.05f, 0.30f);
+    colorful_world.color_shore    = Vec3(0.70f, 0.15f, 0.30f);
+    colorful_world.color_lowland  = Vec3(0.90f, 0.40f, 0.20f);
+    colorful_world.color_midland  = Vec3(0.95f, 0.65f, 0.10f);
+    colorful_world.color_highland = Vec3(0.90f, 0.85f, 0.20f);
+    colorful_world.color_snow     = Vec3(1.00f, 0.95f, 0.60f); // vibrante y cálido
+    palettes.push_back(colorful_world);
 }
 
 Palette Palette::getNextPallete() {
